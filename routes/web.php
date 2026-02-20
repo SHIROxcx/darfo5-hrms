@@ -10,8 +10,17 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+/**
+ *  ADMIN ROUTES
+ */
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin', [AdminController::class, 'index']);
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('dashboard', function() {
+        return Inertia::render('dashboard');
+    })->name('dashboard');
+});
 
 require __DIR__.'/settings.php';
