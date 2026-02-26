@@ -45,7 +45,7 @@ class HandleInertiaRequests extends Middleware
                     // Spread the original user data (id, name, email, etc.)
                     ...$user->toArray(),
                     // Add spatie roles and permissions
-                    'roles' => $user->getRoleNames(),
+                    'roles' => $request->user()->getRoleNames(),  // ['employee']
                     'permissions' => $user->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
