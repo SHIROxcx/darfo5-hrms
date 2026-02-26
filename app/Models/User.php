@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -20,9 +22,9 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'email', 'password',
+        'photo', 'first_name', 'middle_name',
+        'last_name', 'name_ext', 'is_approved',
     ];
 
     /**
@@ -48,6 +50,40 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'is_approved'       => 'boolean',
         ];
+    }
+
+    // Computed full name
+    public function getFullNameAttribute(): string
+    {
+        return trim(
+            implode(' ', array_filter([
+                $this->first_name,
+                $this->middle_name,
+                $this->last_name,
+                $this->name_ext,
+            ]))
+        );
+    }
+
+    public function employeeProfile(): HasOne
+    {
+        return $this->hasOne(EmployeeProfile::class);
+    }
+
+    public function degrees(): HasMany
+    {
+        return $this->hasMany(EmployeeDegree::class);
+    }
+
+    public function graduateStudies(): HasMany
+    {
+        return $this->hasMany(EmployeeGraduateStudy::class);
+    }
+
+    public function eligibilities(): HasMany
+    {
+        return $this->hasMany(EmployeeEligibility::class);
     }
 }

@@ -42,7 +42,17 @@ class RoleAndPermissionSeeder extends Seeder
             'email'             => 'superadmin@hrms.com',
             'password'          => Hash::make('password'),
             'email_verified_at' => now(),
+            'is_approved'       => true,
         ]);
         $user->assignRole('superadmin');
+
+        $user = User::create([
+            'name'              => 'HR Admin',
+            'email'             => 'admin@hrms.com',
+            'password'          => Hash::make('password'),
+            'email_verified_at' => now(),
+            'is_approved'       => true,
+        ]);
+        $user->assignRole('admin');
     }
 }
