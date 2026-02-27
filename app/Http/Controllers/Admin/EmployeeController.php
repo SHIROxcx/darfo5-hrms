@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,7 +37,7 @@ class EmployeeController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Employees/Index', [
+        return Inertia::render('Admin/Employees/Index', [
             'employees' => $employees,
             'filters'   => $request->only(['search', 'status']),
         ]);
@@ -51,7 +52,7 @@ class EmployeeController extends Controller
             'eligibilities',
         ]);
 
-        return Inertia::render('Employees/Show', [
+        return Inertia::render('Admin/Employees/Show', [
             'employee' => $user,
         ]);
     }
@@ -68,5 +69,19 @@ class EmployeeController extends Controller
         $user->notify(new \App\Notifications\AccountApprovedNotification());
 
         return back()->with('success', "{$user->first_name} {$user->last_name}'s account has been approved.");
+    }
+
+    public function toggleApproval(User $user)
+    {
+        $user->update(['is_approved' => ! $user->is_approved]);
+        $status = $user->is_approved ? 'approved' : 'revoked';
+        return back()->with('success', "Access {$status} for {$user->first_name} {$user->last_name}.");
+    }
+
+    public function destroy(User $user)
+    {
+        $name = "{$user->first_name} {$user->last_name}";
+        $user->delete();
+        return back()->with('success', "{$name} has been permanently deleted.");
     }
 }

@@ -30,7 +30,7 @@ const commonNavItems: NavItem[] = [
 const superAdminNavItems: NavItem[] = [
     {
         title: 'User Management',
-        href: '/admin/users',
+        href: '/superadmin/users',
         icon: ShieldCheck,
     },
     {
@@ -38,23 +38,13 @@ const superAdminNavItems: NavItem[] = [
         href: '/admin/roles',
         icon: UserCog,
     },
-    {
-        title: 'Employees',
-        href: '/employees',
-        icon: Users,
-    },
-    {
-        title: 'Leave Management',
-        href: '/leave',
-        icon: Calendar,
-    },
 ];
 
 // ── hr admin only ────────────────────────────────────────
 const adminNavItems: NavItem[] = [
     {
         title: 'Employees',
-        href: '/employees',
+        href: '/admin/employees',
         icon: Users,
     },
     {

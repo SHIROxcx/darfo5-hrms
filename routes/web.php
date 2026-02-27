@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,18 +22,27 @@ Route::get('/pending-approval', function () {
 })->name('pending.approval');
 
 // Only superadmin can access
-Route::middleware(['auth', 'verified', 'role:superadmin'])->group(function () {
-    Route::get('/admin/roles', [RoleController::class, 'index'])->name('admin.roles');
-    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
+Route::middleware(['auth', 'verified', 'role:superadmin'])
+    ->prefix('superadmin')
+    ->name('superadmin.')
+    ->group(function () {
+        Route::get('/users', [SuperAdminUserController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/role', [SuperAdminUserController::class, 'assignRole'])->name('users.role');
+        Route::post('/users/{user}/toggle-approval', [SuperAdminUserController::class, 'toggleApproval'])->name('users.toggle-approval');
+        Route::delete('/users/{user}', [SuperAdminUserController::class, 'destroy'])->name('users.destroy');
 });
 
-// HR staff can access
-Route::middleware(['auth', 'verified', 'role:superadmin|admin'])->group(function () {
-    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-    Route::get('/employees/{user}', [EmployeeController::class, 'show'])->name('employees.show');
-    Route::post('/employees/{user}/approve', [EmployeeController::class, 'approve'])->name('employees.approve');
-});
-
+// Only HR staff can access
+Route::middleware(['auth', 'verified', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('/employees/{user}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::post('/employees/{user}/approve', [EmployeeController::class, 'approve'])->name('employees.approve');
+        Route::post('/employees/{user}/toggle-approval', [EmployeeController::class, 'toggleApproval'])->name('employees.toggle-approval');
+        Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+    });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
