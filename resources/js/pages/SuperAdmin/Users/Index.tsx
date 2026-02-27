@@ -1,12 +1,10 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import {
-    Search, ShieldCheck, Trash2, UserCheck,
-    UserX, ChevronDown, X, AlertTriangle
-} from 'lucide-react';
+import { Search, ShieldCheck, Trash2, UserCheck, UserX, X } from 'lucide-react';
+import Swal from 'sweetalert2';
 
-// ── Types ─────────────────────────────────────────────────────────
+// Types
 
 interface Role {
     id: number;
@@ -41,7 +39,7 @@ interface Props {
     filters: { search?: string; role?: string };
 }
 
-// ── Helpers ────────────────────────────────────────────────────────
+// Helpers
 
 function getFullName(user: User): string {
     return [user.first_name, user.middle_name, user.last_name, user.name_ext]
@@ -57,7 +55,17 @@ const roleBadgeColor: Record<string, string> = {
     employee: 'bg-blue-50 text-blue-700',
 };
 
-// ── Role Assignment Modal ──────────────────────────────────────────
+// SweetAlert Toast
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
+
+// Role Assignment Modal
 
 interface RoleModalProps {
     user: User;
@@ -80,18 +88,24 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
             `/superadmin/users/${user.id}/role`,
             { role: selected },
             {
-                onSuccess: () => { setProcessing(false); onClose(); },
-                onError:   () => setProcessing(false),
+                onSuccess: () => {
+                    setProcessing(false);
+                    onClose();
+                    Toast.fire({ icon: 'success', title: `Role updated to '${selected}'.` });
+                },
+                onError: () => {
+                    setProcessing(false);
+                    Toast.fire({ icon: 'error', title: 'Something went wrong.' });
+                },
             }
         );
     };
 
     return (
-        // Backdrop
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl">
 
-                {/* Modal Header */}
+                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <div className="flex items-center gap-3">
                         {user.photo ? (
@@ -115,12 +129,11 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                     </button>
                 </div>
 
-                {/* Modal Body */}
+                {/* Body */}
                 <div className="px-6 py-5">
                     <p className="text-sm text-gray-500 mb-4">
                         Select the role to assign to this user. This will replace their current role immediately.
                     </p>
-
                     <div className="space-y-3">
                         {roles.map(role => (
                             <label
@@ -155,7 +168,7 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                     </div>
                 </div>
 
-                {/* Modal Footer */}
+                {/* Footer */}
                 <div className="px-6 py-4 border-t flex justify-end gap-3">
                     <button
                         onClick={onClose}
@@ -176,63 +189,12 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
     );
 }
 
-// ── Delete Confirm Modal ───────────────────────────────────────────
-
-interface DeleteModalProps {
-    user: User;
-    onClose: () => void;
-}
-
-function DeleteModal({ user, onClose }: DeleteModalProps) {
-    const [processing, setProcessing] = useState(false);
-
-    const confirm = () => {
-        setProcessing(true);
-        router.delete(`/superadmin/users/${user.id}`, {
-            onSuccess: () => { setProcessing(false); onClose(); },
-            onError:   () => setProcessing(false),
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 text-center">
-                <div className="h-14 w-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-7 w-7 text-red-600" />
-                </div>
-                <h2 className="text-lg font-bold text-gray-900 mb-1">Delete User</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                    Are you sure you want to permanently delete{' '}
-                    <span className="font-semibold text-gray-800">{getFullName(user)}</span>?
-                    This action cannot be undone and will remove all their data.
-                </p>
-                <div className="flex gap-3">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={confirm}
-                        disabled={processing}
-                        className="flex-1 px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-                    >
-                        {processing ? 'Deleting...' : 'Yes, Delete'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ── Main Page ──────────────────────────────────────────────────────
+// Main Page
 
 export default function Index({ users, roles, filters }: Props) {
-    const [search, setSearch]         = useState(filters.search ?? '');
+    const [search, setSearch]       = useState(filters.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
-    const [roleModal, setRoleModal]   = useState<User | null>(null);
-    const [deleteModal, setDeleteModal] = useState<User | null>(null);
+    const [roleModal, setRoleModal] = useState<User | null>(null);  // ← only modal left
 
     const applyFilters = () => {
         router.get('/superadmin/users', { search, role: roleFilter }, {
@@ -241,9 +203,55 @@ export default function Index({ users, roles, filters }: Props) {
         });
     };
 
+    // SweetAlert: Toggle Approval
     const toggleApproval = (user: User) => {
-        router.post(`/superadmin/users/${user.id}/toggle-approval`, {}, {
-            preserveScroll: true,
+        const isRevoking = user.is_approved;
+        Swal.fire({
+            title: isRevoking ? 'Revoke Access?' : 'Approve Account?',
+            html: isRevoking
+                ? `This will <strong>revoke access</strong> for <strong>${getFullName(user)}</strong>. They will no longer be able to log in.`
+                : `This will <strong>grant access</strong> to <strong>${getFullName(user)}</strong>.`,
+            icon: isRevoking ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isRevoking ? '#d97706' : '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: isRevoking ? 'Yes, Revoke' : 'Yes, Approve',
+            cancelButtonText: 'Cancel',
+        }).then(result => {
+            if (result.isConfirmed) {
+                router.post(`/superadmin/users/${user.id}/toggle-approval`, {}, {
+                    preserveScroll: true,
+                    onSuccess: () => Toast.fire({
+                        icon: 'success',
+                        title: isRevoking
+                            ? `Access revoked for ${getFullName(user)}.`
+                            : `${getFullName(user)} has been approved.`,
+                    }),
+                    onError: () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
+                });
+            }
+        });
+    };
+
+    // SweetAlert: Delete
+    const deleteUser = (user: User) => {
+        Swal.fire({
+            title: 'Delete User?',
+            html: `Permanently delete <strong>${getFullName(user)}</strong>? This cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel',
+        }).then(result => {
+            if (result.isConfirmed) {
+                router.delete(`/superadmin/users/${user.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => Toast.fire({ icon: 'success', title: `${getFullName(user)} has been deleted.` }),
+                    onError:   () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
+                });
+            }
         });
     };
 
@@ -251,20 +259,11 @@ export default function Index({ users, roles, filters }: Props) {
         <AppLayout>
             <Head title="User Management" />
 
-            {/* Role Modal */}
             {roleModal && (
                 <RoleModal
                     user={roleModal}
                     roles={roles}
                     onClose={() => setRoleModal(null)}
-                />
-            )}
-
-            {/* Delete Modal */}
-            {deleteModal && (
-                <DeleteModal
-                    user={deleteModal}
-                    onClose={() => setDeleteModal(null)}
                 />
             )}
 
@@ -329,7 +328,6 @@ export default function Index({ users, roles, filters }: Props) {
                                 </tr>
                             ) : (
                                 users.data.map(user => (
-                                    // Clicking the row opens the role modal
                                     <tr
                                         key={user.id}
                                         onClick={() => setRoleModal(user)}
@@ -370,26 +368,18 @@ export default function Index({ users, roles, filters }: Props) {
                                         {/* Email Verified */}
                                         <td className="px-4 py-3 text-center">
                                             {user.email_verified_at ? (
-                                                <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                                                    Verified
-                                                </span>
+                                                <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">Verified</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">
-                                                    Unverified
-                                                </span>
+                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">Unverified</span>
                                             )}
                                         </td>
 
                                         {/* Approval Status */}
                                         <td className="px-4 py-3 text-center">
                                             {user.is_approved ? (
-                                                <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                                                    Approved
-                                                </span>
+                                                <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">Approved</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-full text-xs font-medium">
-                                                    Pending
-                                                </span>
+                                                <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-full text-xs font-medium">Pending</span>
                                             )}
                                         </td>
 
@@ -399,7 +389,7 @@ export default function Index({ users, roles, filters }: Props) {
                                             onClick={e => e.stopPropagation()}
                                         >
                                             <div className="flex items-center justify-center gap-2">
-                                                {/* Toggle Approval */}
+
                                                 <button
                                                     onClick={() => toggleApproval(user)}
                                                     className={`p-1.5 rounded-lg transition ${
@@ -415,9 +405,8 @@ export default function Index({ users, roles, filters }: Props) {
                                                     }
                                                 </button>
 
-                                                {/* Delete */}
                                                 <button
-                                                    onClick={() => setDeleteModal(user)}
+                                                    onClick={() => deleteUser(user)}
                                                     className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition"
                                                     title="Delete User"
                                                 >
