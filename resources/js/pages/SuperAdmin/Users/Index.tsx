@@ -52,7 +52,7 @@ function getInitials(user: User): string {
 
 const roleBadgeColor: Record<string, string> = {
     admin:    'bg-green-50 text-green-700',
-    employee: 'bg-blue-50 text-blue-700',
+    employee: 'bg-blue-50 text-[#116ebb]',
 };
 
 // SweetAlert Toast
@@ -115,7 +115,7 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                                 alt={getFullName(user)}
                             />
                         ) : (
-                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
+                            <div className="h-10 w-10 rounded-full bg-green-600 text-white/90 flex items-center justify-center font-semibold text-sm">
                                 {getInitials(user)}
                             </div>
                         )}
@@ -124,7 +124,7 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                             <p className="text-xs text-gray-400">{user.email}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer transition">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -132,7 +132,7 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                 {/* Body */}
                 <div className="px-6 py-5">
                     <p className="text-sm text-gray-500 mb-4">
-                        Select the role to assign to this user. This will replace their current role immediately.
+                        Select the <strong>Role</strong> to assign to this user. This will replace their current role immediately.
                     </p>
                     <div className="space-y-3">
                         {roles.map(role => (
@@ -140,7 +140,7 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                                 key={role.id}
                                 className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${
                                     selected === role.name
-                                        ? 'border-blue-500 bg-blue-50'
+                                        ? 'border-green-500 bg-green-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                 }`}
                             >
@@ -150,18 +150,18 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                                     value={role.name}
                                     checked={selected === role.name}
                                     onChange={() => setSelected(role.name)}
-                                    className="accent-blue-600"
+                                    className="accent-green-600"
                                 />
                                 <div>
                                     <p className="font-semibold text-gray-900 capitalize">{role.name}</p>
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-gray-500">
                                         {role.name === 'admin'
-                                            ? 'HR Staff — can manage employees, payroll, and leave requests'
-                                            : 'Regular employee — self-service access only'}
+                                            ? 'Admins — can manage employees, payroll, and leave requests.'
+                                            : 'Regular user — self-service access only'}
                                     </p>
                                 </div>
                                 {selected === role.name && (
-                                    <ShieldCheck className="ml-auto h-5 w-5 text-blue-600 shrink-0" />
+                                    <ShieldCheck className="ml-auto h-5 w-5 text-green-600 shrink-0" />
                                 )}
                             </label>
                         ))}
@@ -172,14 +172,14 @@ function RoleModal({ user, roles, onClose }: RoleModalProps) {
                 <div className="px-6 py-4 border-t flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50 transition"
+                        className="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50 transition cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={submit}
                         disabled={processing}
-                        className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                        className="px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                     >
                         {processing ? 'Saving...' : 'Save Role'}
                     </button>
@@ -331,7 +331,7 @@ export default function Index({ users, roles, filters }: Props) {
                                     <tr
                                         key={user.id}
                                         onClick={() => setRoleModal(user)}
-                                        className="hover:bg-blue-50 cursor-pointer transition"
+                                        className="hover:bg-gray-50 cursor-pointer transition"
                                     >
                                         {/* User Info */}
                                         <td className="px-4 py-3">
@@ -343,7 +343,7 @@ export default function Index({ users, roles, filters }: Props) {
                                                         alt={getFullName(user)}
                                                     />
                                                 ) : (
-                                                    <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-xs">
+                                                    <div className="h-9 w-9 rounded-full bg-green-600 text-white/90 flex items-center justify-center font-semibold text-xs">
                                                         {getInitials(user)}
                                                     </div>
                                                 )}

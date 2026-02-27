@@ -61,13 +61,13 @@ function getInitials(emp: Employee): string {
     return `${emp.first_name?.[0] ?? ''}${emp.last_name?.[0] ?? ''}`.toUpperCase() || '??';
 }
 
-// ── Reusable SweetAlert Toast (top-end notification) 
+// Reusable SweetAlert Toast (top-end notification) 
 
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
-    timer: 3000,
+    timer: 2000,
     timerProgressBar: true,
 });
 
@@ -94,7 +94,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                                 alt={getFullName(employee)}
                             />
                         ) : (
-                            <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold">
+                            <div className="h-12 w-12 rounded-full bg-green-600 text-white/90 flex items-center justify-center font-semibold">
                                 {getInitials(employee)}
                             </div>
                         )}
@@ -103,7 +103,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                             <p className="text-xs text-gray-400">{employee.email}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -188,7 +188,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                     </div>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition"
+                        className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition cursor-pointer"
                     >
                         Close
                     </button>
@@ -319,13 +319,13 @@ export default function Index({ employees, filters }: Props) {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && applyFilters()}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                     </div>
                     <select
                         value={status}
                         onChange={e => setStatus(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                         <option value="">All Status</option>
                         <option value="active">Active</option>
@@ -334,7 +334,7 @@ export default function Index({ employees, filters }: Props) {
                     </select>
                     <button
                         onClick={applyFilters}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 cursor-pointer transition"
                     >
                         Search
                     </button>
@@ -368,7 +368,7 @@ export default function Index({ employees, filters }: Props) {
                                     <tr
                                         key={emp.id}
                                         onClick={() => setDetailModal(emp)}
-                                        className="hover:bg-blue-50 cursor-pointer transition"
+                                        className="hover:bg-gray-50 cursor-pointer transition"
                                     >
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
