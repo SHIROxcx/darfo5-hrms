@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployeeProfile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,8 +18,16 @@ class DashboardController extends Controller
         }
  
         if ($user->hasRole('admin')) {
+            $stats = [
+                'total'       => \App\Models\User::role('employee')->count(),
+                'permanent'   => EmployeeProfile::where('employment_type', 'Permanent')->count(),
+                'job_order'   => EmployeeProfile::where('employment_type', 'Job Order')->count(),
+                'cos'         => EmployeeProfile::where('employment_type', 'Contractual')->count(),
+            ];
+
             return Inertia::render('Dashboards/AdminDashboard', [
-                'user' => $user,
+                'user'  => $user,
+                'stats' => $stats,
             ]);
         }
  

@@ -38,7 +38,9 @@ class RoleAndPermissionSeeder extends Seeder
 
         // create default users
         $user = User::create([
-            'name'              => 'Super Admin',
+            'name'              => 'Super Admin User',
+            'first_name'        => 'Super Admin',
+            'last_name'         => 'User',
             'email'             => 'superadmin@hrms.com',
             'password'          => Hash::make('password'),
             'email_verified_at' => now(),
@@ -47,7 +49,9 @@ class RoleAndPermissionSeeder extends Seeder
         $user->assignRole('superadmin');
 
         $user = User::create([
-            'name'              => 'HR Admin',
+            'name'              => 'HR Admin User',
+            'first_name'        => 'HR Admin',
+            'last_name'         => 'User',
             'email'             => 'admin@hrms.com',
             'password'          => Hash::make('password'),
             'email_verified_at' => now(),

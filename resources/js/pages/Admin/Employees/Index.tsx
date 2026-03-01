@@ -21,7 +21,6 @@ interface EmployeeProfile {
 interface Employee {
     id: number;
     first_name: string | null;
-    middle_name: string | null;
     last_name: string | null;
     name_ext: string | null;
     email: string;
@@ -52,7 +51,7 @@ interface Props {
 // Helpers
 
 function getFullName(emp: Employee): string {
-    return [emp.first_name, emp.middle_name, emp.last_name, emp.name_ext]
+    return [emp.first_name, emp.last_name, emp.name_ext]
         .filter(Boolean)
         .join(' ') || emp.email;
 }
@@ -67,7 +66,7 @@ const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
-    timer: 2000,
+    timer: 1500,
     timerProgressBar: true,
 });
 
@@ -299,7 +298,7 @@ export default function Index({ employees, filters }: Props) {
                 />
             )}
 
-            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl min-w-7xl mx-auto">
 
                 {/* Header */}
                 <div className="mb-6">
@@ -311,7 +310,7 @@ export default function Index({ employees, filters }: Props) {
 
                 {/* Filters */}
                 <div className="mb-4 flex gap-3 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative flex-1 min-w-50">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                             type="text"

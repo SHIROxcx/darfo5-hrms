@@ -61,7 +61,7 @@ const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
-    timer: 3000,
+    timer: 1500,
     timerProgressBar: true,
 });
 
@@ -267,7 +267,7 @@ export default function Index({ users, roles, filters }: Props) {
                 />
             )}
 
-            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="py-8 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
                 {/* Header */}
                 <div className="mb-6">
@@ -279,7 +279,7 @@ export default function Index({ users, roles, filters }: Props) {
 
                 {/* Filters */}
                 <div className="mb-4 flex gap-3 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative flex-1 min-w-50">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
@@ -287,13 +287,13 @@ export default function Index({ users, roles, filters }: Props) {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && applyFilters()}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                     </div>
                     <select
                         value={roleFilter}
                         onChange={e => setRoleFilter(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                         <option value="">All Roles</option>
                         <option value="admin">Admin</option>
@@ -301,7 +301,7 @@ export default function Index({ users, roles, filters }: Props) {
                     </select>
                     <button
                         onClick={applyFilters}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 cursor-pointer transition"
                     >
                         Search
                     </button>

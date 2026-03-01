@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { Bell, BookOpen, Calendar, Folder, LayoutGrid, MessagesSquare, Users, ShieldCheck, UserCog } from 'lucide-react';
+import { Bell, Calendar, Folder, LayoutGrid, MessagesSquare, Users, ShieldCheck, UserCog } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -17,7 +17,7 @@ import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
 
-// ── Shared by ALL roles ──────────────────────────────────────────
+// shared by ALL roles 
 const commonNavItems: NavItem[] = [
     {
         title: 'Dashboard',
@@ -26,7 +26,7 @@ const commonNavItems: NavItem[] = [
     },
 ];
 
-// ── Superadmin only ──────────────────────────────────────────────
+// superadmin only 
 const superAdminNavItems: NavItem[] = [
     {
         title: 'User Management',
@@ -40,7 +40,7 @@ const superAdminNavItems: NavItem[] = [
     },
 ];
 
-// ── hr admin only ────────────────────────────────────────
+// hr admin only
 const adminNavItems: NavItem[] = [
     {
         title: 'Employees',
@@ -54,7 +54,7 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-// ── employee only ────────────────────────────────────────────────
+// employee only
 const employeeNavItems: NavItem[] = [
     {
         title: 'My Leave',
@@ -68,7 +68,7 @@ const employeeNavItems: NavItem[] = [
     },
 ];
 
-// ── Footer nav (all roles) ───────────────────────────────────────
+// ── footer nav (all roles) 
 const footerNavItems: NavItem[] = [
     {
         title: 'Messages',
@@ -82,7 +82,7 @@ const footerNavItems: NavItem[] = [
     },
 ];
 
-// ── Types ────────────────────────────────────────────────────────
+// types
 interface AuthUser {
     id: number;
     name: string;
@@ -105,7 +105,7 @@ export function AppSidebar() {
     const isAdmin      = roles.includes('admin');
     const isEmployee   = roles.includes('employee');
 
-    // Build nav items based on role
+    // nav items based on role
     const roleNavItems: NavItem[] = isSuperAdmin
         ? superAdminNavItems
         : isAdmin
@@ -114,7 +114,7 @@ export function AppSidebar() {
         ? employeeNavItems
         : [];
 
-    // Merge common items + role-specific items
+    // merge common items and role-specific items
     const mainNavItems = [...commonNavItems, ...roleNavItems];
 
     return (

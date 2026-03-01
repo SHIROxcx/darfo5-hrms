@@ -37,15 +37,28 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        // Build full name — fallback to email if all name fields are empty
+        $fullName = $user ? trim(implode(' ', array_filter([
+            $user->first_name,
+            $user->last_name,
+        ]))) : '';
+
+        // Final fallback: use email if name is still empty
+        if ($user && empty($fullName)) {
+            $fullName = $user->email;
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user ? [
-                    // Spread the original user data (id, name, email, etc.)
                     ...$user->toArray(),
-                    // Add spatie roles and permissions
-                    'roles' => $request->user()->getRoleNames(),  // ['employee']
+                    'name'        => $fullName,    
+                    'first_name'  => $user->first_name ?? '',
+                    'last_name'   => $user->last_name ?? '',
+                    'email'       => $user->email,
+                    'roles'       => $user->getRoleNames(),
                     'permissions' => $user->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
