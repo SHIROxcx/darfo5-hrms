@@ -77,7 +77,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="w-full py-3 cursor-pointer bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                 Email Password Reset Link

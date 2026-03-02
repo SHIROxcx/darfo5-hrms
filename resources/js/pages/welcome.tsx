@@ -26,7 +26,7 @@ export default function Welcome({
                 </picture>
 
                 {/* ── Gradient Overlay ── */}
-                 <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-30" />
 
                 {/* ── Top Nav ── */}
                 <header className="relative z-20 flex items-center justify-end gap-3 px-6 py-5 sm:px-10">
@@ -59,16 +59,11 @@ export default function Welcome({
 
                 {/* ── Centered Logo ── */}
                 <main className="relative z-20 flex flex-1 flex-col items-center justify-center gap-6 text-center">
-                    <img
-                        src="/images/da-masarig-logo.png"
-                        alt="DA RFO 5 Logo"
-                        className="h-50 w-50 object-contain drop-shadow-2xl sm:h-96 sm:w-96 mt-25 sm:mt-22"
-                    />
-                    <div>
+                    <div className='mt-60 sm:mt-96'>
                         <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow-lg sm:text-4xl">
                             DA RFO 5 — HRMS
                         </h1>
-                        <p className="mt-2 text-sm font-medium text-white/70">
+                        <p className="mt-2 text-sm font-medium text-white/80">
                             Human Resource Management System
                         </p>
                     </div>

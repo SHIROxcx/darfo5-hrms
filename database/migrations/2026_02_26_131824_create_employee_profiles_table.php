@@ -19,13 +19,12 @@ return new class extends Migration {
 
             // Company Info
             $table->string('employee_number')->unique()->nullable();
-            $table->enum('employment_type', [
-                'Permanent', 'Casual', 'Contractual', 'Job Order', 'Co-Terminus'
-            ])->nullable();
+            $table->string('employment_type')->nullable();
             $table->string('position')->nullable();
             $table->string('salary_grade')->nullable();
             $table->string('place_assign')->nullable();
             $table->string('division')->nullable();
+            $table->string('section')->nullable();
             $table->date('date_hired')->nullable();
             $table->boolean('is_active')->default(true);
 

@@ -8,8 +8,13 @@ interface FormData {
     middle_name: string;
     last_name: string;
     name_ext: string;
+    agency: string;
+    division_unit: string;
+    section: string;
+    position: string;
+    employment_type: string;
     email: string;
-    mobile_no: string;
+    mobile_number: string;
     password: string;
     password_confirmation: string;
 }
@@ -148,18 +153,33 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
     );
 }
 
+// Division data
+interface DivisionData {
+    id: number;
+    name: string;
+    sections: { id: number; name: string }[];
+}
+
 // Main Register Page
 export default function Register() {
     const [step, setStep] = useState(1);
     const [passwordMismatch, setPasswordMismatch] = useState('');
+    const [divisions, setDivisions] = useState<DivisionData[]>([]);
+    const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
+    const [positions, setPositions] = useState<{ id: number; title: string; salary_grade: number }[]>([]);
 
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         middle_name: '',
         last_name: '',
         name_ext: '',
+        agency: 'Department of Agriculture Regional Field Office 5',
+        division_unit: '',
+        section: '',
+        position: '',
+        employment_type: '',
         email: '',
-        mobile_no: '',
+        mobile_number: '',
         password: '',
         password_confirmation: '',
     });
@@ -172,8 +192,44 @@ export default function Register() {
         }
     }, [errors]);
 
+    // Fetch divisions on mount
+    useEffect(() => {
+        fetch('/divisions')
+            .then(r => r.json())
+            .then(setDivisions)
+            .catch(console.error);
+    }, []);
+
+    // Update sections when division changes
+    useEffect(() => {
+        if (!data.division_unit) {
+            setSections([]);
+            setData('section', '');
+            return;
+        }
+        const found = divisions.find(d => d.name === data.division_unit);
+        setSections(found?.sections ?? []);
+        // setData('section', '');
+    }, [data.division_unit, divisions]);
+
+    // Fetch positions on mount
+    useEffect(() => {
+        fetch('/positions').then(r => r.json()).then(setPositions).catch(console.error);
+    }, []);
+
     const validateStep2 = (): boolean => {
-        if (!data.first_name || !data.last_name || !data.email || !data.password || !data.password_confirmation) {
+        if (
+            !data.first_name ||
+            !data.last_name  ||
+            !data.division_unit ||
+            !data.section    ||
+            !data.position   ||
+            !data.employment_type ||
+            !data.email      ||
+            !data.mobile_number  ||
+            !data.password   ||
+            !data.password_confirmation
+        ) {
             return false;
         }
         if (data.password !== data.password_confirmation) {
@@ -223,7 +279,7 @@ export default function Register() {
                         <p className="text-sm text-gray-500">Employee Registration Portal</p>
                     </div>
                 </div>
-                <p className="mr-2 text-sm text-gray-500">
+                <p className="hidden sm:flex mr-2 text-sm text-gray-500">
                     Already have an account?{' '}
                     <Link href="/login" className="text-green-600 hover:underline font-medium cursor-pointer">Log in</Link>
                 </p>
@@ -245,8 +301,7 @@ export default function Register() {
                                 <p className="mb-4">
                                     By signing in for my user account at the <strong>DA RFO 5 HRMS</strong>, I hereby acknowledge
                                     that I have read and understood the Data Privacy Notice. I agree to provide my personal data at
-                                    the Electronic Personal Data Sheet (e-PDS), pursuant to <strong>CSC Resolution No. 1700658</strong> promulgated
-                                    on March 21, 2017.
+                                    the Electronic Personal Data Sheet (e-PDS), pursuant to <strong>CSC Resolution No. 2500358</strong> promulgated on April 30, 2025.
                                 </p>
                                 <p>
                                     I knowingly and voluntarily give my consent to DA Human Resource Management Section to collect, use, dispose,
@@ -267,7 +322,7 @@ export default function Register() {
                                 onClick={() => goTo(2)}
                                 className="flex items-center gap-1 px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
                             >
-                                I Agree & Continue <ChevronRight className="h-4 w-4" />
+                                I Agree<ChevronRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
@@ -278,7 +333,7 @@ export default function Register() {
                     <div>
                         <div className="px-6 sm:px-12 py-8">
                             <h2 className="text-base font-bold text-gray-800 uppercase mb-8 text-center tracking-wide">
-                                Account Information
+                                Employee Information
                             </h2>
 
                             <form id="registerForm" onSubmit={submit}>
@@ -294,6 +349,14 @@ export default function Register() {
                                         />
                                     </Field>
 
+                                    <Field label="Middle Name">
+                                        <TextInput
+                                            value={data.middle_name}
+                                            onChange={v => setData('middle_name', v)}
+                                            placeholder="Santos"
+                                        />
+                                    </Field>
+
                                     <Field label="Last Name" required error={errors.last_name}>
                                         <TextInput
                                             value={data.last_name}
@@ -303,28 +366,96 @@ export default function Register() {
                                         />
                                     </Field>
 
-                                    <Field label="Middle Name" optional>
-                                        <TextInput
-                                            value={data.middle_name}
-                                            onChange={v => setData('middle_name', v)}
-                                            placeholder="Santos"
-                                        />
-                                    </Field>
-
-                                    <Field label="Name Extension" optional>
+                                    <Field label="Name Extension">
                                         <select
                                             value={data.name_ext}
                                             onChange={e => setData('name_ext', e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
                                             <option value="">None</option>
-                                            <option>Jr.</option>
-                                            <option>Sr.</option>
-                                            <option>I</option>
-                                            <option>II</option>
-                                            <option>III</option>
-                                            <option>IV</option>
-                                            <option>V</option>
+                                            <option value={'Jr.'}>Jr.</option>
+                                            <option value={'Sr.'}>Sr.</option>
+                                            <option value={'I'}>I</option>
+                                            <option value={'II'}>II</option>
+                                            <option value={'III'}>III</option>
+                                            <option value={'IV'}>IV</option>
+                                            <option value={'V'}>V</option>
+                                        </select>
+                                    </Field>
+
+                                </div>
+                                <div className="grid grid-cols-1 gap-x-6 gap-y-5 mt-5">
+
+                                    <Field label="Agency" required>
+                                        <select
+                                            value={data.agency}
+                                            onChange={e => setData('agency', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        >
+                                            <option value="Department of Agriculture Regional Field Office 5">Department of Agriculture Regional Field Office 5</option>
+                                        </select>
+                                    </Field>
+
+                                    <Field label="Division / Unit" required error={errors.division_unit}>
+                                        <select
+                                            value={data.division_unit}
+                                            onChange={e => setData('division_unit', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        >
+                                            <option value="" disabled>Select Division / Unit</option>
+                                            {divisions.map(d => (
+                                                <option key={d.id} value={d.name}>{d.name}</option>
+                                            ))}
+                                        </select>
+                                    </Field>
+
+                                    <Field label="Section" required error={errors.section}>
+                                        <select
+                                            value={data.section}
+                                            onChange={e => setData('section', e.target.value)}
+                                            disabled={!data.division_unit}
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
+                                                ${!data.division_unit ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                                        >
+                                            <option value="" disabled>
+                                                {!data.division_unit ? 'Select a division first' : 'Select Section'}
+                                            </option>
+                                            {sections.length === 0 && data.division_unit && (
+                                                <option value="N/A">N/A</option>
+                                            )}
+                                            {sections.map(s => (
+                                                <option key={s.id} value={s.name}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                    </Field>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-5">
+
+                                    <Field label="Position" required>
+                                        <select
+                                            value={data.position}
+                                            onChange={e => setData('position', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        >
+                                            <option value="" disabled>Select Position</option>
+                                            {positions.map(p => (
+                                                <option key={p.id} value={p.title}>
+                                                    {p.title} (SG {p.salary_grade})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </Field>
+
+                                    <Field label="Employment Type" required>
+                                        <select
+                                            value={data.employment_type}
+                                            onChange={e => setData('employment_type', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        >
+                                            <option value="" disabled>Select Employment</option>
+                                            <option value="JO">Job Order</option>
+                                            <option value="COS">Contract of Service</option>
+                                            <option value="Permanent">Permanent</option>
                                         </select>
                                     </Field>
 
@@ -334,20 +465,20 @@ export default function Register() {
                                             type="email"
                                             value={data.email}
                                             onChange={e => setData('email', e.target.value)}
-                                            placeholder="juan@example.com"
+                                            placeholder="email@example.com"
                                             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
                                                 ${errors.email ? 'border-red-400' : 'border-gray-300'}`}
                                         />
                                     </Field>
 
-                                    <Field label="Mobile Number" required error={errors.mobile_no}>
+                                    <Field label="Mobile Number" required error={errors.mobile_number}>
                                         <input
                                             type="text"
-                                            value={data.mobile_no}
-                                            onChange={e => setData('mobile_no', e.target.value)}
+                                            value={data.mobile_number}
+                                            onChange={e => setData('mobile_number', e.target.value)}
                                             placeholder="09XXXXXXXXX"
                                             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
-                                                ${errors.mobile_no ? 'border-red-400' : 'border-gray-300'}`}
+                                                ${errors.mobile_number ? 'border-red-400' : 'border-gray-300'}`}
                                         />
                                     </Field>
 
@@ -361,7 +492,7 @@ export default function Register() {
                                             setData('password', v);
                                             setPasswordMismatch('');
                                         }}
-                                        placeholder="Min. 8 characters"
+                                        placeholder="Minimum 8 characters"
                                         error={errors.password}
                                     />
 
@@ -415,22 +546,31 @@ export default function Register() {
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mb-4">
                                     Personal Information
                                 </h3>
-                                <ReviewRow label="Full Name"    value={fullName} />
-                                <ReviewRow label="First Name"   value={data.first_name} />
-                                <ReviewRow label="Middle Name"  value={data.middle_name} />
-                                <ReviewRow label="Last Name"    value={data.last_name} />
-                                <ReviewRow label="Name Ext."    value={data.name_ext} />
+                                <ReviewRow label="Full Name"       value={fullName} />
+                                <ReviewRow label="First Name"      value={data.first_name} />
+                                <ReviewRow label="Middle Name"     value={data.middle_name} />
+                                <ReviewRow label="Last Name"       value={data.last_name} />
+                                <ReviewRow label="Name Ext."       value={data.name_ext} />
+
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">
+                                    Employment Details
+                                </h3>
+                                <ReviewRow label="Agency"          value={data.agency} />
+                                <ReviewRow label="Division / Unit" value={data.division_unit} />
+                                <ReviewRow label="Section"         value={data.section} />
+                                <ReviewRow label="Position"        value={data.position} />
+                                <ReviewRow label="Employment Type" value={data.employment_type} />
 
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">
                                     Contact Details
                                 </h3>
-                                <ReviewRow label="Email"         value={data.email} />
-                                <ReviewRow label="Mobile Number" value={data.mobile_no} />
+                                <ReviewRow label="Email"           value={data.email} />
+                                <ReviewRow label="Mobile Number"   value={data.mobile_number} />
 
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">
                                     Security
                                 </h3>
-                                <ReviewRow label="Password" value="••••••••" />
+                                <ReviewRow label="Password"        value="••••••••" />
                             </div>
 
                             <div className="mt-6 bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-xs text-green-700 text-center">

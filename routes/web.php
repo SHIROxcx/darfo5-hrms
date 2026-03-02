@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
+use App\Models\Division;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,6 +66,10 @@ Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
     return back()->with('status', 'verification-link-sent');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+
+Route::get('/divisions', fn() => Division::with('sections')->get());
+Route::get('/positions', fn() => \App\Models\Position::orderBy('salary_grade')->orderBy('title')->get());
 
 
 require __DIR__.'/settings.php';
