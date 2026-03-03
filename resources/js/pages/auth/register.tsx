@@ -9,8 +9,8 @@ interface FormData {
     last_name: string;
     name_ext: string;
     agency: string;
-    division_unit: string;
-    section: string;
+    division: string;
+    section_unit: string;
     position: string;
     employment_type: string;
     email: string;
@@ -96,6 +96,27 @@ function PasswordInput({ id, value, onChange, placeholder, error, label, require
     );
 }
 
+// Check password security
+function getPasswordStrength(password: string): {
+    level: 'low' | 'medium' | 'high';
+    label: string;
+    color: string;
+    bars: number;
+} {
+    let score = 0;
+
+    if (password.length >= 8)  score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;  // special characters
+
+    if (score <= 2) return { level: 'low',    label: 'Weak',   color: 'bg-red-500',    bars: 1 };
+    if (score <= 4) return { level: 'medium',  label: 'Fair',   color: 'bg-yellow-400', bars: 2 };
+    return           { level: 'high',   label: 'Strong', color: 'bg-green-500',  bars: 3 };
+}
+
 // Field
 interface FieldProps {
     label: string;
@@ -174,8 +195,8 @@ export default function Register() {
         last_name: '',
         name_ext: '',
         agency: 'Department of Agriculture Regional Field Office 5',
-        division_unit: '',
-        section: '',
+        division: '',
+        section_unit: '',
         position: '',
         employment_type: '',
         email: '',
@@ -202,15 +223,15 @@ export default function Register() {
 
     // Update sections when division changes
     useEffect(() => {
-        if (!data.division_unit) {
+        if (!data.division) {
             setSections([]);
-            setData('section', '');
+            setData('section_unit', '');
             return;
         }
-        const found = divisions.find(d => d.name === data.division_unit);
+        const found = divisions.find(d => d.name === data.division);
         setSections(found?.sections ?? []);
         // setData('section', '');
-    }, [data.division_unit, divisions]);
+    }, [data.division, divisions]);
 
     // Fetch positions on mount
     useEffect(() => {
@@ -221,8 +242,8 @@ export default function Register() {
         if (
             !data.first_name ||
             !data.last_name  ||
-            !data.division_unit ||
-            !data.section    ||
+            !data.division ||
+            !data.section_unit    ||
             !data.position   ||
             !data.employment_type ||
             !data.email      ||
@@ -280,7 +301,7 @@ export default function Register() {
                     </div>
                 </div>
                 <p className="hidden sm:flex mr-2 text-sm text-gray-500">
-                    Already have an account?{' '}
+                    <span className='mr-1'>Already have an account?</span>
                     <Link href="/login" className="text-green-600 hover:underline font-medium cursor-pointer">Log in</Link>
                 </p>
             </div>
@@ -396,31 +417,31 @@ export default function Register() {
                                         </select>
                                     </Field>
 
-                                    <Field label="Division / Unit" required error={errors.division_unit}>
+                                    <Field label="Division" required error={errors.division}>
                                         <select
-                                            value={data.division_unit}
-                                            onChange={e => setData('division_unit', e.target.value)}
+                                            value={data.division}
+                                            onChange={e => setData('division', e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
-                                            <option value="" disabled>Select Division / Unit</option>
+                                            <option value="" disabled>Select Division</option>
                                             {divisions.map(d => (
                                                 <option key={d.id} value={d.name}>{d.name}</option>
                                             ))}
                                         </select>
                                     </Field>
 
-                                    <Field label="Section" required error={errors.section}>
+                                    <Field label="Section / Unit" required error={errors.section_unit}>
                                         <select
-                                            value={data.section}
-                                            onChange={e => setData('section', e.target.value)}
-                                            disabled={!data.division_unit} 
+                                            value={data.section_unit}
+                                            onChange={e => setData('section_unit', e.target.value)}
+                                            disabled={!data.division} 
                                             className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
-                                                ${!data.division_unit ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                                                ${!data.division ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
                                         >
                                             <option value="" disabled>
-                                                {!data.division_unit ? 'Select a division first' : 'Select Section'}
+                                                {!data.division ? 'Select a division first' : 'Select Section / Unit'}
                                             </option>
-                                            {sections.length === 0 && data.division_unit && (
+                                            {sections.length === 0 && data.division && (
                                                 <option value="N/A">N/A</option>
                                             )}
                                             {sections.map(s => (
@@ -508,6 +529,34 @@ export default function Register() {
                                         placeholder="Re-enter password"
                                         error={passwordMismatch || errors.password_confirmation}
                                     />
+
+                                    {/* Password Security*/}
+                                    {data.password && (() => {
+                                        const strength = getPasswordStrength(data.password);
+                                        return (
+                                            <div className="mt-2 space-y-1.5">
+                                                <div className="flex gap-1.5">
+                                                    {[1, 2, 3].map((bar) => (
+                                                        <div
+                                                            key={bar}
+                                                            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                                                                bar <= strength.bars ? strength.color : 'bg-gray-200'
+                                                            }`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <p className={`text-xs font-medium ${
+                                                    strength.level === 'low'    ? 'text-red-500'    :
+                                                    strength.level === 'medium' ? 'text-yellow-500' :
+                                                    'text-green-600'
+                                                }`}>
+                                                    {strength.level === 'low'    && 'Weak — add uppercase, numbers, or symbols'}
+                                                    {strength.level === 'medium' && 'Fair — getting better, try adding symbols'}
+                                                    {strength.level === 'high'   && 'Strong password'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </form>
                         </div>
@@ -556,8 +605,8 @@ export default function Register() {
                                     Employment Details
                                 </h3>
                                 <ReviewRow label="Agency"          value={data.agency} />
-                                <ReviewRow label="Division / Unit" value={data.division_unit} />
-                                <ReviewRow label="Section"         value={data.section} />
+                                <ReviewRow label="Division" value={data.division} />
+                                <ReviewRow label="Section / Unit"         value={data.section_unit} />
                                 <ReviewRow label="Position"        value={data.position} />
                                 <ReviewRow label="Employment Type" value={data.employment_type} />
 
@@ -570,7 +619,36 @@ export default function Register() {
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">
                                     Security
                                 </h3>
-                                <ReviewRow label="Password"        value="••••••••" />
+
+                                {/* Password row with strength indicator */}
+                                <div className="flex flex-col sm:flex-row sm:gap-4 py-2.5 border-b border-gray-100 last:border-0">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 sm:w-44 shrink-0">Password</span>
+                                    <div className="flex flex-col items-end">
+
+                                        {/* Strength bars */}
+                                        <div className="flex items-center gap-1.5">
+                                            {[1, 2, 3].map((bar) => {
+                                                const strength = getPasswordStrength(data.password);
+                                                const filled = bar <= strength.bars;
+                                                return (
+                                                    <div
+                                                        key={bar}
+                                                        className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
+                                                            filled ? strength.color : 'bg-gray-200'
+                                                        }`}
+                                                    />
+                                                );
+                                            })}
+                                            <span className={`text-xs font-semibold ml-1 ${
+                                                getPasswordStrength(data.password).level === 'low'    ? 'text-red-500'    :
+                                                getPasswordStrength(data.password).level === 'medium' ? 'text-yellow-500' :
+                                                'text-green-600'
+                                            }`}>
+                                                {getPasswordStrength(data.password).label}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="mt-6 bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-xs text-green-700 text-center">

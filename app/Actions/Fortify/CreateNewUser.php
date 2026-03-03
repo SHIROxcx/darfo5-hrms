@@ -18,8 +18,8 @@ class CreateNewUser implements CreatesNewUsers
             'last_name'       => ['required', 'string', 'max:255'],
             'name_ext'        => ['nullable', 'string', 'max:50'],
             'agency'          => ['required', 'string', 'max:255'],
-            'division_unit'   => ['required', 'string', 'max:255'],
-            'section'         => ['required', 'string', 'max:255'],
+            'division'        => ['required', 'string', 'max:255'],
+            'section_unit'    => ['required', 'string', 'max:255'],
             'position'        => ['required', 'string', 'max:255'],
             'employment_type' => ['required', 'string', 'max:50'],
             'email'           => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -51,8 +51,8 @@ class CreateNewUser implements CreatesNewUsers
             'mobile_number'   => $input['mobile_number'],
             'employment_type' => $input['employment_type'],
             'position'        => $input['position'],
-            'division'        => $input['division_unit'],
-            'section'         => $input['section'],
+            'division'        => $input['division'],
+            'section'         => $input['section_unit'],
             'place_assign'    => $input['agency'],
         ]);
 
