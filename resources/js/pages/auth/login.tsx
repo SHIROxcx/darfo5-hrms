@@ -1,6 +1,5 @@
 import { Form, Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -32,14 +31,8 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
 
             {/* ── Responsive Background Image ── */}
             <picture className="absolute inset-0 w-full h-full z-0">
-
-                {/* Desktop */}
                 <source media="(min-width: 1024px)" srcSet="/images/desktop-wallpaper.png" />
-
-                {/* Tablet*/}
                 <source media="(min-width: 640px)" srcSet="/images/tablet-wallpaper.png" />
-
-                {/* Mobile (default) */}
                 <img
                     src="/images/mobile-wallpaper.png"
                     alt=""
@@ -52,10 +45,10 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
 
             {/* Left Side — Tagline (desktop only) */}
             <div className="hidden lg:flex flex-col justify-center w-1/2 px-16 relative z-10 text-white">
-                <h3 className="text-2xl font-extralight leading-tight  drop-shadow-lg">
+                <h3 className="text-2xl xl:text-3xl font-medium leading-tight  drop-shadow-lg uppercase">
                     Masarig na Agrikultura, Mauswag na
                 </h3>
-                <h3 className="text-7xl font-semibold leading-tight tracking-wider drop-shadow-lg">
+                <h3 className="text-2xl xl:text-8xl font-bold leading-tight tracking-wider drop-shadow-lg">
                     BICOLANDIA
                 </h3>
             </div>
@@ -163,7 +156,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full py-3 cursor-pointer bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="w-full py-3 cursor-pointer bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 uppercase"
                                 >
                                     {processing && <Spinner />}
                                     Log in

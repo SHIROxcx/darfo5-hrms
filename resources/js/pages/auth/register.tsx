@@ -320,7 +320,7 @@ export default function Register() {
                             </button>
                             <button
                                 onClick={() => goTo(2)}
-                                className="flex items-center gap-1 px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
+                                className="flex items-center gap-1 px-6 py-2 rounded-lg cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
                             >
                                 I Agree<ChevronRight className="h-4 w-4" />
                             </button>
@@ -413,7 +413,7 @@ export default function Register() {
                                         <select
                                             value={data.section}
                                             onChange={e => setData('section', e.target.value)}
-                                            disabled={!data.division_unit}
+                                            disabled={!data.division_unit} 
                                             className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
                                                 ${!data.division_unit ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
                                         >
@@ -516,14 +516,14 @@ export default function Register() {
                             <button
                                 type="button"
                                 onClick={() => goTo(1)}
-                                className="flex items-center gap-1 px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm transition"
+                                className="flex items-center gap-1 px-5 py-2 rounded-lg bg-gray-200 cursor-pointer hover:bg-gray-300 text-gray-700 text-sm transition"
                             >
                                 <ChevronLeft className="h-4 w-4" /> Previous
                             </button>
                             <button
                                 type="button"
                                 onClick={() => goTo(3)}
-                                className="flex items-center gap-1 px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
+                                className="flex items-center gap-1 px-6 py-2 rounded-lg cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
                             >
                                 Review <ChevronRight className="h-4 w-4" />
                             </button>
@@ -590,7 +590,7 @@ export default function Register() {
                                 type="button"
                                 disabled={processing}
                                 onClick={submit}
-                                className="flex items-center gap-1 px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50"
+                                className="flex items-center gap-1 px-6 py-2 rounded-lg cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50"
                             >
                                 <Check className="h-4 w-4" />
                                 {processing ? 'Submitting...' : 'Submit Registration'}

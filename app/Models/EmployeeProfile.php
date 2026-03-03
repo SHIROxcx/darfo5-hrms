@@ -10,7 +10,7 @@ class EmployeeProfile extends Model
     protected $fillable = [
         'user_id', 'sex', 'birth_place', 'civil_status', 'mobile_number',
         'employee_number', 'employment_type', 'position', 'salary_grade',
-        'place_assign', 'division', 'date_hired', 'is_active',
+        'place_assign', 'division', 'section', 'date_hired', 'is_active',
         'gsis_number', 'sss_number', 'pagibig_number', 'tin_number', 'philhealth_number',
     ];
 

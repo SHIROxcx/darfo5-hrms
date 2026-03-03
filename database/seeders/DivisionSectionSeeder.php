@@ -15,6 +15,7 @@ class DivisionSectionSeeder extends Seeder
                 'name' => 'Office of the Regional Executive Director',
                 'sections' => [
                     'Office of the Chief',
+                    'Information and Communication Technology Unit'
                 ],
             ],
             [
@@ -36,20 +37,31 @@ class DivisionSectionSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Finance and Administrative Division',
+                'name' => 'Administrative and Finance Division',
                 'sections' => [
+                    'Office of the Chief',
                     'Administrative Section',
-                    'Finance Section',
+                    'Budget Section',
+                    'Accounting Section',
                     'Human Resource Management Section',
-                    'Records Section',
+                    'Health and Safety Unit',
+                    'General Services Section',
+                    'Cash Unit',
+                    'Property Unit',
+                    'Records Unit',
+                    'Building and Maintenance Unit',
+                    'Motorpool',
                 ],
             ],
             [
-                'name' => 'Planning and Monitoring Division',
+                'name' => 'Planning, Monitoring, and Evaluation Division',
                 'sections' => [
-                    'Planning Section',
+                    'Planning and Programming Section',
                     'Monitoring and Evaluation Section',
-                    'Programming Section',
+                    'Prohject Development Section',
+                    'Special Concerns Unit',
+                    'Neutral Evaluation Unit',
+                    'Admin and Technical Unit'
                 ],
             ],
             [
@@ -66,8 +78,12 @@ class DivisionSectionSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Information and Communication Technology Unit',
-                'sections' => ['Software Development Section'],
+                'name' => 'Agribusiness and Marketing Assistance Division',
+                'sections' => [
+                    'Market Development Section',
+                    'Agribusiness Support Industry Section',
+                    'Agribusiness Promotion Section',
+                ],
             ],
         ];
 

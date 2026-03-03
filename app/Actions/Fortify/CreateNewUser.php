@@ -51,9 +51,9 @@ class CreateNewUser implements CreatesNewUsers
             'mobile_number'   => $input['mobile_number'],
             'employment_type' => $input['employment_type'],
             'position'        => $input['position'],
-            'place_assign'    => $input['agency'],
             'division'        => $input['division_unit'],
             'section'         => $input['section'],
+            'place_assign'    => $input['agency'],
         ]);
 
         $user->assignRole('employee');

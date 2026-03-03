@@ -1,47 +1,70 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { CheckCircle, Clock } from 'lucide-react';
+import { login } from '@/routes';
 
 export default function PendingApproval() {
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="min-h-screen flex relative justify-center items-center px-4">
             <Head title="Pending Approval" />
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
 
-                {/* Icons */}
-                <div className="flex items-center justify-center gap-2 mb-6">
-                    <div className="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle className="h-8 w-8 text-green-600" />
-                    </div>
-                    <div className="h-14 w-14 rounded-full bg-yellow-100 flex items-center justify-center">
-                        <Clock className="h-8 w-8 text-yellow-500" />
-                    </div>
+            {/* ── Responsive Background Image ── */}
+            <picture className="absolute inset-0 w-full h-full z-0">
+                <source media="(min-width: 1024px)" srcSet="/images/desktop-wallpaper.png" />
+                <source media="(min-width: 640px)"  srcSet="/images/tablet-wallpaper.png" />
+                <img
+                    src="/images/mobile-wallpaper.png"
+                    alt=""
+                    className="w-full h-full object-cover object-center"
+                />
+            </picture>
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50 z-10" />
+
+            {/* Card */}
+            <div className="relative z-20 w-full max-w-md bg-white border border-gray-200 rounded-md p-8 sm:p-10 shadow-2xl text-black/80">
+
+                {/* Logo */}
+                <div className="flex justify-center mb-2">
+                    <img
+                        src="/images/da-masarig-logo.png"
+                        alt="DA Logo"
+                        className="w-22 h-22 object-contain"
+                    />
                 </div>
 
-                {/* Message */}
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-green-700 text-center text-3xl font-semibold mb-3">
                     Email Verified!
-                </h1>
-                <p className="text-gray-500 mb-6 leading-relaxed">
-                    Your email address has been successfully verified.
-                    Your account is currently <span className="font-semibold text-yellow-600">pending approval</span> by
-                    the HR Administrator.
+                </h2>
+
+                <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
+                    Your email address has been successfully verified. Your account is currently{' '}
+                    <span className="font-semibold text-green-600">pending approval</span>{' '}
+                    by the HR Administrator.
                 </p>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800 text-left mb-6">
-                    <p className="font-semibold mb-1">What happens next?</p>
-                    <ul className="space-y-1 list-disc list-inside text-yellow-700">
+                {/* What happens next */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-left mb-6">
+                    <p className="font-semibold text-green-800 mb-2">What happens next?</p>
+                    <ul className="space-y-1 list-disc list-inside text-green-700">
                         <li>The HR Admin will review your registration</li>
                         <li>You will receive an email once approved</li>
                         <li>You can then log in to your account</li>
                     </ul>
                 </div>
 
-                <a
-                    href="/login"
-                    className="text-sm text-blue-600 hover:underline"
-                >
-                    Back to Login
-                </a>
+                {/* Back to login */}
+                <div className="text-center text-sm text-gray-500">
+                    Once approved, you may{' '}
+                    <Link href={login()} className="text-green-600 hover:text-green-700 hover:underline font-medium">
+                        Log in
+                    </Link>
+                </div>
+
+                {/* Footer */}
+                <div className="text-xs text-black/40 text-center mt-10">
+                    © Department of Agriculture RFO 5 - {new Date().getFullYear()}
+                </div>
             </div>
         </div>
     );
