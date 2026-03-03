@@ -20,9 +20,9 @@ class DashboardController extends Controller
         if ($user->hasRole('admin')) {
             $stats = [
                 'total'       => \App\Models\User::role('employee')->count(),
-                'permanent'   => EmployeeProfile::where('employment_type', 'Permanent')->count(),
-                'job_order'   => EmployeeProfile::where('employment_type', 'Job Order')->count(),
-                'cos'         => EmployeeProfile::where('employment_type', 'Contractual')->count(),
+                'permanent'   => EmployeeProfile::where('employment_type', 'permanent')->count(),
+                'job_order'   => EmployeeProfile::where('employment_type', 'jo')->count(),
+                'cos'         => EmployeeProfile::where('employment_type', 'cos')->count(),
             ];
 
             return Inertia::render('Dashboards/AdminDashboard', [

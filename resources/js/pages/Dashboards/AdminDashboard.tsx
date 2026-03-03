@@ -129,7 +129,7 @@ export default function AdminDashboard({ user, stats }: Props) {
         <AppLayout>
             <Head title="HR Admin Dashboard" />
 
-            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
                 {/* Welcome Header */}
                 <div className="mb-8">

@@ -267,7 +267,8 @@ export default function Index({ users, roles, filters }: Props) {
                 />
             )}
 
-            <div className="py-8 px-4 sm:px-6 lg:px-8 w-full mx-auto">
+            <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
+
 
                 {/* Header */}
                 <div className="mb-6">
@@ -392,7 +393,7 @@ export default function Index({ users, roles, filters }: Props) {
 
                                                 <button
                                                     onClick={() => toggleApproval(user)}
-                                                    className={`p-1.5 rounded-lg transition ${
+                                                    className={`p-1.5 rounded-lg transition cursor-pointer ${
                                                         user.is_approved
                                                             ? 'hover:bg-yellow-50 text-yellow-600'
                                                             : 'hover:bg-green-50 text-green-600'
@@ -407,7 +408,7 @@ export default function Index({ users, roles, filters }: Props) {
 
                                                 <button
                                                     onClick={() => deleteUser(user)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition"
+                                                    className="p-1.5 rounded-lg cursor-pointer hover:bg-red-50 text-red-500 transition"
                                                     title="Delete User"
                                                 >
                                                     <Trash2 className="h-4 w-4" />

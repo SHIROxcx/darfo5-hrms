@@ -12,6 +12,7 @@ interface FormData {
     division: string;
     section_unit: string;
     position: string;
+    salary_grade: number,
     employment_type: string;
     email: string;
     mobile_number: string;
@@ -198,6 +199,7 @@ export default function Register() {
         division: '',
         section_unit: '',
         position: '',
+        salary_grade: 0,
         employment_type: '',
         email: '',
         mobile_number: '',
@@ -230,7 +232,6 @@ export default function Register() {
         }
         const found = divisions.find(d => d.name === data.division);
         setSections(found?.sections ?? []);
-        // setData('section', '');
     }, [data.division, divisions]);
 
     // Fetch positions on mount
@@ -455,7 +456,11 @@ export default function Register() {
                                     <Field label="Position" required>
                                         <select
                                             value={data.position}
-                                            onChange={e => setData('position', e.target.value)}
+                                            onChange={e => {
+                                                const selected = positions.find(p => p.title === e.target.value);
+                                                setData('position', e.target.value);
+                                                setData('salary_grade', selected?.salary_grade ?? 0);
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
                                             <option value="" disabled>Select Position</option>
@@ -605,9 +610,10 @@ export default function Register() {
                                     Employment Details
                                 </h3>
                                 <ReviewRow label="Agency"          value={data.agency} />
-                                <ReviewRow label="Division" value={data.division} />
-                                <ReviewRow label="Section / Unit"         value={data.section_unit} />
+                                <ReviewRow label="Division"        value={data.division} />
+                                <ReviewRow label="Section / Unit"  value={data.section_unit} />
                                 <ReviewRow label="Position"        value={data.position} />
+                                <ReviewRow label="Salary Grade"    value={data.salary_grade ? `SG ${data.salary_grade}` : '—'} />
                                 <ReviewRow label="Employment Type" value={data.employment_type} />
 
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">

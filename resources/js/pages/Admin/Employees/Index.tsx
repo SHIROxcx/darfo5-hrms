@@ -12,8 +12,10 @@ import Swal from 'sweetalert2';
 interface EmployeeProfile {
     employee_number: string | null;
     position: string | null;
+    salary_grade: string | null;
     place_assign: string | null;
     division: string | null;
+    section: string | null;
     employment_type: string | null;
     is_active: boolean;
 }
@@ -158,15 +160,21 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Division</p>
+                            <p className="text-xs text-gray-400">Salary Grade</p>
                             <p className="font-medium text-gray-800">
-                                {employee.employee_profile?.division ?? <span className="italic text-gray-300">Not set</span>}
+                                {employee.employee_profile?.salary_grade ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
-                        <div className="col-span-2">
+                        <div  className="col-span-2">
                             <p className="text-xs text-gray-400">Place of Assignment</p>
                             <p className="font-medium text-gray-800">
                                 {employee.employee_profile?.place_assign ?? <span className="italic text-gray-300">Not set</span>}
+                            </p>
+                        </div>
+                        <div  className="col-span-2">
+                            <p className="text-xs text-gray-400">Division</p>
+                            <p className="font-medium text-gray-800">
+                                {employee.employee_profile?.division ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                     </div>
@@ -178,7 +186,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         {employee.email_verified_at && !employee.is_approved && (
                             <button
                                 onClick={() => { onApprove(employee); onClose(); }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                                className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                             >
                                 <CheckCircle className="h-4 w-4" />
                                 Approve Account
@@ -298,7 +306,7 @@ export default function Index({ employees, filters }: Props) {
                 />
             )}
 
-            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl min-w-7xl mx-auto">
+            <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
                 {/* Header */}
                 <div className="mb-6">
@@ -342,23 +350,22 @@ export default function Index({ employees, filters }: Props) {
                 {/* Table */}
                 <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
                     <table className="w-full text-sm">
-                        <thead className="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
+                        <thead className="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs tracking-wider">
                             <tr>
-                                <th className="px-4 py-3 text-left">Employee</th>
-                                <th className="px-4 py-3 text-left">Employee No.</th>
-                                <th className="px-4 py-3 text-left">Position</th>
-                                <th className="px-4 py-3 text-left">Division</th>
-                                <th className="px-4 py-3 text-left">Type</th>
-                                <th className="px-4 py-3 text-center">Status</th>
-                                <th className="px-4 py-3 text-center">Approved</th>
-                                <th className="px-4 py-3 text-center">Actions</th>
+                                <th className="px-4 py-5 text-left">Employee</th>
+                                <th className="px-4 py-5 text-left">Employee No.</th>
+                                <th className="px-4 py-5 text-left">Position</th>
+                                <th className="px-4 py-5 text-left">Division</th>
+                                <th className="px-4 py-5 text-left">Type</th>
+                                <th className="px-4 py-5 text-center">Status</th>
+                                <th className="px-4 py-5 text-center">Approved</th>
+                                <th className="px-4 py-5 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {employees.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-12 text-gray-400">
-                                        <UserX className="mx-auto h-8 w-8 mb-2" />
+                                    <td colSpan={8} className="text-center py-12 text-gray-400 italic">
                                         No employees found.
                                     </td>
                                 </tr>
