@@ -34,13 +34,19 @@ function StepBar({ current }: { current: number }) {
                 return (
                     <div
                         key={label}
-                        className={`flex-1 flex items-center gap-2 px-4 py-5 transition-colors duration-300
+                        className={`
+                            flex-1 flex items-center gap-2 px-4 py-6 transition-colors duration-300
+
+                            /* ── Mobile/tablet ── */
+                            ${!isActive && !isComplete ? 'hidden md:flex' : ''}
+                            ${isComplete ? 'hidden md:flex' : ''}
+
+                            /* ── Colors ── */
                             ${isActive   ? 'bg-green-600 text-white' : ''}
                             ${isComplete ? 'bg-green-100 text-green-700' : ''}
                             ${!isActive && !isComplete ? 'bg-gray-100 text-gray-400' : ''}
                         `}
                     >
-                        {/* Circle / Check */}
                         <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border
                             ${isActive   ? 'bg-green-700 border-green-700 text-white' : ''}
                             ${isComplete ? 'bg-green-600 border-green-600 text-white' : ''}
@@ -48,7 +54,12 @@ function StepBar({ current }: { current: number }) {
                         `}>
                             {isComplete ? <Check className="h-3 w-3" /> : stepNum}
                         </span>
-                        <span className="hidden sm:inline truncate">{label}</span>
+                        <span className="truncate">{label}</span>
+
+                        {/* Step counter shown on mobile — e.g. "Step 2 of 3" */}
+                        <span className="ml-auto text-xs opacity-70 md:hidden whitespace-nowrap">
+                            Step {stepNum} of {STEPS.length}
+                        </span>
                     </div>
                 );
             })}
@@ -252,14 +263,14 @@ export default function Register() {
         if (!data.mobile_number)     newErrors.mobile_number    = 'Mobile number is required.';
         if (!data.password)          newErrors.password         = 'Password is required.';
         else if (data.password.length < 8)
-                                    newErrors.password         = 'Password must be at least 8 characters.';
+            newErrors.password         = 'Password must be at least 8 characters.';
         else if (getPasswordStrength(data.password).level === 'low')
-                                    newErrors.password         = 'Password is too weak. Add uppercase letters, numbers, or symbols.';
+            newErrors.password         = 'Password is too weak. Add uppercase letters, numbers, or symbols.';
 
         if (!data.password_confirmation)
-                                    newErrors.password_confirmation = 'Please confirm your password.';
+            newErrors.password_confirmation = 'Please confirm your password.';
         else if (data.password !== data.password_confirmation)
-                                    newErrors.password_confirmation = 'Passwords do not match.';
+            newErrors.password_confirmation = 'Passwords do not match.';
 
         setFormErrors(newErrors);
 
@@ -377,9 +388,7 @@ export default function Register() {
                                     <span className="mt-0.5 shrink-0">
                                         <TriangleAlert className='h-4 w-4' />
                                     </span>
-                                    <span>
-                                        Please fix <strong>{Object.keys(formErrors).length} error{Object.keys(formErrors).length > 1 ? 's' : ''}</strong> before proceeding.
-                                    </span>
+                                    <span>Please fill in required fields!</span>
                                 </div>
                             )}
 
@@ -545,7 +554,7 @@ export default function Register() {
                                             setPasswordMismatch(''); 
                                         }}
                                         placeholder="Minimum 8 characters"
-                                        error={formErrors.password}
+                                        error={formErrors.password || errors.password}
                                     />
 
                                     <PasswordInput
@@ -648,39 +657,6 @@ export default function Register() {
                                 <ReviewRow label="Email"           value={data.email} />
                                 <ReviewRow label="Mobile Number"   value={data.mobile_number} />
 
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">
-                                    Security
-                                </h3>
-
-                                {/* Password row with strength indicator */}
-                                <div className="flex flex-col sm:flex-row sm:gap-4 py-2.5 border-b border-gray-100 last:border-0">
-                                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 sm:w-44 shrink-0">Password</span>
-                                    <div className="flex flex-col items-end">
-
-                                        {/* Strength bars */}
-                                        <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3].map((bar) => {
-                                                const strength = getPasswordStrength(data.password);
-                                                const filled = bar <= strength.bars;
-                                                return (
-                                                    <div
-                                                        key={bar}
-                                                        className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
-                                                            filled ? strength.color : 'bg-gray-200'
-                                                        }`}
-                                                    />
-                                                );
-                                            })}
-                                            <span className={`text-xs font-semibold ml-1 ${
-                                                getPasswordStrength(data.password).level === 'low'    ? 'text-red-500'    :
-                                                getPasswordStrength(data.password).level === 'medium' ? 'text-yellow-500' :
-                                                'text-green-600'
-                                            }`}>
-                                                {getPasswordStrength(data.password).label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="mt-6 bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-xs text-green-700 text-center">

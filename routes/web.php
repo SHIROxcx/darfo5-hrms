@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Models\Division;
 use App\Models\User;
@@ -50,7 +51,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-// Email Verification Routes
+
+// Email Verification (OTP-based)
 Route::get('/email/verify', function () {
     return inertia('auth/verify-email');
 })->middleware('auth')->name('verification.notice');
@@ -74,17 +76,16 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, string $id, 
     $request->session()->regenerateToken();
 
     return redirect('/pending-approval');
-
 })->middleware(['signed'])->name('verification.verify');
 
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return back()->with('status', 'verification-link-sent');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+// OTP Routes
+Route::post('/otp/send',   [OtpController::class, 'send'])->middleware('auth');
+Route::post('/otp/verify', [OtpController::class, 'verify'])->middleware('auth');
 
-
+// Data Routes
 Route::get('/divisions', fn() => Division::with('sections')->get());
 Route::get('/positions', fn() => \App\Models\Position::orderBy('title')->get());
+
 
 
 require __DIR__.'/settings.php';

@@ -34,6 +34,8 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureViews();
         $this->configureRateLimiting();
 
+        Fortify::redirects('register', '/verify-otp');
+
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('email', $request->email)->first();
 
