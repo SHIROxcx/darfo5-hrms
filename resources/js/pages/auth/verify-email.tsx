@@ -3,16 +3,18 @@ import { useState, useEffect, useRef } from 'react';
 import { Check, LoaderCircle } from 'lucide-react';
 
 export default function VerifyEmail() {
-    const props = usePage<{ auth: { user: { email: string; first_name: string } | null } }>().props;
-    const user = props.auth?.user;
+    const { auth } = usePage<{ auth: { user: { email: string; first_name: string } | null } }>().props;
+    const email     = auth?.user?.email ?? '';
+    const firstName = auth?.user?.first_name ?? '';
 
-    const [otpDigits, setOtpDigits]         = useState(['', '', '', '', '', '']);
-    const [otpError, setOtpError]           = useState('');
-    const [otpSuccess, setOtpSuccess]       = useState('');
-    const [otpSending, setOtpSending]       = useState(false);
-    const [otpVerifying, setOtpVerifying]   = useState(false);
-    const [otpSent, setOtpSent]             = useState(false);
+    const [otpDigits, setOtpDigits]           = useState(['', '', '', '', '', '']);
+    const [otpError, setOtpError]             = useState('');
+    const [otpSuccess, setOtpSuccess]         = useState('');
+    const [otpSending, setOtpSending]         = useState(false);
+    const [otpVerifying, setOtpVerifying]     = useState(false);
+    const [otpSent, setOtpSent]               = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [resending, setResending]           = useState(false);
 
     const otpRef0 = useRef<HTMLInputElement>(null);
     const otpRef1 = useRef<HTMLInputElement>(null);
@@ -21,9 +23,13 @@ export default function VerifyEmail() {
     const otpRef4 = useRef<HTMLInputElement>(null);
     const otpRef5 = useRef<HTMLInputElement>(null);
     const otpRefs = [otpRef0, otpRef1, otpRef2, otpRef3, otpRef4, otpRef5];
+    const hasSentRef = useRef(false);
 
-    const getCsrf = () =>
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+    // Read XSRF token from cookie (Laravel sets this automatically)
+    const getCsrf = () => {
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    };
 
     const startResendCooldown = () => {
         setResendCooldown(60);
@@ -35,7 +41,11 @@ export default function VerifyEmail() {
         }, 1000);
     };
 
-    const sendOtp = async () => {
+    const sendOtp = async (emailAddr: string) => {
+        if (!emailAddr) {
+            setOtpError('Could not determine your email address. Please log out and register again.');
+            return;
+        }
         setOtpSending(true);
         setOtpError('');
         setOtpSuccess('');
@@ -45,27 +55,36 @@ export default function VerifyEmail() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': getCsrf(),
+                    'X-XSRF-TOKEN': getCsrf(),
                 },
-                // No body needed — backend uses auth()->user()
+                body: JSON.stringify({ email: emailAddr }), // always send email in body
             });
-            const json = await res.json();
-            if (!res.ok) { setOtpError(json.message); return; }
+
+            const text = await res.text();
+            let json: { message?: string };
+            try { json = JSON.parse(text); }
+            catch { setOtpError(`Unexpected server response (${res.status}).`); return; }
+
+            if (!res.ok) { setOtpError(json.message ?? 'Failed to send OTP.'); return; }
+
             setOtpSent(true);
-            setOtpSuccess(`Code sent to ${user?.email}`);
+            setResending(false);
+            setOtpSuccess(`A 6-digit code was sent to ${emailAddr}`);
             startResendCooldown();
             setTimeout(() => otpRef0.current?.focus(), 100);
-        } catch (err) {
-            console.error(err);
-            setOtpError('Failed to send code. Please try again.');
+        } catch {
+            setOtpError('Failed to send code. Please check your connection.');
         } finally {
             setOtpSending(false);
+            setResending(false);
         }
     };
 
     const verifyOtp = async () => {
         const code = otpDigits.join('');
         if (code.length < 6) { setOtpError('Please enter all 6 digits.'); return; }
+        if (!email) { setOtpError('Session error. Please log out and try again.'); return; }
+
         setOtpVerifying(true);
         setOtpError('');
         try {
@@ -74,16 +93,21 @@ export default function VerifyEmail() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': getCsrf(),
+                    'X-XSRF-TOKEN': getCsrf(),
                 },
-                body: JSON.stringify({ otp: code }),  // only otp needed now
+                body: JSON.stringify({ email: email, otp: code }),  // send otp code
             });
-            const json = await res.json();
-            if (!res.ok) { setOtpError(json.message); return; }
+
+            const text = await res.text();
+            let json: { message?: string };
+            try { json = JSON.parse(text); }
+            catch { setOtpError(`Unexpected server response (${res.status}).`); return; }
+
+            if (!res.ok) { setOtpError(json.message ?? 'Verification failed.'); return; }
+
             window.location.href = '/pending-approval';
-        } catch (err) {
-            console.error(err);
-            setOtpError('Verification failed. Please try again.');
+        } catch {
+            setOtpError('Verification failed. Please check your connection.');
         } finally {
             setOtpVerifying(false);
         }
@@ -113,12 +137,13 @@ export default function VerifyEmail() {
         }
     };
 
-    // Auto-send OTP on page load
-    useEffect(() => { sendOtp(); }, []);
-
+    // Auto-send OTP once email is available
     useEffect(() => {
-        if (user?.email) sendOtp();
-    }, [user?.email]);
+        if (email && !hasSentRef.current) {
+            hasSentRef.current = true;
+            sendOtp(email);
+        }
+    }, [email]);
 
     return (
         <div className="min-h-screen flex relative justify-center items-center px-4">
@@ -140,33 +165,23 @@ export default function VerifyEmail() {
                     <img src="/images/da-masarig-logo.png" alt="DA Logo" className="w-20 h-20 object-contain" />
                 </div>
 
-                {/* Email icon */}
-                <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                </div>
-
                 <h2 className="text-green-700 text-center text-2xl font-bold mb-2">
                     Verify Your Email
                 </h2>
 
                 <p className="text-sm text-gray-500 text-center mb-1">
-                    {otpSent
-                        ? <>We sent a 6-digit code to <strong className="text-gray-700">{user.email}</strong></>
-                        : <>Sending verification code to <strong className="text-gray-700">{user.email}</strong>...</>
-}
+                    {!otpSent
+                        ? <>Sending verification code to <strong className="text-gray-700">{email || '...'}</strong>...</>
+                        : <>Enter the 6-digit code sent to <strong className="text-gray-700">{email}</strong></>
+                    }
                 </p>
 
-                {/* Success message */}
-                {otpSuccess && !otpError && (
+                {/* Success banner */}
+                {/* {otpSuccess && !otpError && (
                     <div className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-center">
                         {otpSuccess}
                     </div>
-                )}
+                )} */}
 
                 {/* OTP Inputs */}
                 <div className="flex justify-center gap-3 my-7" onPaste={handleOtpPaste}>
@@ -180,11 +195,11 @@ export default function VerifyEmail() {
                             value={digit}
                             onChange={e => handleOtpChange(i, e.target.value)}
                             onKeyDown={e => handleOtpKeyDown(i, e)}
-                            disabled={otpSending}
+                            disabled={otpSending && !otpSent}
                             className={`w-12 h-14 text-center text-xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors disabled:opacity-40
-                                ${otpError   ? 'border-red-400 bg-red-50'    :
-                                  digit       ? 'border-green-500 bg-green-50' :
-                                               'border-gray-300 bg-white'}`}
+                                ${otpError ? 'border-red-400 bg-red-50'     :
+                                  digit     ? 'border-green-500 bg-green-50' :
+                                              'border-gray-300 bg-white'}`}
                         />
                     ))}
                 </div>
@@ -198,8 +213,8 @@ export default function VerifyEmail() {
                 <button
                     type="button"
                     onClick={verifyOtp}
-                    disabled={otpVerifying || otpSending || otpDigits.join('').length < 6}
-                    className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={otpVerifying || (otpSending && !otpSent) || otpDigits.join('').length < 6}
+                    className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                     {otpVerifying
                         ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Verifying...</>
@@ -215,9 +230,15 @@ export default function VerifyEmail() {
                         : (
                             <button
                                 type="button"
-                                onClick={() => { setOtpDigits(['','','','','','']); sendOtp(); }}
+                                onClick={() => { 
+                                    setOtpDigits(['', '', '', '', '', '']); 
+                                    sendOtp(email); 
+                                    setResending(true);
+                                    setOtpSent(false);
+                                    sendOtp(email);
+                                }}
                                 disabled={otpSending}
-                                className="text-green-600 hover:underline font-medium disabled:opacity-50"
+                                className="text-green-600 hover:underline font-medium disabled:opacity-50 cursor-pointer"
                             >
                                 {otpSending ? 'Sending...' : 'Resend code'}
                             </button>
@@ -225,14 +246,14 @@ export default function VerifyEmail() {
                     }
                 </p>
 
-                {/* Log out link */}
+                {/* Log out */}
                 <p className="text-center text-sm text-gray-500 mt-6">
                     Wrong account?{' '}
                     <Link
                         href="/logout"
                         method="post"
                         as="button"
-                        className="text-green-600 hover:underline font-medium"
+                        className="text-green-600 hover:underline font-medium cursor-pointer"
                     >
                         Log out
                     </Link>

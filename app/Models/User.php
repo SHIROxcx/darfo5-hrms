@@ -67,6 +67,11 @@ class User extends Authenticatable implements MustVerifyEmail
         );
     }
 
+    public function sendEmailVerificationNotification(): void
+    {
+        // Intentionally empty — use OTP verification instead
+    }
+
     public function employeeProfile(): HasOne
     {
         return $this->hasOne(EmployeeProfile::class);

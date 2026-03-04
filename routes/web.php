@@ -54,7 +54,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Email Verification (OTP-based)
 Route::get('/email/verify', function () {
-    return inertia('auth/verify-email');
+    $user = auth()->user();
+    return inertia('auth/verify-email', [
+        'email'      => $user?->email,
+        'first_name' => $user?->first_name,
+    ]);
 })->middleware('auth')->name('verification.notice');
 
 Route::get('/email/verify/{id}/{hash}', function (Request $request, string $id, string $hash) {
