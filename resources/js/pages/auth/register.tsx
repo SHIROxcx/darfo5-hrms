@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler, useEffect } from 'react';
-import { Eye, EyeOff, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Eye, EyeOff, Check, ChevronRight, ChevronLeft, TriangleAlert, TrainTrackIcon } from 'lucide-react';
 
 // Types
 interface FormData {
@@ -189,7 +189,7 @@ export default function Register() {
     const [divisions, setDivisions] = useState<DivisionData[]>([]);
     const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
     const [positions, setPositions] = useState<{ id: number; title: string; salary_grade: number }[]>([]);
-
+    const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({});
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         middle_name: '',
@@ -240,30 +240,41 @@ export default function Register() {
     }, []);
 
     const validateStep2 = (): boolean => {
-        if (
-            !data.first_name ||
-            !data.last_name  ||
-            !data.division ||
-            !data.section_unit    ||
-            !data.position   ||
-            !data.employment_type ||
-            !data.email      ||
-            !data.mobile_number  ||
-            !data.password   ||
-            !data.password_confirmation
-        ) {
+        const newErrors: Partial<Record<keyof FormData, string>> = {};
+
+        if (!data.first_name)        newErrors.first_name       = 'First name is required.';
+        if (!data.last_name)         newErrors.last_name        = 'Last name is required.';
+        if (!data.division)          newErrors.division         = 'Division is required.';
+        if (!data.section_unit)      newErrors.section_unit     = 'Section / Unit is required.';
+        if (!data.position)          newErrors.position         = 'Position is required.';
+        if (!data.employment_type)   newErrors.employment_type  = 'Employment type is required.';
+        if (!data.email)             newErrors.email            = 'Email address is required.';
+        if (!data.mobile_number)     newErrors.mobile_number    = 'Mobile number is required.';
+        if (!data.password)          newErrors.password         = 'Password is required.';
+        else if (data.password.length < 8)
+                                    newErrors.password         = 'Password must be at least 8 characters.';
+        else if (getPasswordStrength(data.password).level === 'low')
+                                    newErrors.password         = 'Password is too weak. Add uppercase letters, numbers, or symbols.';
+
+        if (!data.password_confirmation)
+                                    newErrors.password_confirmation = 'Please confirm your password.';
+        else if (data.password !== data.password_confirmation)
+                                    newErrors.password_confirmation = 'Passwords do not match.';
+
+        setFormErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return false;
         }
-        if (data.password !== data.password_confirmation) {
-            setPasswordMismatch('Passwords do not match.');
-            return false;
-        }
-        if (data.password.length < 8) {
-            setPasswordMismatch('Password must be at least 8 characters.');
-            return false;
-        }
+
         setPasswordMismatch('');
         return true;
+    };
+
+    // Clear errors as the user types
+    const clearError = (field: keyof FormData) => {
+        setFormErrors(prev => ({ ...prev, [field]: undefined }));
     };
 
     const goTo = (next: number) => {
@@ -274,6 +285,7 @@ export default function Register() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    // Submit registration
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post('/register', {
@@ -281,6 +293,7 @@ export default function Register() {
         });
     };
 
+    // Get full name
     const fullName = [data.first_name, data.middle_name, data.last_name, data.name_ext]
         .filter(Boolean).join(' ');
 
@@ -358,16 +371,28 @@ export default function Register() {
                                 Employee Information
                             </h2>
 
+                            {/* Show error banners */}
+                            {Object.keys(formErrors).length > 0 && (
+                                <div className="mb-6 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+                                    <span className="mt-0.5 shrink-0">
+                                        <TriangleAlert className='h-4 w-4' />
+                                    </span>
+                                    <span>
+                                        Please fix <strong>{Object.keys(formErrors).length} error{Object.keys(formErrors).length > 1 ? 's' : ''}</strong> before proceeding.
+                                    </span>
+                                </div>
+                            )}
+
                             <form id="registerForm" onSubmit={submit}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
 
                                     {/* Name Row */}
-                                    <Field label="First Name" required error={errors.first_name}>
+                                    <Field label="First Name" required error={formErrors.first_name}>
                                         <TextInput
                                             value={data.first_name}
-                                            onChange={v => setData('first_name', v)}
-                                            placeholder="Juan"
-                                            error={errors.first_name}
+                                            onChange={v => { setData('first_name', v); clearError('first_name'); }}
+                                            placeholder="Enter your first name"
+                                            error={formErrors.first_name}
                                         />
                                     </Field>
 
@@ -375,16 +400,16 @@ export default function Register() {
                                         <TextInput
                                             value={data.middle_name}
                                             onChange={v => setData('middle_name', v)}
-                                            placeholder="Santos"
+                                            placeholder="Enter your middle name"
                                         />
                                     </Field>
 
-                                    <Field label="Last Name" required error={errors.last_name}>
+                                    <Field label="Last Name" required error={formErrors.last_name}>
                                         <TextInput
                                             value={data.last_name}
-                                            onChange={v => setData('last_name', v)}
-                                            placeholder="Dela Cruz"
-                                            error={errors.last_name}
+                                            onChange={v => { setData('last_name', v); clearError('last_name'); }}
+                                            placeholder="Enter your last name"
+                                            error={formErrors.last_name}
                                         />
                                     </Field>
 
@@ -415,13 +440,13 @@ export default function Register() {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
                                             <option value="Department of Agriculture Regional Field Office 5">Department of Agriculture Regional Field Office 5</option>
-                                        </select>
+                                        </select> 
                                     </Field>
 
-                                    <Field label="Division" required error={errors.division}>
+                                    <Field label="Division" required error={formErrors.division}>
                                         <select
                                             value={data.division}
-                                            onChange={e => setData('division', e.target.value)}
+                                            onChange={e => { setData('division', e.target.value); clearError('division'); }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
                                             <option value="" disabled>Select Division</option>
@@ -431,10 +456,10 @@ export default function Register() {
                                         </select>
                                     </Field>
 
-                                    <Field label="Section / Unit" required error={errors.section_unit}>
+                                    <Field label="Section / Unit" required error={formErrors.section_unit}>
                                         <select
                                             value={data.section_unit}
-                                            onChange={e => setData('section_unit', e.target.value)}
+                                            onChange={e => { setData('section_unit', e.target.value); clearError('section_unit'); }}
                                             disabled={!data.division} 
                                             className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
                                                 ${!data.division ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
@@ -453,13 +478,14 @@ export default function Register() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-5">
 
-                                    <Field label="Position" required>
+                                    <Field label="Position" required error={formErrors.position}>
                                         <select
                                             value={data.position}
                                             onChange={e => {
                                                 const selected = positions.find(p => p.title === e.target.value);
                                                 setData('position', e.target.value);
                                                 setData('salary_grade', selected?.salary_grade ?? 0);
+                                                clearError('position');
                                             }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
@@ -472,10 +498,10 @@ export default function Register() {
                                         </select>
                                     </Field>
 
-                                    <Field label="Employment Type" required>
+                                    <Field label="Employment Type" required error={formErrors.employment_type}>
                                         <select
                                             value={data.employment_type}
-                                            onChange={e => setData('employment_type', e.target.value)}
+                                            onChange={e => { setData('employment_type', e.target.value); clearError('employment_type'); }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                                         >
                                             <option value="" disabled>Select Employment</option>
@@ -486,25 +512,25 @@ export default function Register() {
                                     </Field>
 
                                     {/* Contact */}
-                                    <Field label="Email Address" required error={errors.email}>
+                                    <Field label="Email Address" required error={formErrors.email || errors.email}>
                                         <input
                                             type="email"
                                             value={data.email}
-                                            onChange={e => setData('email', e.target.value)}
+                                            onChange={e => { setData('email', e.target.value); clearError('email'); }}
                                             placeholder="email@example.com"
-                                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
-                                                ${errors.email ? 'border-red-400' : 'border-gray-300'}`}
+                                             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
+                                                ${formErrors.email || errors.email ? 'border-red-400' : 'border-gray-300'}`}
                                         />
                                     </Field>
 
-                                    <Field label="Mobile Number" required error={errors.mobile_number}>
+                                    <Field label="Mobile Number" required error={formErrors.mobile_number}>
                                         <input
                                             type="text"
                                             value={data.mobile_number}
-                                            onChange={e => setData('mobile_number', e.target.value)}
+                                            onChange={e => { setData('mobile_number', e.target.value); clearError('mobile_number'); }}
                                             placeholder="09XXXXXXXXX"
-                                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
-                                                ${errors.mobile_number ? 'border-red-400' : 'border-gray-300'}`}
+                                             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
+                                                ${formErrors.mobile_number || errors.mobile_number ? 'border-red-400' : 'border-gray-300'}`}
                                         />
                                     </Field>
 
@@ -514,12 +540,12 @@ export default function Register() {
                                         label="Password"
                                         required
                                         value={data.password}
-                                        onChange={v => {
-                                            setData('password', v);
-                                            setPasswordMismatch('');
+                                        onChange={v => { setData('password', v); 
+                                            clearError('password'); 
+                                            setPasswordMismatch(''); 
                                         }}
                                         placeholder="Minimum 8 characters"
-                                        error={errors.password}
+                                        error={formErrors.password}
                                     />
 
                                     <PasswordInput
@@ -527,12 +553,12 @@ export default function Register() {
                                         label="Confirm Password"
                                         required
                                         value={data.password_confirmation}
-                                        onChange={v => {
-                                            setData('password_confirmation', v);
-                                            setPasswordMismatch('');
+                                        onChange={v => { setData('password_confirmation', v); 
+                                            clearError('password_confirmation'); 
+                                            setPasswordMismatch(''); 
                                         }}
                                         placeholder="Re-enter password"
-                                        error={passwordMismatch || errors.password_confirmation}
+                                        error={formErrors.password_confirmation || passwordMismatch || errors.password_confirmation}
                                     />
 
                                     {/* Password Security*/}
