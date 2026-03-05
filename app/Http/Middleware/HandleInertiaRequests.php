@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        
 
         // Build full name — fallback to email if all name fields are empty
         $fullName = $user ? trim(implode(' ', array_filter([
@@ -61,6 +62,9 @@ class HandleInertiaRequests extends Middleware
                     'roles'       => $user->getRoleNames(),
                     'permissions' => $user->getAllPermissions()->pluck('name'),
                 ] : null,
+                    'unreadNotificationsCount' => fn () => $request->user()
+                        ? $request->user()->unreadNotifications()->count()
+                        : 0,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -74,6 +74,12 @@ class EmployeeController extends Controller
     public function toggleApproval(User $user)
     {
         $user->update(['is_approved' => ! $user->is_approved]);
+
+        // Only send approval email when toggled to approved
+        if ($user->is_approved) {
+            $user->notify(new \App\Notifications\AccountApprovedNotification());
+        }
+
         $status = $user->is_approved ? 'approved' : 'revoked';
         return back()->with('success', "Access {$status} for {$user->first_name} {$user->last_name}.");
     }

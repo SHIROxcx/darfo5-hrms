@@ -12,9 +12,17 @@ class AccountApprovedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'message' => 'Your account has been approved. You can now log in.',
+            'url'     => '/dashboard',
+        ];
+    }
+    
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

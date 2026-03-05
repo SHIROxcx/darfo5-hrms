@@ -66,7 +66,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                         />
                     </div>
 
-                    <h2 className="text-green-700 text-center text-3xl font-semibold mb-8">HRMS</h2>
+                    <h2 className="text-green-700 text-center text-3xl font-semibold mb-5">HRMS</h2>
 
                     {/* Session Status */}
                     {status && (
@@ -82,6 +82,14 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                     >
                         {({ processing, errors }) => (
                             <>
+                                {/* ── Error Banner ── */}
+                                {(errors.email || errors.password) && (
+                                    <div className="mb-5 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-500">
+                                        {errors.email && <p>{errors.email}</p>}
+                                        {errors.password && <p>{errors.password}</p>}
+                                    </div>
+                                )}
+
                                 {/* Email */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -97,7 +105,6 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                         placeholder="email@example.com"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     />
-                                    <InputError message={errors.email} />
                                 </div>
 
                                 {/* Password */}
@@ -136,7 +143,6 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                             }
                                         </button>
                                     </div>
-                                    <InputError message={errors.password} />
                                 </div>
 
                                 {/* Remember Me */}

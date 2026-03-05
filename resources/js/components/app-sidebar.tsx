@@ -1,9 +1,10 @@
-import { Link } from '@inertiajs/react';
-import { usePage } from '@inertiajs/react';
-import { Bell, Calendar, Folder, LayoutGrid, MessagesSquare, Users, ShieldCheck, UserCog } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Bell, Calendar, Folder, LayoutGrid, MessagesSquare, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { useState } from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { NotificationDrawer } from '@/components/notification-drawer';
 import {
     Sidebar,
     SidebarContent,
@@ -17,72 +18,25 @@ import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
 
-// shared by ALL roles 
 const commonNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
 ];
 
-// superadmin only 
 const superAdminNavItems: NavItem[] = [
-    {
-        title: 'User Management',
-        href: '/superadmin/users',
-        icon: ShieldCheck,
-    },
-    {
-        title: 'Roles & Permissions',
-        href: '/admin/roles',
-        icon: UserCog,
-    },
+    { title: 'User Management', href: '/superadmin/users', icon: ShieldCheck },
+    { title: 'Roles & Permissions', href: '/admin/roles', icon: UserCog },
 ];
 
-// hr admin only
 const adminNavItems: NavItem[] = [
-    {
-        title: 'Employees',
-        href: '/admin/employees',
-        icon: Users,
-    },
-    {
-        title: 'Leave Management',
-        href: '/leave',
-        icon: Calendar,
-    },
+    { title: 'Employees', href: '/admin/employees', icon: Users },
+    { title: 'Leave Management', href: '/leave', icon: Calendar },
 ];
 
-// employee only
 const employeeNavItems: NavItem[] = [
-    {
-        title: 'My Leave',
-        href: '/my-leave',
-        icon: Calendar,
-    },
-    {
-        title: 'My Profile',
-        href: '/my-profile',
-        icon: Folder,
-    },
+    { title: 'My Leave', href: '/my-leave', icon: Calendar },
+    { title: 'My Profile', href: '/my-profile', icon: Folder },
 ];
 
-// ── footer nav (all roles) 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Messages',
-        href: '#',
-        icon: MessagesSquare,
-    },
-    {
-        title: 'Notifications',
-        href: '#',
-        icon: Bell,
-    },
-];
-
-// types
 interface AuthUser {
     id: number;
     name: string;
@@ -91,22 +45,20 @@ interface AuthUser {
 }
 
 interface PageProps {
-    auth: {
-        user: AuthUser;
-    };
+    auth: { user: AuthUser };
+    unreadNotificationsCount: number;
     [key: string]: unknown;
 }
 
 export function AppSidebar() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, unreadNotificationsCount } = usePage<PageProps>().props;
     const roles = auth.user?.roles ?? [];
 
     const isSuperAdmin = roles.includes('superadmin');
     const isAdmin      = roles.includes('admin');
     const isEmployee   = roles.includes('employee');
 
-    // nav items based on role
-    const roleNavItems: NavItem[] = isSuperAdmin
+    const roleNavItems = isSuperAdmin
         ? superAdminNavItems
         : isAdmin
         ? adminNavItems
@@ -114,31 +66,61 @@ export function AppSidebar() {
         ? employeeNavItems
         : [];
 
-    // merge common items and role-specific items
     const mainNavItems = [...commonNavItems, ...roleNavItems];
 
+    const [drawerOpen, setDrawerOpen]   = useState(false);
+    const [unreadCount, setUnreadCount] = useState(unreadNotificationsCount ?? 0);
+
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+        <>
+            <NotificationDrawer
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                onUnreadChange={setUnreadCount}
+            />
 
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
-            </SidebarContent>
+            <Sidebar collapsible="icon" variant="inset">
+                <SidebarHeader>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link href={dashboard()} prefetch>
+                                    <AppLogo />
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarHeader>
 
-            <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
-                <NavUser />
-            </SidebarFooter>
-        </Sidebar>
+                <SidebarContent>
+                    <NavMain items={mainNavItems} />
+                </SidebarContent>
+
+                <SidebarFooter>
+                    <NavFooter
+                        items={[{ title: 'Messages', href: '#', icon: MessagesSquare }]}
+                        className="mt-auto"
+                    />
+
+                    {/* Notifications button with badge */}
+                    <button
+                        onClick={() => setDrawerOpen(true)}
+                        className="group relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    >
+                        <span className="relative">
+                            <Bell className="h-4 w-4" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
+                        </span>
+                        <span className="group-data-[collapsible=icon]:hidden">Notifications</span>
+                    </button>
+
+                    <NavUser />
+                </SidebarFooter>
+            </Sidebar>
+        </>
     );
 }

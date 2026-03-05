@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Models\Division;
@@ -49,6 +50,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Notification Routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 // Email Verification (OTP-based)
