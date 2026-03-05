@@ -171,6 +171,7 @@ function DtrRow({ date, timeIn, breakTime, timeOut, remarks, late }: typeof dtrs
 
     const remarksBadge = remarks
         ? <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+            ${remarks === 'Present' ? 'bg-red-50 text-green-600' : ''}
             ${remarks === 'Late' ? 'bg-red-50 text-red-600' : ''}
             ${remarks === 'Holiday' ? 'bg-blue-50 text-blue-600' : ''}
             ${!['Late', 'Holiday'].includes(remarks) ? 'bg-gray-100 text-gray-600' : ''}`}>

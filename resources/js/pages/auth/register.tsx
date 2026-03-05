@@ -201,6 +201,7 @@ export default function Register() {
     const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
     const [positions, setPositions] = useState<{ id: number; title: string; salary_grade: number }[]>([]);
     const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+    const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         middle_name: '',
@@ -251,6 +252,7 @@ export default function Register() {
     }, []);
 
     const validateStep2 = (): boolean => {
+        setHasAttemptedNext(true);
         const newErrors: Partial<Record<keyof FormData, string>> = {};
 
         if (!data.first_name)        newErrors.first_name       = 'First name is required.';
@@ -383,7 +385,7 @@ export default function Register() {
                             </h2>
 
                             {/* Show error banners */}
-                            {Object.keys(formErrors).length > 0 && (
+                            {hasAttemptedNext && Object.keys(formErrors).length > 0 && (
                                 <div className="mb-6 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 flex items-start gap-2">
                                     <span className="mt-0.5 shrink-0">
                                         <TriangleAlert className='h-4 w-4' />

@@ -34,7 +34,7 @@ export default function PendingApproval() {
                 </div>
 
                 <h2 className="text-green-700 text-center text-3xl font-semibold mb-3">
-                    Email Verified!
+                    Email Verified
                 </h2>
 
                 <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
@@ -55,7 +55,7 @@ export default function PendingApproval() {
 
                 {/* Back to login */}
                 <div className="text-center text-sm text-gray-500">
-                    Once approved, you may{' '}
+                    Back to {' '}
                     <Link href={login()} className="text-green-600 hover:text-green-700 hover:underline font-medium">
                         Log in
                     </Link>

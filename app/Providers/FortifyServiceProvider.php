@@ -48,10 +48,11 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Block if email not verified
+            // If email not verified, log them in temporarily and redirect to verify
             if (! $user->hasVerifiedEmail()) {
-                throw ValidationException::withMessages([
-                    'email' => 'Please verify your email address before logging in.',
+                \Illuminate\Support\Facades\Auth::login($user);
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => 'redirect_to_verify',
                 ]);
             }
 

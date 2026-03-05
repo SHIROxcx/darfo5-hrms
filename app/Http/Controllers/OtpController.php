@@ -7,6 +7,7 @@ use App\Models\EmailVerificationOtp;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -78,6 +79,11 @@ class OtpController extends Controller
             $user->markEmailAsVerified();
             event(new Verified($user));
         }
+        
+        // Log the user out so they can't bypass the pending approval page
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Email verified successfully.']);
     }

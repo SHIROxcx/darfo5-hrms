@@ -2,12 +2,12 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import {
-    CheckCircle, Eye, Lock,
+    Check, Eye, Lock,
     Search, Trash2, UserCheck, UserX, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-// ── Types ──────────────────────────────────────────────────────────
+// Types
 
 interface EmployeeProfile {
     employee_number: string | null;
@@ -143,62 +143,62 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                             <p className="text-xs text-gray-400">Employee No.</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.employee_number ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-400">Employment Type</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.employment_type ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-400">Position</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.position ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-400">Salary Grade</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.salary_grade ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                         <div  className="col-span-2">
-                            <p className="text-xs text-gray-400">Place of Assignment</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="text-xs text-gray-400">Agency</p>
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.place_assign ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                         <div  className="col-span-2">
                             <p className="text-xs text-gray-400">Division</p>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-700">
                                 {employee.employee_profile?.division ?? <span className="italic text-gray-300">Not set</span>}
+                            </p>
+                        </div>
+                        <div  className="col-span-2">
+                            <p className="text-xs text-gray-400">Section/Unit</p>
+                            <p className="font-medium text-gray-700">
+                                {employee.employee_profile?.section ?? <span className="italic text-gray-300">Not set</span>}
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t flex justify-between items-center">
+                <div className="px-6 py-4 border-t flex justify-end items-center">
                     <div>
                         {employee.email_verified_at && !employee.is_approved && (
                             <button
                                 onClick={() => { onApprove(employee); onClose(); }}
                                 className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                             >
-                                <CheckCircle className="h-4 w-4" />
+                                <Check className="h-4 w-4" />
                                 Approve Account
                             </button>
                         )}
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition cursor-pointer"
-                    >
-                        Close
-                    </button>
                 </div>
             </div>
         </div>
@@ -348,7 +348,7 @@ export default function Index({ employees, filters }: Props) {
                 </div>
 
                 {/* Table */}
-                <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
+                <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200  overflow-x-auto border-collapse">
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs tracking-wider">
                             <tr>

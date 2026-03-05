@@ -65,7 +65,25 @@ export default function VerifyEmail() {
             try { json = JSON.parse(text); }
             catch { setOtpError(`Unexpected server response (${res.status}).`); return; }
 
-            if (!res.ok) { setOtpError(json.message ?? 'Failed to send OTP.'); return; }
+            if (!res.ok) { 
+
+                // Parse seconds from rate limit message and start countdown
+                 if (res.status === 429) {
+                    const match = json.message?.match(/(\d+)\s*second/);
+                    if (match) {
+                        const seconds = parseInt(match[1]);
+                        setResendCooldown(seconds);
+                        const timer = setInterval(() => {
+                            setResendCooldown(prev => {
+                                if (prev <= 1) { clearInterval(timer); return 0; }
+                                return prev - 1;
+                            });
+                        }, 1000);
+                    }
+                }
+                setOtpError(json.message ?? 'Failed to send OTP.'); 
+                return; 
+            }
 
             setOtpSent(true);
             setResending(false);
@@ -175,13 +193,6 @@ export default function VerifyEmail() {
                         : <>Enter the 6-digit code sent to <strong className="text-gray-700">{email}</strong></>
                     }
                 </p>
-
-                {/* Success banner */}
-                {/* {otpSuccess && !otpError && (
-                    <div className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-center">
-                        {otpSuccess}
-                    </div>
-                )} */}
 
                 {/* OTP Inputs */}
                 <div className="flex justify-center gap-3 my-7" onPaste={handleOtpPaste}>
