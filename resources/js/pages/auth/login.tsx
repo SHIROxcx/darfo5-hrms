@@ -45,10 +45,10 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
 
             {/* Left Side — Tagline (desktop only) */}
             <div className="hidden lg:flex flex-col justify-center w-1/2 px-16 relative z-10 text-white">
-                <h3 className="text-2xl xl:text-3xl font-medium leading-tight  drop-shadow-lg uppercase">
+                <h3 className="text-2xl lg:text-2xl font-light leading-tight  drop-shadow-lg uppercase">
                     Masarig na Agrikultura, Mauswag na
                 </h3>
-                <h3 className="text-2xl xl:text-8xl font-bold leading-tight tracking-wider drop-shadow-lg">
+                <h3 className="text-5xl lg:text-7xl font-bold leading-tight tracking-wider drop-shadow-lg">
                     BICOLANDIA
                 </h3>
             </div>

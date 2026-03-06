@@ -1,6 +1,9 @@
+// resources/js/components/app-sidebar.tsx
+
 import { Link, usePage } from '@inertiajs/react';
 import { Bell, Calendar, Folder, LayoutGrid, MessagesSquare, ShieldCheck, UserCog, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import echo from '@/echo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -17,6 +20,7 @@ import {
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
+import type { PendingUser } from '@/types/notification';
 
 const commonNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
@@ -52,7 +56,8 @@ interface PageProps {
 
 export function AppSidebar() {
     const { auth, unreadNotificationsCount } = usePage<PageProps>().props;
-    const roles = auth.user?.roles ?? [];
+    const roles  = Array.isArray(auth.user?.roles) ? auth.user.roles : [];
+    const userId = auth.user?.id;
 
     const isSuperAdmin = roles.includes('superadmin');
     const isAdmin      = roles.includes('admin');
@@ -69,7 +74,53 @@ export function AppSidebar() {
     const mainNavItems = [...commonNavItems, ...roleNavItems];
 
     const [drawerOpen, setDrawerOpen]   = useState(false);
-    const [unreadCount, setUnreadCount] = useState(unreadNotificationsCount ?? 0);
+    const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
+
+    // ── Real-time Echo subscriptions — always alive regardless of drawer state ──
+    useEffect(() => {
+        if (!userId) return;
+
+        if (isAdmin) {
+            echo
+                .private('admin.notifications')
+                .listen('.new-user-registered', function(data: PendingUser) {
+                    // 1. Increment badge
+                    setUnreadCount(function(prev) { return prev + 1; });
+
+                    // 2. Tell notification drawer to prepend to pending list
+                    window.dispatchEvent(new CustomEvent('notif:new-pending', { detail: data }));
+
+                    // 3. Tell employee table to prepend the new row in real-time
+                    window.dispatchEvent(new CustomEvent('notif:employee-added', { detail: data }));
+                });
+        }
+
+        // Employee: listen for account approval on their private channel
+        echo
+            .private('user.' + userId)
+            .listen('.account-approved', function(data: { message: string; url: string }) {
+                // Increment badge for the employee receiving the notification
+                setUnreadCount(function(prev) { return prev + 1; });
+                window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: data }));
+            });
+
+        return function() {
+            if (isAdmin) echo.leave('admin.notifications');
+            echo.leave('user.' + userId);
+        };
+    }, [userId, isAdmin]);
+
+    // ── Badge decrement — fired by drawer when notification is read,
+    //    or when admin approves/denies a pending user ─────────────────────────
+    useEffect(() => {
+        function onDecrement() {
+            setUnreadCount(function(prev) { return Math.max(0, prev - 1); });
+        }
+        window.addEventListener('notif:decrement', onDecrement);
+        return function() {
+            window.removeEventListener('notif:decrement', onDecrement);
+        };
+    }, []);
 
     return (
         <>
@@ -102,15 +153,14 @@ export function AppSidebar() {
                         className="mt-auto"
                     />
 
-                    {/* Notifications button with badge */}
                     <button
                         onClick={() => setDrawerOpen(true)}
-                        className="group relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        className="group relative flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     >
                         <span className="relative">
                             <Bell className="h-4 w-4" />
                             {unreadCount > 0 && (
-                                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+                                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none animate-pulse">
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
                             )}

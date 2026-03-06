@@ -18,7 +18,7 @@ class AccountApprovedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'message' => 'Your account has been approved. You can now log in.',
+            'message' => 'Welcome to HRMS!',
             'url'     => '/dashboard',
         ];
     }

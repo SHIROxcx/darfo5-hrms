@@ -1,5 +1,7 @@
+// resources/js/components/notification-drawer.tsx
+
 import { useEffect, useRef, useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import {
@@ -11,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { AppNotification, PendingUser } from '@/types/notification';
 
-// Helpers
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fullName(u: PendingUser) {
     return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
@@ -33,7 +35,7 @@ function relativeTime(dateStr: string) {
 }
 
 function notifClass(isUnread: boolean) {
-    const base = 'mb-3 block rounded-lg border p-3 shadow-sm transition hover:bg-gray-50';
+    const base  = 'mb-3 block cursor-pointer rounded-lg border p-3 shadow-sm transition hover:bg-gray-50';
     const state = isUnread ? 'border-green-500 bg-white' : 'border-gray-200 bg-gray-50';
     return base + ' ' + state;
 }
@@ -48,14 +50,14 @@ function backdropClass(open: boolean) {
     return base + ' ' + (open ? 'opacity-100' : 'pointer-events-none opacity-0');
 }
 
-function listScreenClass(screen: string) {
+function listScreenClass(active: boolean) {
     const base = 'absolute inset-0 flex flex-col overflow-y-auto p-4 transition-transform duration-300';
-    return base + ' ' + (screen === 'list' ? 'translate-x-0' : '-translate-x-full');
+    return base + ' ' + (active ? 'translate-x-0' : '-translate-x-full');
 }
 
-function pendingScreenClass(screen: string) {
+function pendingScreenClass(active: boolean) {
     const base = 'absolute inset-0 flex flex-col overflow-y-auto p-4 transition-transform duration-300';
-    return base + ' ' + (screen === 'pending' ? 'translate-x-0' : 'translate-x-full');
+    return base + ' ' + (active ? 'translate-x-0' : 'translate-x-full');
 }
 
 const Toast = Swal.mixin({
@@ -66,7 +68,11 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-// Pending user card
+interface AuthUser { id: number; roles: string[]; }
+interface PageProps { auth: { user: AuthUser }; [key: string]: unknown; }
+
+// ── Pending user card ─────────────────────────────────────────────────────────
+
 function PendingCard({
     user,
     onApprove,
@@ -95,10 +101,10 @@ function PendingCard({
                 <img
                     src={avatarUrl(user)}
                     alt={fullName(user)}
-                    className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-white object-cover shadow-sm"
+                    className="h-10 w-10 shrink-0 rounded-full border-2 border-white object-cover shadow-sm"
                 />
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-700">{fullName(user)}</p>
+                    <p className="truncate text-sm font-semibold text-gray-800">{fullName(user)}</p>
                     <p className="truncate text-xs text-gray-500">{user.email}</p>
                     <p className="mt-0.5 text-[10px] text-gray-400">
                         Registered: {new Date(user.created_at).toLocaleDateString()}
@@ -106,10 +112,10 @@ function PendingCard({
                 </div>
             </div>
 
-            <div ref={menuRef} className="relative flex-shrink-0">
+            <div ref={menuRef} className="relative shrink-0">
                 <button
                     onClick={() => setMenuOpen(function(v) { return !v; })}
-                    className="rounded-full p-2 text-gray-600 transition cursor-pointer hover:bg-red-200/80 hover:text-red-800 focus:outline-none"
+                    className="cursor-pointer rounded-full p-2 text-gray-600 transition hover:bg-red-200/80 hover:text-red-800 focus:outline-none"
                 >
                     <EllipsisVertical className="h-4 w-4" />
                 </button>
@@ -118,7 +124,7 @@ function PendingCard({
                     <div className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-md border border-gray-100 bg-white py-1 shadow-lg">
                         <button
                             onClick={() => { setMenuOpen(false); onApprove(user); }}
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 cursor-pointer"
+                            className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-xs font-bold text-green-700 transition-colors hover:bg-green-50"
                         >
                             <span className="rounded-full bg-green-100 p-1">
                                 <Check className="h-3 w-3" />
@@ -128,7 +134,7 @@ function PendingCard({
                         <div className="my-0.5 h-px bg-gray-100" />
                         <button
                             onClick={() => { setMenuOpen(false); onDeny(user); }}
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-xs font-semibold text-red-700 transition-colors hover:bg-red-50 cursor-pointer"
+                            className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-xs font-bold text-red-700 transition-colors hover:bg-red-50"
                         >
                             <span className="rounded-full bg-red-100 p-1">
                                 <X className="h-3 w-3" />
@@ -142,7 +148,8 @@ function PendingCard({
     );
 }
 
-// Main drawer
+// ── Main drawer ───────────────────────────────────────────────────────────────
+
 interface Props {
     open: boolean;
     onClose: () => void;
@@ -150,11 +157,20 @@ interface Props {
 }
 
 export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
+    const { auth } = usePage<PageProps>().props;
+    const roles    = Array.isArray(auth?.user?.roles) ? auth.user.roles : [];
+    const isAdmin  = roles.includes('admin');
+
     const [screen, setScreen]               = useState<'list' | 'pending'>('list');
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [pendingUsers, setPendingUsers]   = useState<PendingUser[]>([]);
     const [loading, setLoading]             = useState(false);
 
+    function pushUnread(count: number) {
+        if (onUnreadChange) onUnreadChange(count);
+    }
+
+    // ── Initial axios load when drawer opens ──────────────────────────────────
     useEffect(() => {
         if (!open) return;
         setScreen('list');
@@ -165,20 +181,52 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                 const pending: PendingUser[]    = res.data.pendingUsers ?? [];
                 setNotifications(notifs);
                 setPendingUsers(pending);
-                const unread = notifs.filter(function(n) { return !n.read_at; }).length;
-                if (onUnreadChange) onUnreadChange(unread);
+                const unreadNotifs  = notifs.filter(function(n) { return !n.read_at; }).length;
+                const unreadPending = pending.length;
+                pushUnread(unreadNotifs + unreadPending);
             })
             .finally(function() { setLoading(false); });
     }, [open]);
 
+    // ── Listen to real-time events from app-sidebar's Echo listeners ──────────
     useEffect(() => {
-        function handler(e: KeyboardEvent) {
-            if (e.key === 'Escape') onClose();
+        function onNewPending(e: Event) {
+            const data = (e as CustomEvent<PendingUser>).detail;
+            setPendingUsers(function(prev) {
+                if (prev.some(function(u) { return u.id === data.id; })) return prev;
+                return [data, ...prev];
+            });
+            Toast.fire({ icon: 'info', title: 'New user registration pending approval.' });
         }
+
+        function onNewNotification(e: Event) {
+            const data = (e as CustomEvent<{ message: string; url: string }>).detail;
+            const newNotif: AppNotification = {
+                id: 'live-' + Date.now(),
+                data: data,
+                read_at: null,
+                created_at: new Date().toISOString(),
+            };
+            setNotifications(function(prev) { return [newNotif, ...prev]; });
+            Toast.fire({ icon: 'success', title: data.message });
+        }
+
+        window.addEventListener('notif:new-pending', onNewPending);
+        window.addEventListener('notif:new-notification', onNewNotification);
+        return function() {
+            window.removeEventListener('notif:new-pending', onNewPending);
+            window.removeEventListener('notif:new-notification', onNewNotification);
+        };
+    }, []);
+
+    // ── Escape key ────────────────────────────────────────────────────────────
+    useEffect(() => {
+        function handler(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [onClose]);
 
+    // ── Mark notification read on click ───────────────────────────────────────
     function handleNotifClick(notif: AppNotification) {
         if (notif.read_at) return;
         axios.post('/notifications/' + notif.id + '/read').then(function() {
@@ -188,11 +236,19 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                     return n;
                 });
             });
-            const unread = notifications.filter(function(n) { return n.id !== notif.id && !n.read_at; }).length;
-            if (onUnreadChange) onUnreadChange(unread);
+            // Decrement badge — one unread notification was just read
+            window.dispatchEvent(new CustomEvent('notif:decrement'));
         });
     }
 
+    // ── Remove pending user from list and decrement badge ─────────────────────
+    function removePending(userId: number) {
+        setPendingUsers(function(prev) { return prev.filter(function(u) { return u.id !== userId; }); });
+        // Decrement badge — one pending approval was resolved
+        window.dispatchEvent(new CustomEvent('notif:decrement'));
+    }
+
+    // ── Approve ───────────────────────────────────────────────────────────────
     function approveUser(user: PendingUser) {
         Swal.fire({
             title: 'Approve Account?',
@@ -204,21 +260,20 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             confirmButtonText: 'Yes, Approve',
         }).then(function(result) {
             if (!result.isConfirmed) return;
-            router.post(
-                '/admin/employees/' + user.id + '/approve',
-                {},
-                {
-                    preserveScroll: true,
-                    onSuccess: function() {
-                        setPendingUsers(function(prev) { return prev.filter(function(u) { return u.id !== user.id; }); });
-                        Toast.fire({ icon: 'success', title: fullName(user) + ' approved.' });
-                    },
-                    onError: function() { Toast.fire({ icon: 'error', title: 'Something went wrong.' }); },
-                }
-            );
+            router.post('/admin/employees/' + user.id + '/approve', {}, {
+                preserveScroll: true,
+                onSuccess: function() {
+                    removePending(user.id);
+                    // Also update the employee table row to approved status
+                    window.dispatchEvent(new CustomEvent('notif:employee-approved', { detail: { id: user.id } }));
+                    Toast.fire({ icon: 'success', title: fullName(user) + ' approved.' });
+                },
+                onError: function() { Toast.fire({ icon: 'error', title: 'Something went wrong.' }); },
+            });
         });
     }
 
+    // ── Deny ──────────────────────────────────────────────────────────────────
     function denyUser(user: PendingUser) {
         Swal.fire({
             title: 'Deny & Delete?',
@@ -230,64 +285,59 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             confirmButtonText: 'Yes, Deny',
         }).then(function(result) {
             if (!result.isConfirmed) return;
-            router.delete(
-                '/admin/employees/' + user.id,
-                {
-                    preserveScroll: true,
-                    onSuccess: function() {
-                        setPendingUsers(function(prev) { return prev.filter(function(u) { return u.id !== user.id; }); });
-                        Toast.fire({ icon: 'success', title: fullName(user) + ' denied and removed.' });
-                    },
-                    onError: function() { Toast.fire({ icon: 'error', title: 'Something went wrong.' }); },
-                }
-            );
+            router.delete('/admin/employees/' + user.id, {
+                preserveScroll: true,
+                onSuccess: function() {
+                    removePending(user.id);
+                    // Also remove the row from the employee table
+                    window.dispatchEvent(new CustomEvent('notif:employee-removed', { detail: { id: user.id } }));
+                    Toast.fire({ icon: 'success', title: fullName(user) + ' denied and removed.' });
+                },
+                onError: function() { Toast.fire({ icon: 'error', title: 'Something went wrong.' }); },
+            });
         });
     }
 
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <>
             <div onClick={onClose} className={backdropClass(open)} />
 
             <div className={drawerClass(open)}>
-
                 <div className="flex items-center justify-between border-b px-4 py-4">
                     <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-                    <button
-                        onClick={onClose}
-                        className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
-                    >
+                    <button onClick={onClose} className="cursor-pointer rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
                 <div className="relative flex-1 overflow-hidden">
 
-                    {/* List screen */}
-                    <div className={listScreenClass(screen)}>
-
+                    {/* LIST SCREEN */}
+                    <div className={listScreenClass(screen === 'list')}>
                         {loading && (
-                            <p className="mt-5 text-center text-sm italic text-gray-400">Loading…</p>
+                            <p className="mt-10 text-center text-sm italic text-gray-400">Loading…</p>
                         )}
 
                         {!loading && pendingUsers.length > 0 && (
                             <button
                                 onClick={() => setScreen('pending')}
-                                className="mb-4 flex w-full items-center justify-between rounded-lg border border-red-300 bg-red-50 p-3 transition hover:bg-red-100 cursor-pointer"
+                                className="mb-4 flex w-full cursor-pointer items-center justify-between rounded-lg border border-red-300 bg-red-50 p-3 transition hover:bg-red-100"
                             >
                                 <div className="flex items-center gap-2">
                                     <span className="rounded-md bg-red-500 p-2 text-white">
                                         <BellRing className="h-5 w-5" />
                                     </span>
-                                    <span className="font-semibold text-red-600">Pending Approvals</span>
+                                    <span className="font-semibold text-red-700">Pending Approvals</span>
                                 </div>
-                                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white">
+                                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                                     {pendingUsers.length}
                                 </span>
                             </button>
                         )}
 
-                        {!loading && notifications.length === 0 && (
-                            <p className="mt-5 text-center text-sm italic text-gray-400">No notifications</p>
+                        {!loading && notifications.length === 0 && pendingUsers.length === 0 && (
+                            <p className="mt-10 text-center text-sm italic text-gray-400">No notifications</p>
                         )}
 
                         {!loading && notifications.map(function(notif) {
@@ -305,11 +355,11 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                         })}
                     </div>
 
-                    {/* Pending screen */}
-                    <div className={pendingScreenClass(screen)}>
+                    {/* PENDING SCREEN */}
+                    <div className={pendingScreenClass(screen === 'pending')}>
                         <button
                             onClick={() => setScreen('list')}
-                            className="sticky top-0 z-10 mb-3 flex items-center gap-2 bg-white py-2 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+                            className="sticky top-0 z-10 mb-3 flex cursor-pointer items-center gap-2 bg-white py-2 text-sm text-gray-600 hover:text-gray-900"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to notifications

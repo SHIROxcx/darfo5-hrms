@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\AccountApproved;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -63,10 +64,14 @@ class EmployeeController extends Controller
         if (! $user->hasVerifiedEmail()) {
             return back()->with('error', 'This employee has not verified their email yet.');
         }
+
         $user->update(['is_approved' => true]);
 
         // Send approval email
         $user->notify(new \App\Notifications\AccountApprovedNotification());
+
+        // Broadcast real-time event to the employee
+        AccountApproved::dispatch($user);  
 
         return back()->with('success', "{$user->first_name} {$user->last_name}'s account has been approved.");
     }
@@ -78,6 +83,8 @@ class EmployeeController extends Controller
         // Only send approval email when toggled to approved
         if ($user->is_approved) {
             $user->notify(new \App\Notifications\AccountApprovedNotification());
+            // Broadcast real-time event to the employee
+            AccountApproved::dispatch($user);  
         }
 
         $status = $user->is_approved ? 'approved' : 'revoked';

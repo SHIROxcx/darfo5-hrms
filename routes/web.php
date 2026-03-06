@@ -78,6 +78,7 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, string $id, 
     if (! $user->hasVerifiedEmail()) {
         $user->markEmailAsVerified();
         event(new \Illuminate\Auth\Events\Verified($user));
+         \App\Events\NewUserRegistered::dispatch($user);
     }
 
     Auth::logout();

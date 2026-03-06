@@ -59,13 +59,27 @@ class HandleInertiaRequests extends Middleware
                     'first_name'  => $user->first_name ?? '',
                     'last_name'   => $user->last_name ?? '',
                     'email'       => $user->email,
-                    'roles'       => $user->getRoleNames(),
-                    'permissions' => $user->getAllPermissions()->pluck('name'),
+                    'roles'       => $user->getRoleNames()->values()->toArray(),
+                    'permissions' => $user->getAllPermissions()->pluck('name')->values()->toArray(),
                 ] : null,
-                    'unreadNotificationsCount' => fn () => $request->user()
-                        ? $request->user()->unreadNotifications()->count()
-                        : 0,
             ],
+            'unreadNotificationsCount' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) return 0;
+
+                $unreadNotifs = $user->unreadNotifications()->count();
+
+                // Also count pending approvals for admins
+                $pendingCount = 0;
+                if ($user->hasRole('admin')) {
+                    $pendingCount = \App\Models\User::role('employee')
+                        ->where('is_approved', false)
+                        ->whereNotNull('email_verified_at')
+                        ->count();
+                }
+
+                return $unreadNotifs + $pendingCount;
+            },
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
