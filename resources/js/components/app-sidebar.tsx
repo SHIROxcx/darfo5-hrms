@@ -16,6 +16,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
@@ -55,6 +56,9 @@ interface PageProps {
 }
 
 export function AppSidebar() {
+    // ✅ useSidebar gives us setOpenMobile to close the sidebar on mobile nav clicks
+    const { setOpenMobile, isMobile } = useSidebar();
+
     const { auth, unreadNotificationsCount } = usePage<PageProps>().props;
     const roles  = Array.isArray(auth.user?.roles) ? auth.user.roles : [];
     const userId = auth.user?.id;
@@ -76,7 +80,7 @@ export function AppSidebar() {
     const [drawerOpen, setDrawerOpen]   = useState(false);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
 
-    // ── Real-time Echo subscriptions — always alive regardless of drawer state ──
+    // ── Real-time Echo subscriptions ─────────────────────────────────────────
     useEffect(() => {
         if (!userId) return;
 
@@ -84,22 +88,15 @@ export function AppSidebar() {
             echo
                 .private('admin.notifications')
                 .listen('.new-user-registered', function(data: PendingUser) {
-                    // 1. Increment badge
                     setUnreadCount(function(prev) { return prev + 1; });
-
-                    // 2. Tell notification drawer to prepend to pending list
                     window.dispatchEvent(new CustomEvent('notif:new-pending', { detail: data }));
-
-                    // 3. Tell employee table to prepend the new row in real-time
                     window.dispatchEvent(new CustomEvent('notif:employee-added', { detail: data }));
                 });
         }
 
-        // Employee: listen for account approval on their private channel
         echo
             .private('user.' + userId)
             .listen('.account-approved', function(data: { message: string; url: string }) {
-                // Increment badge for the employee receiving the notification
                 setUnreadCount(function(prev) { return prev + 1; });
                 window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: data }));
             });
@@ -110,8 +107,7 @@ export function AppSidebar() {
         };
     }, [userId, isAdmin]);
 
-    // ── Badge decrement — fired by drawer when notification is read,
-    //    or when admin approves/denies a pending user ─────────────────────────
+    // ── Badge decrement ───────────────────────────────────────────────────────
     useEffect(() => {
         function onDecrement() {
             setUnreadCount(function(prev) { return Math.max(0, prev - 1); });
@@ -121,6 +117,11 @@ export function AppSidebar() {
             window.removeEventListener('notif:decrement', onDecrement);
         };
     }, []);
+
+    // ── Close mobile sidebar on any nav click ─────────────────────────────────
+    function closeMobile() {
+        if (isMobile) setOpenMobile(false);
+    }
 
     return (
         <>
@@ -135,7 +136,8 @@ export function AppSidebar() {
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton size="lg" asChild>
-                                <Link href={dashboard()} prefetch>
+                                {/* ✅ Close mobile sidebar when logo is clicked */}
+                                <Link href={dashboard()} prefetch onClick={closeMobile}>
                                     <AppLogo />
                                 </Link>
                             </SidebarMenuButton>
@@ -144,17 +146,20 @@ export function AppSidebar() {
                 </SidebarHeader>
 
                 <SidebarContent>
-                    <NavMain items={mainNavItems} />
+                    {/* ✅ Pass onNavClick so each nav item closes the mobile sidebar */}
+                    <NavMain items={mainNavItems} onNavClick={closeMobile} />
                 </SidebarContent>
 
                 <SidebarFooter>
                     <NavFooter
                         items={[{ title: 'Messages', href: '#', icon: MessagesSquare }]}
                         className="mt-auto"
+                        onNavClick={closeMobile}
                     />
 
+                    {/* close mobile sidebar then open drawer */}
                     <button
-                        onClick={() => setDrawerOpen(true)}
+                        onClick={function() { closeMobile(); setDrawerOpen(true); }}
                         className="group relative flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     >
                         <span className="relative">
@@ -167,7 +172,7 @@ export function AppSidebar() {
                         </span>
                         <span className="group-data-[collapsible=icon]:hidden">Notifications</span>
                     </button>
-
+                    
                     <NavUser />
                 </SidebarFooter>
             </Sidebar>

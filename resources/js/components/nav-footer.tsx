@@ -12,14 +12,16 @@ import type { NavItem } from '@/types';
 export function NavFooter({
     items,
     className,
+    onNavClick,
     ...props
 }: ComponentPropsWithoutRef<typeof SidebarGroup> & {
     items: NavItem[];
+    onNavClick?: () => void;
 }) {
     return (
         <SidebarGroup
             {...props}
-            className={`group-data-[collapsible=icon]:p-0 ${className || ''}`}
+            className={'group-data-[collapsible=icon]:p-0 ' + (className || '')}
         >
             <SidebarGroupContent>
                 <SidebarMenu>
@@ -33,10 +35,9 @@ export function NavFooter({
                                     href={toUrl(item.href)}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={onNavClick}
                                 >
-                                    {item.icon && (
-                                        <item.icon className="h-5 w-5" />
-                                    )}
+                                    {item.icon && <item.icon className="h-5 w-5" />}
                                     <span>{item.title}</span>
                                 </a>
                             </SidebarMenuButton>
