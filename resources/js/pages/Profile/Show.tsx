@@ -85,7 +85,7 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 function getInitials(u: ProfileUser) {
     return ((u.first_name?.[0] ?? '') + (u.last_name?.[0] ?? '')).toUpperCase() || u.name?.[0]?.toUpperCase() || '?';
@@ -101,7 +101,7 @@ function dateRange(sm: string | null, sy: number | null, em: string | null, ey: 
     return start + ' – ' + end;
 }
 
-// ── Shared UI ─────────────────────────────────────────────────────────────────
+// Shared UI
 
 function SectionCard({ icon: Icon, title, action, children }: {
     icon: any; title: string; action?: React.ReactNode; children: React.ReactNode;
@@ -188,7 +188,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600";
 const selectCls = inputCls;
 
-// ── Modals ────────────────────────────────────────────────────────────────────
+// Modals
 
 function EditPersonalModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
     const ep = user.employee_profile;
@@ -373,6 +373,57 @@ function DegreeModal({ userId, degree, onClose }: {
     );
 }
 
+function GraduateStudyModal({ userId, program, onClose }: {
+    userId: number; program?: GraduateStudy; onClose: () => void;
+}) {
+    const [form, setForm] = useState({
+        program:     program?.program      ?? '',
+        start_month: program?.start_month ?? '',
+        start_year:  program?.start_year  ? String(program.start_year) : '',
+        end_month:   program?.end_month   ?? '',
+        end_year:    program?.end_year    ? String(program.end_year)   : '',
+    });
+    const [saving, setSaving] = useState(false);
+    const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        setForm(f => ({ ...f, [k]: e.target.value }));
+
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function save() {
+        setSaving(true);
+        const url = program ? '/profile/program/' + program.id : '/profile/' + userId + '/program';
+        router.post(url, form, {
+            preserveScroll: true,
+            onSuccess: () => { setSaving(false); onClose(); },
+            onError:   () => setSaving(false),
+        });
+    }
+
+    return (
+        <ModalShell title={program ? 'Edit Program' : 'Add Program'} onClose={onClose} onSave={save} saving={saving}>
+            <Field label="program / Course">
+                <input value={form.program} onChange={set('program')} className={inputCls} placeholder="e.g. Master in Information Technology" />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+                <Field label="Start Month">
+                    <select value={form.start_month} onChange={e => setForm(f => ({...f, start_month: e.target.value}))} className={selectCls}>
+                        <option value="">— Month —</option>
+                        {months.map(m => <option key={m}>{m}</option>)}
+                    </select>
+                </Field>
+                <Field label="Start Year"><input value={form.start_year} onChange={set('start_year')} className={inputCls} placeholder="2018" /></Field>
+                <Field label="End Month">
+                    <select value={form.end_month} onChange={e => setForm(f => ({...f, end_month: e.target.value}))} className={selectCls}>
+                        <option value="">— Month —</option>
+                        {months.map(m => <option key={m}>{m}</option>)}
+                    </select>
+                </Field>
+                <Field label="End Year"><input value={form.end_year} onChange={set('end_year')} className={inputCls} placeholder="2022" /></Field>
+            </div>
+        </ModalShell>
+    );
+}
+
 function EligibilityModal({ userId, item, onClose }: {
     userId: number; item?: Eligibility; onClose: () => void;
 }) {
@@ -445,7 +496,7 @@ function CompletionDonut({ percent }: { percent: number }) {
     );
 }
 
-// ── Profile completion calculator ─────────────────────────────────────────────
+// Profile completion calculator
 
 function calcCompletion(user: ProfileUser): number {
     const ep = user.employee_profile;
@@ -486,6 +537,7 @@ export default function ProfileShow() {
     const [modal, setModal] = useState<
         'personal' | 'company' | 'government' |
         { type: 'degree';       item?: Degree }      |
+        { type: 'program';      item?: GraduateStudy }      |
         { type: 'eligibility';  item?: Eligibility } |
         null
     >(null);
@@ -508,6 +560,8 @@ export default function ProfileShow() {
             {modal === 'government' && <EditGovernmentModal user={user} onClose={() => setModal(null)} />}
             {modal !== null && typeof modal === 'object' && modal.type === 'degree' &&
                 <DegreeModal userId={user.id} degree={modal.item} onClose={() => setModal(null)} />}
+            {modal !== null && typeof modal === 'object' && modal.type === 'program' &&
+                <GraduateStudyModal userId={user.id} program={modal.item} onClose={() => setModal(null)} />}
             {modal !== null && typeof modal === 'object' && modal.type === 'eligibility' &&
                 <EligibilityModal userId={user.id} item={modal.item} onClose={() => setModal(null)} />}
 
@@ -520,15 +574,15 @@ export default function ProfileShow() {
                     <div className="relative flex-1 rounded-2xl bg-gradient-to-br from-[#016630] to-[#008236] p-6 text-white shadow-xl">
                         {isOwn && (
                             <button onClick={() => setModal('personal')}
-                                className="absolute right-5 bottom-5 flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold hover:bg-white/25 transition">
-                                <Edit2 className="h-3.5 w-3.5" /> Edit
+                                className="absolute right-5 bottom-5 flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 p-3 text-xs font-semibold hover:bg-white/25 transition">
+                                <Edit2 className="h-3.5 w-3.5" />
                             </button>
                         )}
 
                         <div className="flex gap-5 items-start">
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white/30 shadow-lg">
+                                <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white/20 shadow-lg">
                                     {avatar
                                         ? <img src={avatar} alt={name} className="h-full w-full object-cover bg-white" />
                                         : <div className="flex h-full w-full items-center justify-center bg-white-700 text-2xl font-bold">{getInitials(user)}</div>
@@ -537,8 +591,8 @@ export default function ProfileShow() {
                                 {isOwn && (
                                     <>
                                         <button onClick={() => photoRef.current?.click()}
-                                            className="absolute -bottom-0.5 right-1 flex cursor-pointer h-7 w-7 items-center justify-center rounded-full bg-white shadow text-gray-700 hover:bg-gray-100 transition">
-                                            <Camera className="h-3.5 w-3.5" />
+                                            className="absolute bottom-0.5 right-2 flex cursor-pointer h-6 w-6 items-center border-green-700 justify-center rounded-full bg-white shadow text-gray-700 hover:bg-gray-100 transition">
+                                            <Camera className="h-4 w-4" />
                                         </button>
                                         <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
                                     </>
@@ -678,7 +732,7 @@ export default function ProfileShow() {
                 {/* GRADUATE STUDIES */}
                 {(user.graduate_studies.length > 0 || isOwn) && (
                     <SectionCard icon={BookOpen} title="Graduate Studies"
-                        action={isOwn ? <AddBtn onClick={() => setModal({ type: 'degree' })} label="Add" /> : undefined}>
+                        action={isOwn ? <AddBtn onClick={() => setModal({ type: 'program' })} label="Add" /> : undefined}>
                         {user.graduate_studies.length === 0
                             ? <p className="text-sm text-gray-400 italic">No graduate studies added yet.</p>
                             : <div className="space-y-4">
@@ -693,6 +747,10 @@ export default function ProfileShow() {
                                                 <p className="text-xs text-gray-400 mt-0.5">{dateRange(g.start_month, g.start_year, g.end_month, g.end_year)}</p>
                                             </div>
                                         </div>
+                                        {isOwn && (
+                                        <button onClick={() => setModal({ type: 'program', item: g })}
+                                            className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>
+                                    )}
                                     </div>
                                 ))}
                             </div>
@@ -716,7 +774,7 @@ export default function ProfileShow() {
                                             <p className="text-sm font-semibold text-gray-900">{e.eligibility}</p>
                                             <p className="text-xs text-gray-400">
                                                 {e.date_issued ? new Date(e.date_issued).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
-                                                {e.place_issued ? ' · ' + e.place_issued : ''}
+                                                {e.place_issued ? ' | ' + e.place_issued : ''}
                                             </p>
                                         </div>
                                     </div>

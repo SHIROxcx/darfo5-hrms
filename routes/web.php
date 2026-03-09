@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{id}/government',      [UserProfileController::class, 'updateGovernment'])->name('profile.government');
     Route::post('/profile/{userId}/degree',      [UserProfileController::class, 'storeDegree'])->name('profile.degree.store');
     Route::post('/profile/degree/{id}',          [UserProfileController::class, 'updateDegree'])->name('profile.degree.update');
+    Route::post('/profile/{userId}/program',     [UserProfileController::class, 'storeGraduateStudy'])->name('profile.program.store');
+    Route::post('/profile/program/{id}',         [UserProfileController::class, 'updateGraduateStudy'])->name('profile.program.update');
     Route::post('/profile/{userId}/eligibility', [UserProfileController::class, 'storeEligibility'])->name('profile.eligibility.store');
     Route::post('/profile/eligibility/{id}',     [UserProfileController::class, 'updateEligibility'])->name('profile.eligibility.update');
     

@@ -166,7 +166,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
     );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main Page
 
 export default function Index({ employees, filters }: Props) {
     const [search, setSearch]           = useState(filters.search ?? '');

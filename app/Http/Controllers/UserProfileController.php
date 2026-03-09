@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\EmployeeDegree;
 use App\Models\EmployeeEligibility;
+use App\Models\EmployeeGraduateStudy;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,7 +28,7 @@ class UserProfileController extends Controller
         ]);
     }
 
-    // ── Personal info (owner only) ────────────────────────────────────────────
+    // Personal info (owner only)
     public function updatePersonal(Request $request)
     {
         $user = $request->user();
@@ -65,7 +66,7 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Company info (admin only) ─────────────────────────────────────────────
+    // Company info (admin only)
     public function updateCompany(Request $request, int $id)
     {
         abort_unless($request->user()->hasRole('admin'), 403);
@@ -87,7 +88,7 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Government IDs (admin only) ───────────────────────────────────────────
+    // Government IDs (admin only)
     public function updateGovernment(Request $request, int $id)
     {
         abort_unless($request->user()->hasRole('admin'), 403);
@@ -106,7 +107,7 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Photo (owner only) ────────────────────────────────────────────────────
+    // Photo (owner only)
     public function updatePhoto(Request $request)
     {
         $request->validate(['photo' => 'required|image|max:2048']);
@@ -115,7 +116,7 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Degree (owner only) ───────────────────────────────────────────────────
+    // Degree (owner only)
     public function storeDegree(Request $request, int $userId)
     {
         abort_unless($request->user()->id === $userId, 403);
@@ -145,7 +146,37 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Eligibility (owner only) ──────────────────────────────────────────────
+    // Graduate Studies (owner only)
+    public function storeGraduateStudy(Request $request, int $userId)
+    {
+        abort_unless($request->user()->id === $userId, 403);
+        $data = $request->validate([
+            'program'     => 'required|string|max:255',
+            'start_month' => 'nullable|string|max:20',
+            'start_year'  => 'nullable|integer|min:1900|max:2100',
+            'end_month'   => 'nullable|string|max:20',
+            'end_year'    => 'nullable|integer|min:1900|max:2100',
+        ]);
+        EmployeeGraduateStudy::create(['user_id' => $userId, ...$data]);
+        return back();
+    }
+
+    public function updateGraduateStudy(Request $request, int $programId)
+    {
+        $program = EmployeeGraduateStudy::findOrFail($programId);
+        abort_unless($request->user()->id === $program->user_id, 403);
+        $data = $request->validate([
+            'program'     => 'required|string|max:255',
+            'start_month' => 'nullable|string|max:20',
+            'start_year'  => 'nullable|integer',
+            'end_month'   => 'nullable|string|max:20',
+            'end_year'    => 'nullable|integer',
+        ]);
+        $program->update($data);
+        return back();
+    }
+
+    // Eligibility (owner only)
     public function storeEligibility(Request $request, int $userId)
     {
         abort_unless($request->user()->id === $userId, 403);
@@ -175,7 +206,7 @@ class UserProfileController extends Controller
         return back();
     }
 
-    // ── Format helper ─────────────────────────────────────────────────────────
+    // Format helper
     private function format(User $u): array
     {
         $ep = $u->employeeProfile;
