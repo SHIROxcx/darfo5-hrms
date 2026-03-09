@@ -51,7 +51,10 @@ interface PageProps {
 }
 
 export function AppSidebar() {
-    const { setOpenMobile, isMobile } = useSidebar();
+    // openMobile is the Sheet open state — only true when the mobile Sheet is open.
+    // We close it directly rather than relying on isMobile, which only covers <768px.
+    // This also correctly handles tablets (768–1024px) where the Sheet is used.
+    const { openMobile, setOpenMobile } = useSidebar();
     const { auth } = usePage<PageProps>().props;
     const roles = Array.isArray(auth.user?.roles) ? auth.user.roles : [];
 
@@ -69,8 +72,8 @@ export function AppSidebar() {
 
     const mainNavItems = [...commonNavItems, ...roleNavItems];
 
-    function closeMobile() {
-        if (isMobile) setOpenMobile(false);
+    function closeMobileIfOpen() {
+        if (openMobile) setOpenMobile(false);
     }
 
     return (
@@ -79,7 +82,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch onClick={closeMobile}>
+                            <Link href={dashboard()} prefetch onClick={closeMobileIfOpen}>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -88,8 +91,17 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} onNavClick={closeMobile} />
+                <NavMain items={mainNavItems} onNavClick={closeMobileIfOpen} />
             </SidebarContent>
+
+            <SidebarFooter>
+                <NavFooter
+                    items={[{ title: 'Messages', href: '#', icon: MessagesSquare }]}
+                    className="mt-auto"
+                    onNavClick={closeMobileIfOpen}
+                />
+                <NavUser />
+            </SidebarFooter>
         </Sidebar>
     );
 }

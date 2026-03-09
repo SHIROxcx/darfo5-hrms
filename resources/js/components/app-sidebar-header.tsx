@@ -20,8 +20,6 @@ import type { PendingUser } from '@/types/notification';
 import echo from '@/echo';
 import { useEffect } from 'react';
 
-// Types
-
 interface AuthUser {
     id: number;
     name: string;
@@ -36,8 +34,6 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-// Header
-
 export function AppSidebarHeader({
     breadcrumbs = [],
 }: {
@@ -50,12 +46,12 @@ export function AppSidebarHeader({
     const isAdmin = roles.includes('admin');
 
     const getInitials = useInitials();
-    const { isMobile, setOpenMobile } = useSidebar();
+
+    const { openMobile, setOpenMobile } = useSidebar();
 
     const [drawerOpen, setDrawerOpen]   = useState(false);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
 
-    // Current day/date display
     const today = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -106,25 +102,20 @@ export function AppSidebarHeader({
 
             <header className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5">
 
-                {/* Left — sidebar trigger on mobile */}
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />
                 </div>
 
-                {/* Date — hidden on small screens */}
                 <span className="hidden select-none text-sm text-white/80 md:block whitespace-nowrap">
                     {today}
                 </span>
 
-                {/* Right actions */}
                 <div className="ml-auto flex items-center gap-2">
 
-                    {/* Messages */}
                     <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white">
                         <MessagesSquare className="h-4 w-4" />
                     </button>
 
-                    {/* Notifications */}
                     <button
                         onClick={() => setDrawerOpen(true)}
                         className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 transition hover:bg-white/20 hover:text-white"
@@ -137,7 +128,6 @@ export function AppSidebarHeader({
                         )}
                     </button>
 
-                    {/* User avatar */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="cursor-pointer rounded-full ring-2 ring-white/40 transition hover:ring-white/40">
@@ -156,7 +146,6 @@ export function AppSidebarHeader({
                 </div>
             </header>
 
-            {/* Breadcrumb row */}
             {breadcrumbs.length > 1 && (
                 <div className="flex w-full border-b border-sidebar-border/50 bg-white px-6 py-2">
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
