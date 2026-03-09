@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
+use App\Http\Controllers\UserProfileController;
 use App\Models\Division;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
@@ -50,11 +51,23 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profile page
+    Route::get('/profile',                       [UserProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/{id}',                  [UserProfileController::class, 'show'])->name('profile.show.user');
+    Route::post('/profile/photo',                [UserProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/personal',             [UserProfileController::class, 'updatePersonal'])->name('profile.personal');
+    Route::post('/profile/{id}/company',         [UserProfileController::class, 'updateCompany'])->name('profile.company');
+    Route::post('/profile/{id}/government',      [UserProfileController::class, 'updateGovernment'])->name('profile.government');
+    Route::post('/profile/{userId}/degree',      [UserProfileController::class, 'storeDegree'])->name('profile.degree.store');
+    Route::post('/profile/degree/{id}',          [UserProfileController::class, 'updateDegree'])->name('profile.degree.update');
+    Route::post('/profile/{userId}/eligibility', [UserProfileController::class, 'storeEligibility'])->name('profile.eligibility.store');
+    Route::post('/profile/eligibility/{id}',     [UserProfileController::class, 'updateEligibility'])->name('profile.eligibility.update');
     
     // Notification Routes
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::get('/notifications',                 [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all',       [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read',      [NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 // Email Verification (OTP-based)

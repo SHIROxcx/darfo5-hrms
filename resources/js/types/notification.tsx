@@ -8,6 +8,17 @@ export interface AppNotification {
     created_at: string;
 }
 
+export interface EmployeeProfile {
+    employee_number: string | null;
+    position: string | null;
+    salary_grade: string | null;
+    place_assign: string | null;
+    division: string | null;
+    section: string | null;
+    employment_type: string | null;
+    is_active: boolean;
+}
+
 export interface PendingUser {
     id: number;
     first_name: string;
@@ -15,4 +26,5 @@ export interface PendingUser {
     email: string;
     photo: string | null;
     created_at: string;
+    employee_profile?: EmployeeProfile;
 }

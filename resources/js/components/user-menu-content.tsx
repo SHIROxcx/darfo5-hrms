@@ -1,5 +1,7 @@
+// resources/js/components/user-menu-content.tsx
+
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, UserCircle } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -26,13 +28,30 @@ export function UserMenuContent({ user }: Props) {
 
     return (
         <>
+            {/* User identity */}
             <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <UserInfo user={user} showEmail={true} />
                 </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
+                {/* Profile — new */}
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/profile"
+                        prefetch
+                        onClick={cleanup}
+                    >
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        Profile
+                    </Link>
+                </DropdownMenuItem>
+
+                {/* Settings — existing */}
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
@@ -40,12 +59,14 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2" />
+                        <Settings className="mr-2 h-4 w-4" />
                         Settings
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem asChild>
                 <Link
                     className="block w-full cursor-pointer"
@@ -54,7 +75,7 @@ export function UserMenuContent({ user }: Props) {
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
-                    <LogOut className="mr-2" />
+                    <LogOut className="mr-2 h-4 w-4" />
                     Log out
                 </Link>
             </DropdownMenuItem>

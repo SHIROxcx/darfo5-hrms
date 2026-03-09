@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { Check, X, UserCheck, UserX, Clock, Bell } from 'lucide-react';
 import type { AppNotification, PendingUser } from '@/types/notification';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 function fullName(u: PendingUser) {
     return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
@@ -21,7 +21,7 @@ function avatarUrl(u: PendingUser) {
 function relativeTime(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'just now';
+    if (mins < 1) return 'Just now';
     if (mins < 60) return mins + 'm ago';
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return hrs + 'h ago';
@@ -36,14 +36,14 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 type Tab = 'unread' | 'pending' | 'all';
 
 interface AuthUser { id: number; roles: string[]; }
 interface PageProps { auth: { user: AuthUser }; [key: string]: unknown; }
 
-// ── User Detail Modal ─────────────────────────────────────────────────────────
+// User Detail Modal
 
 function UserDetailModal({
     user,
@@ -56,63 +56,108 @@ function UserDetailModal({
     onApprove: (u: PendingUser) => void;
     onDeny: (u: PendingUser) => void;
 }) {
+    const ep = user.employee_profile;
+    const initials = ((user.first_name?.[0] ?? '') + (user.last_name?.[0] ?? '')).toUpperCase() || '??';
+
     return (
-        <div className="fixed inset-0 z-60 flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
-                {/* Header banner */}
-                <div className="h-20 bg-gradient-to-r from-green-500 to-emerald-600" />
-                <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 cursor-pointer rounded-full bg-white/20 p-1.5 text-white hover:bg-white/30 transition"
-                >
-                    <X className="h-4 w-4" />
-                </button>
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl">
 
-                {/* Avatar overlapping banner */}
-                <div className="px-5 pb-5">
-                    <div className="-mt-10 mb-3 flex items-end justify-between">
-                        <img
-                            src={avatarUrl(user)}
-                            alt={fullName(user)}
-                            className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-lg"
-                        />
-                        <span className="mb-1 flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-semibold text-yellow-700 border border-yellow-200">
-                            <Clock className="h-3 w-3" />
-                            Pending
-                        </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-gray-900">{fullName(user)}</h3>
-                    <p className="text-sm text-gray-400 mb-4">{user.email}</p>
-
-                    <div className="space-y-2 rounded-xl bg-gray-50 p-3 text-sm mb-5">
-                        <div className="flex justify-between">
-                            <span className="text-gray-400">Registered</span>
-                            <span className="font-medium text-gray-700">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-400">Email verified</span>
-                            <span className="font-medium text-green-600">✓ Yes</span>
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b">
+                    <div className="flex items-center gap-3">
+                        {user.photo ? (
+                            <img
+                                src={'/storage/' + user.photo}
+                                className="h-12 w-12 rounded-full object-cover border"
+                                alt={fullName(user)}
+                            />
+                        ) : (
+                            <div className="h-12 w-12 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold">
+                                {initials}
+                            </div>
+                        )}
+                        <div>
+                            <p className="font-semibold text-gray-900">{fullName(user)}</p>
+                            <p className="text-xs text-gray-400">{user.email}</p>
                         </div>
                     </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
 
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => { onDeny(user); onClose(); }}
-                            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-                        >
-                            <UserX className="h-4 w-4" />
-                            Deny
-                        </button>
-                        <button
-                            onClick={() => { onApprove(user); onClose(); }}
-                            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
-                        >
-                            <UserCheck className="h-4 w-4" />
-                            Approve
-                        </button>
+                {/* Body */}
+                <div className="px-6 py-5 space-y-4">
+                    {/* Status badges */}
+                    <div className="flex gap-3">
+                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                            <p className="text-xs text-gray-400 mb-1">Email</p>
+                            <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
+                        </div>
+                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                            <p className="text-xs text-gray-400 mb-1">Approval</p>
+                            <span className="text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-full">Pending</span>
+                        </div>
+                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                            <p className="text-xs text-gray-400 mb-1">Active</p>
+                            {ep?.is_active
+                                ? <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Active</span>
+                                : <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Inactive</span>}
+                        </div>
                     </div>
+
+                    {/* Details grid */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p className="text-xs text-gray-400">Employee No.</p>
+                            <p className="font-medium text-gray-700">{ep?.employee_number ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-400">Employment Type</p>
+                            <p className="font-medium text-gray-700">{ep?.employment_type ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-400">Position</p>
+                            <p className="font-medium text-gray-700">{ep?.position ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-400">Salary Grade</p>
+                            <p className="font-medium text-gray-700">{ep?.salary_grade ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs text-gray-400">Agency</p>
+                            <p className="font-medium text-gray-700">{ep?.place_assign ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs text-gray-400">Division</p>
+                            <p className="font-medium text-gray-700">{ep?.division ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs text-gray-400">Section/Unit</p>
+                            <p className="font-medium text-gray-700">{ep?.section ?? <span className="italic text-gray-300">Not set</span>}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs text-gray-400">Registered</p>
+                            <p className="font-medium text-gray-700">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer actions */}
+                <div className="px-6 py-4 border-t flex justify-end gap-2">
+                    <button
+                        onClick={() => { onDeny(user); onClose(); }}
+                        className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                    >
+                        Deny
+                    </button>
+                    <button
+                        onClick={() => { onApprove(user); onClose(); }}
+                        className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                    >
+                        Approve Account
+                    </button>
                 </div>
             </div>
         </div>
@@ -140,9 +185,9 @@ function PendingRow({
                 <img
                     src={avatarUrl(user)}
                     alt={fullName(user)}
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-12 w-12 rounded-full object-cover"
                 />
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400 ring-2 ring-white">
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 ring-2 ring-white">
                     <Clock className="h-2.5 w-2.5 text-white" />
                 </span>
             </div>
@@ -152,7 +197,7 @@ function PendingRow({
                     <span className="font-semibold">{fullName(user)}</span>
                     <span className="text-gray-500"> registered and is awaiting approval</span>
                 </p>
-                <p className="mt-0.5 text-xs text-gray-400">{relativeTime(user.created_at)} · Registration</p>
+                <p className="mt-0.5 text-xs text-gray-400">{relativeTime(user.created_at)}</p>
 
                 {/* Approve / Deny inline buttons */}
                 <div className="mt-2 flex gap-2" onClick={function(e) { e.stopPropagation(); }}>
@@ -160,14 +205,12 @@ function PendingRow({
                         onClick={() => onApprove(user)}
                         className="flex cursor-pointer items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700"
                     >
-                        <Check className="h-3 w-3" />
                         Approve
                     </button>
                     <button
                         onClick={() => onDeny(user)}
                         className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
                     >
-                        <X className="h-3 w-3" />
                         Decline
                     </button>
                 </div>
@@ -179,7 +222,7 @@ function PendingRow({
     );
 }
 
-// ── Notification row ──────────────────────────────────────────────────────────
+// Notification row
 
 function NotifRow({
     notif,
@@ -217,7 +260,7 @@ function NotifRow({
     );
 }
 
-// ── Main drawer ───────────────────────────────────────────────────────────────
+// Main drawer
 
 interface Props {
     open: boolean;
@@ -311,7 +354,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         });
     }
 
-    // Remove from pending list 
+    // Remove from pending list
     function removePending(userId: number) {
         setPendingUsers(function(prev) { return prev.filter(function(u) { return u.id !== userId; }); });
         window.dispatchEvent(new CustomEvent('notif:decrement'));
@@ -343,7 +386,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         });
     }
 
-    // ── Deny ──────────────────────────────────────────────────────────────────
+    // Deny
     function denyUser(user: PendingUser) {
         Swal.fire({
             title: 'Deny & Delete?',
@@ -367,12 +410,12 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         });
     }
 
-    // ── Derived lists per tab ─────────────────────────────────────────────────
+    // Derived lists per tab
     const unreadNotifs  = notifications.filter(function(n) { return !n.read_at; });
     const pendingCount  = pendingUsers.length;
     const unreadCount   = unreadNotifs.length;
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // Render
     const drawerCls = 'fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-white shadow-2xl transition-transform duration-300 md:w-96 ' + (open ? 'translate-x-0' : 'translate-x-full');
     const backdropCls = 'fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ' + (open ? 'opacity-100' : 'pointer-events-none opacity-0');
 
@@ -548,7 +591,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                                                         <span className="font-medium text-gray-700">{fullName(user)}</span>
                                                         <span> was approved</span>
                                                     </p>
-                                                    <p className="mt-0.5 text-xs text-gray-400">just now · Registration</p>
+                                                    <p className="mt-0.5 text-xs text-gray-400">Just now</p>
                                                 </div>
                                                 <span className="mt-1.5 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600">Approved</span>
                                             </div>

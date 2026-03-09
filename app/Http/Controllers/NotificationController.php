@@ -28,6 +28,7 @@ class NotificationController extends Controller
             $pendingUsers = User::role('employee')
                 ->where('is_approved', false)
                 ->whereNotNull('email_verified_at')
+                ->with('employeeProfile')
                 ->latest()
                 ->get()
                 ->map(fn($u) => [
@@ -37,6 +38,16 @@ class NotificationController extends Controller
                     'email'      => $u->email,
                     'photo'      => $u->photo,
                     'created_at' => $u->created_at,
+                    'employee_profile' => $u->employeeProfile ? [
+                        'employee_number' => $u->employeeProfile->employee_number,
+                        'position'        => $u->employeeProfile->position,
+                        'salary_grade'    => $u->employeeProfile->salary_grade,
+                        'place_assign'    => $u->employeeProfile->place_assign,
+                        'division'        => $u->employeeProfile->division,
+                        'section'         => $u->employeeProfile->section,
+                        'employment_type' => $u->employeeProfile->employment_type,
+                        'is_active'       => $u->employeeProfile->is_active,
+                    ] : null,
                 ]);
         }
 
