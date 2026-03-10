@@ -1,5 +1,3 @@
-// resources/js/pages/Profile/Show.tsx
-
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Award, BookOpen, Briefcase, Building2, Calendar,
@@ -10,6 +8,7 @@ import {
 import { useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import { Spinner } from '@/components/ui/spinner';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -160,15 +159,15 @@ function ModalShell({ title, onClose, onSave, saving, children }: {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
             <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
                 <div className="flex items-center justify-between border-b px-6 py-4">
-                    <h3 className="font-semibold text-gray-900">{title}</h3>
+                    <h3 className="font-semibold text-green-800">{title}</h3>
                     <button onClick={onClose} className="cursor-pointer text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
                 </div>
                 <div className="max-h-[65vh] overflow-y-auto px-6 py-5 space-y-4">{children}</div>
                 <div className="flex justify-end gap-2 border-t px-6 py-4">
-                    <button onClick={onClose} className="cursor-pointer rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                    <button onClick={onClose} className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">Cancel</button>
                     <button onClick={onSave} disabled={saving}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg bg-[#1a3a2a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2d6a4f] transition disabled:opacity-60">
-                        {saving ? 'Saving…' : <><Check className="h-4 w-4" />Save</>}
+                        className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
+                        {saving ? <><Spinner /> Saving</> : 'Save Changes' } 
                     </button>
                 </div>
             </div>
@@ -222,7 +221,16 @@ function EditPersonalModal({ user, onClose }: { user: ProfileUser; onClose: () =
                 <Field label="First Name"><input value={form.first_name} onChange={set('first_name')} className={inputCls} /></Field>
                 <Field label="Middle Name"><input value={form.middle_name} onChange={set('middle_name')} className={inputCls} /></Field>
                 <Field label="Last Name"><input value={form.last_name} onChange={set('last_name')} className={inputCls} /></Field>
-                <Field label="Suffix (Jr., Sr., II)"><input value={form.name_ext} onChange={set('name_ext')} className={inputCls} /></Field>
+                <Field label="Suffix (Jr., Sr., II)">
+                    <select value={form.name_ext} onChange={set('name_ext')} className={inputCls}>
+                        <option value="">None</option>
+                        <option>Jr</option>
+                        <option>Sr</option>
+                        <option>I</option>
+                        <option>II</option>
+                        <option>III</option>
+                    </select>
+                </Field>
             </div>
             <Field label="Email"><input type="email" value={form.email} onChange={set('email')} className={inputCls} /></Field>
             <Field label="Mobile Number"><input value={form.mobile_number} onChange={set('mobile_number')} className={inputCls} /></Field>
@@ -484,7 +492,7 @@ function CompletionDonut({ percent }: { percent: number }) {
                 </svg>
                 <div className="absolute flex flex-col items-center">
                     <span className="text-2xl font-bold text-gray-900">{percent}%</span>
-                    <span className="text-xs text-gray-400">completed</span>
+                    <span className="text-xs text-gray-400">Completed</span>
                 </div>
             </div>
             <p className="mt-3 text-xs text-center text-gray-400 leading-snug px-2">
@@ -514,7 +522,7 @@ function calcCompletion(user: ProfileUser): number {
         !!ep?.civil_status,
         !!ep?.birth_place,
         user.degrees.length > 0,
-        user.eligibilities.length > 0,
+        // user.eligibilities.length > 0,
     ];
     const done = checks.filter(Boolean).length;
     return Math.round((done / checks.length) * 100);
@@ -565,113 +573,85 @@ export default function ProfileShow() {
             {modal !== null && typeof modal === 'object' && modal.type === 'eligibility' &&
                 <EligibilityModal userId={user.id} item={modal.item} onClose={() => setModal(null)} />}
 
-            <div className="max-w-7xl px-4 py-8 space-y-5 mx-auto">
+            <div className="px-4 md:px-12 py-6 space-y-5">
 
                 {/* HERO ROW: profile card + completion card */}
                 <div className="flex gap-4 items-stretch">
 
-                    {/* Main hero card */}
-                    <div className="relative flex-1 rounded-2xl bg-gradient-to-br from-[#016630] to-[#008236] p-6 text-white shadow-xl">
-                        {isOwn && (
-                            <button onClick={() => setModal('personal')}
-                                className="absolute right-5 bottom-5 flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 p-3 text-xs font-semibold hover:bg-white/25 transition">
-                                <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                        )}
+                    {/*  HERO ROW: profile card + completion card */}
+                    <div className="flex gap-4 items-stretch w-full">
 
-                        <div className="flex gap-5 items-start">
-                            {/* Avatar */}
-                            <div className="relative shrink-0">
-                                <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white/20 shadow-lg">
-                                    {avatar
-                                        ? <img src={avatar} alt={name} className="h-full w-full object-cover bg-white" />
-                                        : <div className="flex h-full w-full items-center justify-center bg-white-700 text-2xl font-bold">{getInitials(user)}</div>
-                                    }
-                                </div>
-                                {isOwn && (
-                                    <>
-                                        <button onClick={() => photoRef.current?.click()}
-                                            className="absolute bottom-0.5 right-2 flex cursor-pointer h-6 w-6 items-center border-green-700 justify-center rounded-full bg-white shadow text-gray-700 hover:bg-gray-100 transition">
-                                            <Camera className="h-4 w-4" />
-                                        </button>
-                                        <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
-                                    </>
-                                )}
+                        {/* ── Main hero card ── */}
+                        <div className="relative flex-1 rounded-2xl bg-white shadow-sm overflow-hidden">
+
+                            {/* Banner */}
+                            <div className="relative h-44 w-full bg-green-700">
+                                <img
+                                    src="/images/desktop-wallpaper.png"
+                                    alt=""
+                                    className="h-full w-full object-cover object-[25%_48%]"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-green-500/50" />
                             </div>
 
-                            {/* Name + details + contact */}
-                            <div className="flex flex-1 flex-col sm:flex-row gap-4 min-w-0">
-                                {/* Left: name, position, location, date */}
-                                <div className="flex-1 min-w-0">
-                                    <h1 className="text-2xl font-semibold leading-tight mb-1">{name}</h1>
-                                    <p className="text-white/70 text-sm mb-1">
+                            {/* Avatar — overlaps the banner */}
+                            <div className="absolute left-5 top-28">
+                                <div className="relative">
+                                    <div className="h-36 w-36 overflow-hidden rounded-full border-4 border-white shadow-md bg-white">
+                                        {avatar
+                                            ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
+                                            : <div className="flex h-full w-full items-center justify-center bg-green-700 text-3xl font-bold text-white">{getInitials(user)}</div>
+                                        }
+                                    </div>
+                                    {isOwn && (
+                                        <>
+                                            <button
+                                                onClick={() => photoRef.current?.click()}
+                                                className="absolute bottom-1 right-2 flex cursor-pointer h-8 w-8 items-center justify-center rounded-full bg-green-600 border-2 border-white shadow text-white hover:bg-green-700 transition"
+                                            >
+                                                <Camera className="h-4 w-4" />
+                                            </button>
+                                            <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Name + position — below banner, offset to clear the avatar */}
+                            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between px-5 pt-4 pb-5">
+                                <div className="pl-40">
+                                    <h1 className="text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
+                                    <p className="text-sm text-gray-500 mt-0.5">
                                         {ep?.position ?? 'No position set'}
                                     </p>
                                     {ep?.division && (
-                                        <p className="text-white/50 text-xs mb-1">{ep.division}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">{ep.division}</p>
                                     )}
-                                    {ep?.section && (
-                                        <p className="text-white/50 text-xs mb-1">{ep.section ? ep.section : ''}</p>
-                                    )}
-                                    {ep?.date_hired && (
-                                        <p className="text-white/50 text-xs">
-                                            Hired {new Date(ep.date_hired).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Right: contact details column */}
-                                <div className="shrink-0 space-y-1.5 text-sm">
-                                    {ep?.mobile_number && (
-                                        <div className="flex items-center gap-2 text-white/80">
-                                            <Phone className="h-4 w-4 shrink-0 text-white/40" />
-                                            <span>{ep.mobile_number}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2 text-white/80">
-                                        <Mail className="h-4 w-4 shrink-0 text-white/40" />
-                                        <span>{user.email}</span>
-                                    </div>
-                                    {ep?.birth_place && (
-                                        <div className="flex items-center gap-2 text-white/80">
-                                            <MapPin className="h-4 w-4 shrink-0 text-white/40" />
-                                            <span>{ep.birth_place}</span>
-                                        </div>
-                                    )}
-                                    {ep?.civil_status && (
-                                        <div className="flex items-center gap-2 text-white/80">
-                                            <Heart className="h-4 w-4 shrink-0 text-white/40" />
-                                            <span>{ep.civil_status}</span>
-                                        </div>
+                                    {ep?.division && (
+                                        <p className="text-xs text-gray-400 mt-0.5">{ep.section ? ep.section : ''}</p>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Edit button — bottom right */}
+                            {isOwn && (
+                                <button
+                                    title="Edit Profile"
+                                    onClick={() => setModal('personal')}
+                                    className="absolute bottom-5 right-5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 p-2 text-xs font-semibold text-white/90 hover:text-white hover:bg-green-700 transition"
+                                >
+                                    <Edit2 className="h-5 w-5" />
+                                </button>
+                            )}
                         </div>
 
-                        {/* Tags row at bottom */}
-                        <div className="mt-5 flex flex-wrap gap-2">
-                            {ep?.employment_type && (
-                                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">{ep.employment_type}</span>
-                            )}
-                            {ep?.salary_grade && (
-                                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">SG {ep.salary_grade}</span>
-                            )}
-                            {ep?.is_active
-                                ? <span className="rounded-full bg-green-400/25 border border-green-300/30 px-3 py-1 text-xs font-medium text-green-200">Active</span>
-                                : <span className="rounded-full bg-red-400/25 border border-red-300/30 px-3 py-1 text-xs font-medium text-red-200">Inactive</span>
-                            }
-                            {user.roles?.map(r => (
-                                <span key={r} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium capitalize">{r}</span>
-                            ))}
-                        </div>
+                        {/* ── Completion donut card ── */}
+                        {pct < 100 && (
+                            <div className=" w-56 shrink-0 rounded-2xl border border-gray-100 bg-white shadow-sm flex items-center justify-center p-4">
+                                <CompletionDonut percent={pct} />
+                            </div>
+                        )}
                     </div>
-
-                    {/* Completion donut card */}
-                    {pct < 100 && (
-                        <div className="w-52 shrink-0 rounded-2xl border border-gray-100 bg-white shadow-sm flex items-center justify-center p-4">
-                            <CompletionDonut percent={pct} />
-                        </div>
-                    )}
                 </div>
 
                 {/* PERSONAL INFO */}

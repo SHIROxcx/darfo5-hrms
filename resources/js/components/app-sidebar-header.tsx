@@ -47,8 +47,6 @@ export function AppSidebarHeader({
 
     const getInitials = useInitials();
 
-    const { openMobile, setOpenMobile } = useSidebar();
-
     const [drawerOpen, setDrawerOpen]   = useState(false);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
 
@@ -112,13 +110,13 @@ export function AppSidebarHeader({
 
                 <div className="ml-auto flex items-center gap-2">
 
-                    <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white">
+                    <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white/90 transition hover:bg-white/20 hover:text-white">
                         <MessagesSquare className="h-4 w-4" />
                     </button>
 
                     <button
                         onClick={() => setDrawerOpen(true)}
-                        className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 transition hover:bg-white/20 hover:text-white"
+                        className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white/90 transition hover:bg-white/20 hover:text-white"
                     >
                         <Bell className="h-4 w-4" />
                         {unreadCount > 0 && (

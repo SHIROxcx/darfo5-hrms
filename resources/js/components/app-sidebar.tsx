@@ -93,15 +93,6 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={mainNavItems} onNavClick={closeMobileIfOpen} />
             </SidebarContent>
-
-            <SidebarFooter>
-                <NavFooter
-                    items={[{ title: 'Messages', href: '#', icon: MessagesSquare }]}
-                    className="mt-auto"
-                    onNavClick={closeMobileIfOpen}
-                />
-                <NavUser />
-            </SidebarFooter>
         </Sidebar>
     );
 }
