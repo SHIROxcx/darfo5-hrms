@@ -19,6 +19,47 @@ interface Props {
     };
 }
 
+// Greeting Logic
+const MORNING_GREETINGS = [
+    'Good morning',
+    'Rise and shine',
+    'Top of the morning',
+    'Hope your morning is going well',
+    'Starting the day strong',
+    'A wonderful morning to you',
+    'Great morning to see you',
+];
+
+const AFTERNOON_GREETINGS = [
+    'Good afternoon',
+    'Hope your day is going great',
+    'Great to see you this afternoon',
+    'Keeping up the good work',
+    'Hope the day is treating you well',
+    'You\'re doing great today',
+    'Halfway through the day',
+];
+
+const EVENING_GREETINGS = [
+    'Good evening',
+    'Hope you had a productive day',
+    'Almost time to rest',
+    'Great work today',
+    'Wrapping up for the day',
+];
+
+function getGreeting(): { text: string; emoji: string } {
+    const now  = new Date();
+    const hour = now.getHours();
+    const pool =
+        hour < 12 ? MORNING_GREETINGS :
+        hour < 18 ? AFTERNOON_GREETINGS :
+        EVENING_GREETINGS;
+    const emoji = hour < 12 ? '🌤️' : hour < 18 ? '☀️' : '🌙';
+    const index = now.getTime() % pool.length;
+    return { text: pool[index], emoji };
+}
+
 // Hard-coded announcements
 const announcements = [
     {
@@ -71,17 +112,11 @@ function ScoreCard({ label, value, icon, color, bg }: ScoreCardProps) {
 }
 
 // Quick Actions
-interface QuickActionProps {
-    label: string;
-    href: string;
-}
-
+interface QuickActionProps { label: string; href: string; }
 function QuickActionItem({ label, href }: QuickActionProps) {
     return (
-        <Link
-            href={href}
-            className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-green-50 hover:border-green-600 text-gray-700 hover:text-green-700 transition group"
-        >
+        <Link href={href}
+            className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-green-50 hover:border-green-600 text-gray-700 hover:text-green-700 transition group">
             <div className="flex items-center gap-3 text-sm font-medium">
                 <Zap className="h-4 w-4" />
                 {label}
@@ -92,21 +127,12 @@ function QuickActionItem({ label, href }: QuickActionProps) {
 }
 
 // Announcement Item
-interface AnnouncementItemProps {
-    title: string;
-    body: string;
-    date: string;
-    tag: string;
-    tagColor: string;
-}
-
+interface AnnouncementItemProps { title: string; body: string; date: string; tag: string; tagColor: string; }
 function AnnouncementItem({ title, body, date, tag, tagColor }: AnnouncementItemProps) {
     return (
         <div className="px-5 py-4 hover:bg-gray-50 transition">
             <div className="flex items-start justify-between gap-2 mb-1">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tagColor}`}>
-                    {tag}
-                </span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
                 <span className="text-xs text-gray-400 shrink-0">{date}</span>
             </div>
             <p className="text-sm font-semibold text-gray-800 mt-2 mb-1">{title}</p>
@@ -115,30 +141,29 @@ function AnnouncementItem({ title, body, date, tag, tagColor }: AnnouncementItem
     );
 }
 
-// Main Dashboard 
+// ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function AdminDashboard({ user, stats }: Props) {
-    const firstName = user.name.split(' ')[0];
+    const firstName  = user.name.split(' ')[0];
+    const { text: greeting, emoji } = getGreeting();
     const timeString = new Date().toLocaleDateString('en-PH', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
     return (
         <AppLayout>
             <Head title="HR Admin Dashboard" />
 
-                <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
+            <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
-                {/* Welcome Header */}
+                {/* Greeting Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900">
-                        <span className="text-green-700">Welcome back,</span> 
-                        <span className="text-orange-500"> {firstName}!</span>
+                        <span className="text-green-700">{greeting}, </span>
+                        <span className="text-orange-500">{firstName}!</span>
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                        {timeString}
+                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                        <span>{emoji}</span>
+                        <span>{timeString}</span>
                     </p>
                 </div>
 
@@ -147,49 +172,20 @@ export default function AdminDashboard({ user, stats }: Props) {
 
                     {/* Left — Score Cards and Quick Actions */}
                     <div className="lg:col-span-2 space-y-6">
-
-                        {/* Score Cards */}
-                        <div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <ScoreCard
-                                    label="Total Employees"
-                                    value={stats.total}
-                                    icon={<Users className="h-6 w-6" />}
-                                    color="text-green-600"
-                                    bg="bg-green-50"
-                                />
-                                <ScoreCard
-                                    label="Permanent Employees"
-                                    value={stats.permanent}
-                                    icon={<ShieldCheck className="h-6 w-6" />}
-                                    color="text-green-600"
-                                    bg="bg-green-50"
-                                />
-                                <ScoreCard
-                                    label="Job Order Employees"
-                                    value={stats.job_order}
-                                    icon={<Briefcase className="h-6 w-6" />}
-                                    color="text-green-600"
-                                    bg="bg-green-50"
-                                />
-                                <ScoreCard
-                                    label="Contractual Employees"
-                                    value={stats.cos}
-                                    icon={<SquareUserRound className="h-6 w-6" />}
-                                    color="text-green-600"
-                                    bg="bg-green-50"
-                                />
-                            </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <ScoreCard label="Total Employees"       value={stats.total}     icon={<Users className="h-6 w-6" />}          color="text-green-600" bg="bg-green-50" />
+                            <ScoreCard label="Permanent Employees"   value={stats.permanent} icon={<ShieldCheck className="h-6 w-6" />}    color="text-green-600" bg="bg-green-50" />
+                            <ScoreCard label="Job Order Employees"   value={stats.job_order} icon={<Briefcase className="h-6 w-6" />}      color="text-green-600" bg="bg-green-50" />
+                            <ScoreCard label="Contractual Employees" value={stats.cos}       icon={<SquareUserRound className="h-6 w-6" />} color="text-green-600" bg="bg-green-50" />
                         </div>
 
-                        {/* Quick Actions */}
                         <div>
                             <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 ml-3">
                                 Quick Actions
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <QuickActionItem label="Manage Employees" href="/admin/employees" />
-                                <QuickActionItem label="Leave Requests" href="/admin/leave" />
+                                <QuickActionItem label="Leave Requests"   href="/admin/leave" />
                             </div>
                         </div>
                     </div>
@@ -197,25 +193,16 @@ export default function AdminDashboard({ user, stats }: Props) {
                     {/* Right — Announcements */}
                     <div className="lg:col-span-1">
                         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
-
                             <div className="px-5 py-4 border-b flex items-center gap-2 bg-gray-50">
                                 <Megaphone className="h-4 w-4 text-green-700" />
                                 <h2 className="text-sm font-semibold text-green-800">Announcements</h2>
                             </div>
-
                             <div className="divide-y divide-gray-100 overflow-y-auto max-h-130">
                                 {announcements.map(item => (
-                                    <AnnouncementItem
-                                        key={item.id}
-                                        title={item.title}
-                                        body={item.body}
-                                        date={item.date}
-                                        tag={item.tag}
-                                        tagColor={item.tagColor}
-                                    />
+                                    <AnnouncementItem key={item.id} title={item.title} body={item.body}
+                                        date={item.date} tag={item.tag} tagColor={item.tagColor} />
                                 ))}
                             </div>
-
                             <div className="px-5 py-3 border-t text-center">
                                 <button className="text-xs text-blue-600 hover:underline">
                                     View all announcements

@@ -26,7 +26,7 @@ export default function Welcome({
                 </picture>
 
                 {/* ── Gradient Overlay ── */}
-                <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-30" />
+                <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50 opacity-50" />
 
                 {/* ── Top Nav ── */}
                 <header className="relative z-20 flex items-center justify-end gap-3 px-6 py-5 sm:px-10">

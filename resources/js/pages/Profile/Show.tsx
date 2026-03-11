@@ -284,57 +284,105 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
         employment_type: ep?.employment_type ?? '',
         position:        ep?.position        ?? '',
         salary_grade:    ep?.salary_grade    ?? '',
+        place_assign:    ep?.place_assign    ?? '',
         division:        ep?.division        ?? '',
         section:         ep?.section         ?? '',
-        date_hired:      ep?.date_hired      ?? '',
+        date_hired:      ep?.date_hired ? ep.date_hired.substring(0, 10) : '',
     });
     const [saving, setSaving] = useState(false);
 
-    // Divisions + Sections
-    const [divisions, setDivisions]   = useState<DivisionData[]>([]);
-    const [sections,  setSections]    = useState<{ id: number; name: string }[]>([]);
+    // ── Data ──────────────────────────────────────────────────────────────────
+    const [divisions,  setDivisions]  = useState<DivisionData[]>([]);
+    const [positions,  setPositions]  = useState<PositionData[]>([]);
+    const [loadingDivs, setLoadingDivs] = useState(true);
+    const [loadingPos,  setLoadingPos]  = useState(true);
 
-    // Positions
-    const [positions,       setPositions]       = useState<PositionData[]>([]);
-    const [posSearch,       setPosSearch]       = useState(ep?.position ?? '');
-    const [posOpen,         setPosOpen]         = useState(false);
-    const [posDropStyle,    setPosDropStyle]    = useState<React.CSSProperties>({});
-    const posInputRef = useRef<HTMLInputElement>(null);
+    // ── Position searchable ───────────────────────────────────────────────────
+    const [posSearch,    setPosSearch]    = useState(ep?.position ?? '');
+    const [posOpen,      setPosOpen]      = useState(false);
+    const [posStyle,     setPosStyle]     = useState<React.CSSProperties>({});
+    const posRef = useRef<HTMLInputElement>(null);
 
-    // Fetch divisions & positions on mount
+    // ── Division searchable ───────────────────────────────────────────────────
+    const [divSearch,    setDivSearch]    = useState(ep?.division ?? '');
+    const [divOpen,      setDivOpen]      = useState(false);
+    const [divStyle,     setDivStyle]     = useState<React.CSSProperties>({});
+    const divRef = useRef<HTMLInputElement>(null);
+
+    // ── Section searchable (filtered by selected division) ────────────────────
+    const [secSearch,    setSecSearch]    = useState(ep?.section ?? '');
+    const [secOpen,      setSecOpen]      = useState(false);
+    const [secStyle,     setSecStyle]     = useState<React.CSSProperties>({});
+    const secRef = useRef<HTMLInputElement>(null);
+
+    // Fetch on mount
     useEffect(() => {
-        fetch('/divisions').then(r => r.json()).then(setDivisions).catch(console.error);
-        fetch('/positions').then(r => r.json()).then(setPositions).catch(console.error);
+        fetch('/divisions')
+            .then(r => r.json())
+            .then(data => { setDivisions(data); setLoadingDivs(false); })
+            .catch(() => setLoadingDivs(false));
+        fetch('/positions')
+            .then(r => r.json())
+            .then(data => { setPositions(data); setLoadingPos(false); })
+            .catch(() => setLoadingPos(false));
     }, []);
 
-    // Sync sections when division changes
-    useEffect(() => {
-        if (!form.division) { setSections([]); return; }
-        const found = divisions.find(d => d.name === form.division);
-        setSections(found?.sections ?? []);
-        // only clear section if it no longer belongs to new division
-        if (found && !found.sections.find(s => s.name === form.section)) {
-            setForm(f => ({ ...f, section: '' }));
-        }
-    }, [form.division, divisions]);
+    // Derived: sections of the currently selected division
+    const currentDivisionSections: { id: number; name: string }[] =
+        divisions.find(d => d.name === form.division)?.sections ?? [];
 
-    // Position filtered list
+    // Filtered lists
     const filteredPositions = posSearch.length < 1
         ? positions
         : positions.filter(p => p.title.toLowerCase().includes(posSearch.toLowerCase()));
 
-    function openPosDropdown() {
-        if (posInputRef.current) {
-            const rect = posInputRef.current.getBoundingClientRect();
-            setPosDropStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 });
+    const filteredDivisions = divSearch.length < 1
+        ? divisions
+        : divisions.filter(d => d.name.toLowerCase().includes(divSearch.toLowerCase()));
+
+    const filteredSections = secSearch.length < 1
+        ? currentDivisionSections
+        : currentDivisionSections.filter(s => s.name.toLowerCase().includes(secSearch.toLowerCase()));
+
+    // Open helpers
+    function openPos() {
+        if (posRef.current) {
+            const r = posRef.current.getBoundingClientRect();
+            setPosStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, width: r.width, zIndex: 9999 });
         }
         setPosOpen(true);
     }
+    function openDiv() {
+        if (divRef.current) {
+            const r = divRef.current.getBoundingClientRect();
+            setDivStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, width: r.width, zIndex: 9999 });
+        }
+        setDivOpen(true);
+    }
+    function openSec() {
+        if (secRef.current) {
+            const r = secRef.current.getBoundingClientRect();
+            setSecStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, width: r.width, zIndex: 9999 });
+        }
+        setSecOpen(true);
+    }
 
+    // Select helpers
     function selectPosition(p: PositionData) {
         setForm(f => ({ ...f, position: p.title, salary_grade: String(p.salary_grade) }));
         setPosSearch(p.title);
         setPosOpen(false);
+    }
+    function selectDivision(d: DivisionData) {
+        setForm(f => ({ ...f, division: d.name, section: '' }));
+        setDivSearch(d.name);
+        setSecSearch('');
+        setDivOpen(false);
+    }
+    function selectSection(s: { id: number; name: string }) {
+        setForm(f => ({ ...f, section: s.name }));
+        setSecSearch(s.name);
+        setSecOpen(false);
     }
 
     function save() {
@@ -345,6 +393,14 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
             onError:   () => setSaving(false),
         });
     }
+
+    // Spinner SVG
+    const Spin = () => (
+        <svg className="h-4 w-4 animate-spin text-green-600" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+    );
 
     return (
         <ModalShell title="Edit Company Info" onClose={onClose} onSave={save} saving={saving}>
@@ -360,7 +416,7 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
                     <select value={form.employment_type}
                         onChange={e => setForm(f => ({ ...f, employment_type: e.target.value }))}
                         className={inputCls}>
-                        <option value="">Select Type</option>
+                        <option value="">— Select —</option>
                         <option value="JO">Job Order (JO)</option>
                         <option value="COS">Contract of Service (COS)</option>
                         <option value="Permanent">Permanent</option>
@@ -371,18 +427,20 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
             {/* Position — searchable, auto-fills Salary Grade */}
             <Field label="Position">
                 <div className="relative">
-                    <input
-                        ref={posInputRef}
-                        value={posSearch}
-                        onChange={e => { setPosSearch(e.target.value); openPosDropdown(); setForm(f => ({ ...f, position: e.target.value })); }}
-                        onFocus={openPosDropdown}
-                        className={inputCls}
-                        placeholder="Search position title..."
-                        autoComplete="off"
-                    />
+                    {loadingPos && (
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <Spin />
+                        </div>
+                    )}
+                    <input ref={posRef} value={posSearch} disabled={loadingPos}
+                        onChange={e => { setPosSearch(e.target.value); openPos(); setForm(f => ({ ...f, position: e.target.value })); }}
+                        onFocus={openPos}
+                        className={`${inputCls} ${loadingPos ? 'text-gray-400' : ''}`}
+                        placeholder={loadingPos ? 'Loading positions...' : 'Search position title...'}
+                        autoComplete="off" />
                     {posOpen && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setPosOpen(false)} />}
                     {posOpen && filteredPositions.length > 0 && (
-                        <ul style={posDropStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
+                        <ul style={posStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
                             {filteredPositions.map(p => (
                                 <li key={p.id} onMouseDown={() => selectPosition(p)}
                                     className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-green-50">
@@ -395,44 +453,84 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
                 </div>
             </Field>
 
-            {/* Salary Grade — read-only, auto-filled from position */}
+            {/* Salary Grade — read-only, auto-filled */}
             <Field label="Salary Grade">
-                <input
-                    value={form.salary_grade ? `SG ${form.salary_grade}` : ''}
-                    readOnly
+                <input value={form.salary_grade ? `SG ${form.salary_grade}` : ''} readOnly
                     className={`${inputCls} bg-gray-50 text-gray-500 cursor-default`}
-                    placeholder="Auto-filled from position"
-                />
+                    placeholder="Auto-filled from position" />
             </Field>
 
-            {/* Division — cascading select */}
+            {/* Agency */}
+            <Field label="Agency / Place Assigned">
+                <input value={form.place_assign}
+                    onChange={e => setForm(f => ({ ...f, place_assign: e.target.value }))}
+                    className={inputCls} placeholder="e.g. DA RFO 5" />
+            </Field>
+
+            {/* Division — searchable */}
             <Field label="Division">
-                <select value={form.division}
-                    onChange={e => setForm(f => ({ ...f, division: e.target.value, section: '' }))}
-                    className={inputCls}>
-                    <option value="">— Select Division —</option>
-                    {divisions.map(d => (
-                        <option key={d.id} value={d.name}>{d.name}</option>
-                    ))}
-                </select>
+                <div className="relative">
+                    {loadingDivs && (
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <Spin />
+                        </div>
+                    )}
+                    <input ref={divRef} value={divSearch} disabled={loadingDivs}
+                        onChange={e => {
+                            setDivSearch(e.target.value);
+                            openDiv();
+                            setForm(f => ({ ...f, division: e.target.value, section: '' }));
+                            setSecSearch('');
+                        }}
+                        onFocus={openDiv}
+                        className={`${inputCls} ${loadingDivs ? 'text-gray-400' : ''}`}
+                        placeholder={loadingDivs ? 'Loading divisions...' : 'Search division...'}
+                        autoComplete="off" />
+                    {divOpen && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setDivOpen(false)} />}
+                    {divOpen && filteredDivisions.length > 0 && (
+                        <ul style={divStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
+                            {filteredDivisions.map(d => (
+                                <li key={d.id} onMouseDown={() => selectDivision(d)}
+                                    className="cursor-pointer px-3 py-2 text-gray-800 hover:bg-green-50">
+                                    {d.name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </Field>
 
-            {/* Section — cascading select, disabled until division chosen */}
+            {/* Section — searchable, scoped to selected division */}
             <Field label="Section / Unit">
-                <select value={form.section}
-                    onChange={e => setForm(f => ({ ...f, section: e.target.value }))}
-                    disabled={!form.division}
-                    className={`${inputCls} ${!form.division ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}>
-                    <option value="">
-                        {!form.division ? 'Select a division first' : '— Select Section —'}
-                    </option>
-                    {sections.length === 0 && form.division && (
-                        <option value="N/A">N/A</option>
+                <div className="relative">
+                    {loadingDivs && (
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <Spin />
+                        </div>
                     )}
-                    {sections.map(s => (
-                        <option key={s.id} value={s.name}>{s.name}</option>
-                    ))}
-                </select>
+                    <input ref={secRef} value={secSearch}
+                        disabled={loadingDivs || !form.division}
+                        onChange={e => { setSecSearch(e.target.value); openSec(); setForm(f => ({ ...f, section: e.target.value })); }}
+                        onFocus={openSec}
+                        className={`${inputCls} ${loadingDivs || !form.division ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
+                        placeholder={
+                            loadingDivs    ? 'Loading...' :
+                            !form.division ? 'Select a division first' :
+                            'Search section / unit...'
+                        }
+                        autoComplete="off" />
+                    {secOpen && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setSecOpen(false)} />}
+                    {secOpen && filteredSections.length > 0 && (
+                        <ul style={secStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
+                            {filteredSections.map(s => (
+                                <li key={s.id} onMouseDown={() => selectSection(s)}
+                                    className="cursor-pointer px-3 py-2 text-gray-800 hover:bg-green-50">
+                                    {s.name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </Field>
 
             {/* Date Hired */}
@@ -445,6 +543,7 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
         </ModalShell>
     );
 }
+
 
 function EditGovernmentModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
     const ep = user.employee_profile;
@@ -733,16 +832,36 @@ function CompletionDonut({ percent }: { percent: number }) {
     );
 }
 
+function CompletionBar({ percent }: { percent: number }) {
+    return (
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm px-5 py-4">
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-600">Profile Completion</p>
+                <span className="text-xs font-bold text-green-700">{percent}%</span>
+            </div>
+            <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div
+                    className="h-full rounded-full bg-green-500 transition-all duration-700"
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+                {percent === 100 ? '✓ Profile complete!' : 'Complete your profile to unlock all features'}
+            </p>
+        </div>
+    );
+}
+
 // Nav
 
 type Section = 'personal' | 'company' | 'education' | 'eligibility' | 'government';
 
-const navItems: { id: Section; label: string; icon: any }[] = [
-    { id: 'personal',    label: 'Personal Info',  icon: User },
-    { id: 'company',     label: 'Company Info',   icon: Building2 },
-    { id: 'education',   label: 'Education',      icon: GraduationCap },
-    { id: 'eligibility', label: 'Eligibility',    icon: Award },
-    { id: 'government',  label: 'Government IDs', icon: Hash },
+const navItems: { id: Section; label: string; }[] = [
+    { id: 'personal',    label: 'About' },
+    { id: 'company',     label: 'Company Info'},
+    { id: 'education',   label: 'Education' },
+    { id: 'eligibility', label: 'Eligibility'},
+    { id: 'government',  label: 'Government IDs'},
 ];
 
 // Main Page
@@ -805,16 +924,17 @@ export default function ProfileShow() {
             <div className="px-4 py-6 sm:px-6 lg:px-8 space-y-6">
 
                 {/* HERO */}
+                <div className="flex flex-col gap-4">
                 <div className="flex gap-4 items-stretch">
                     <div className="relative flex-1 rounded-2xl bg-white shadow-sm overflow-hidden">
-                        <div className="relative h-44 w-full bg-green-700">
+                        <div className="relative h-32 sm:h-44 w-full bg-green-700">
                             <img src="/images/desktop-wallpaper.png" alt=""
                                 className="h-full w-full object-cover object-[25%_48%]" />
                             <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50" />
                         </div>
-                        <div className="absolute left-5 top-28">
+                        <div className="absolute left-5 top-12 sm:top-28">
                             <div className="relative">
-                                <div className="h-36 w-36 overflow-hidden rounded-full border-4 border-white shadow-md bg-white">
+                                <div className="h-32 w-32 sm:h-36 sm:w-36 overflow-hidden rounded-full border-4 border-white shadow-md bg-white">
                                     {avatar
                                         ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
                                         : <div className="flex h-full w-full items-center justify-center bg-green-700 text-3xl font-bold text-white">{getInitials(user)}</div>
@@ -832,9 +952,9 @@ export default function ProfileShow() {
                             </div>
                         </div>
                         <div className="px-5 pt-4 pb-5">
-                            <div className="pl-40">
-                                <h1 className="text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
-                                <p className="text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
+                            <div className="pt-10 sm:pt-0 sm:pl-40">
+                                <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
+                                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
                                 {(divAbbr || secAbbr) && (
                                     <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-0.5">
                                         {divAbbr && <span title={ep?.division ?? undefined}>{divAbbr}</span>}
@@ -846,23 +966,52 @@ export default function ProfileShow() {
                         </div>
                         {isOwn && (
                             <button title="Edit Profile" onClick={() => setModal('personal')}
-                                className="absolute bottom-5 right-5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 p-2 text-white/90 hover:text-white hover:bg-green-700 transition">
-                                <Edit2 className="h-5 w-5" />
+                                className="absolute bottom-5 right-5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-2 py-1 text-[14px] text-white/90 hover:text-white hover:bg-green-700 transition">
+                                <Edit2 className="h-4 w-4" />
+                                Edit profile
                             </button>
                         )}
                     </div>
                     {pct < 100 && (
-                        <div className="w-56 shrink-0 rounded-2xl border border-gray-100 bg-white shadow-sm flex items-center justify-center p-4">
+                        <div className="hidden sm:flex w-56 shrink-0 rounded-2xl border border-gray-100 bg-white shadow-sm items-center justify-center p-4">
                             <CompletionDonut percent={pct} />
                         </div>
                     )}
                 </div>
+                {/* Progress bar — mobile only */}
+                {pct < 100 && (
+                    <div className="sm:hidden">
+                        <CompletionBar percent={pct} />
+                    </div>
+                )}
+                </div>
 
                 {/* BODY */}
                 <div className="flex flex-col lg:flex-row lg:gap-10">
-                    <aside className="w-full lg:w-52 shrink-0">
+
+                    {/* Mobile / Tablet: horizontal scrollable tab bar */}
+                    <div className="lg:hidden">
+                        <div className="relative">
+                            <nav className="flex overflow-x-auto scrollbar-none border-b border-gray-200">
+                                {visibleNav.map(({ id, label }) => (
+                                    <button key={id} onClick={() => setActiveSection(id)}
+                                        className={cn(
+                                            'flex shrink-0 cursor-pointer items-center gap-1.5 px-4 py-3 text-sm font-medium transition border-b-2 -mb-px whitespace-nowrap',
+                                            activeSection === id
+                                                ? 'border-green-600 text-green-700'
+                                                : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+                                        )}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    </div>
+
+                    {/* ── Desktop: vertical sidebar ── */}
+                    <aside className="hidden lg:block w-52 shrink-0">
                         <nav className="flex flex-col space-y-0.5">
-                            {visibleNav.map(({ id, label, icon: Icon }) => (
+                            {visibleNav.map(({ id, label }) => (
                                 <button key={id} onClick={() => setActiveSection(id)}
                                     className={cn(
                                         'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition',
@@ -870,16 +1019,13 @@ export default function ProfileShow() {
                                             ? 'bg-green-50 text-green-700'
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     )}>
-                                    <Icon className="h-4 w-4 shrink-0" />
                                     {label}
                                 </button>
                             ))}
                         </nav>
                     </aside>
 
-                    <Separator className="my-4 lg:hidden" />
-
-                    <div className="flex-1 min-w-0 space-y-8">
+                    <div className="flex-1 min-w-0 space-y-8 mt-6 lg:mt-0">
 
                         {/* PERSONAL INFO */}
                         {activeSection === 'personal' && (

@@ -1,5 +1,3 @@
-// resources/js/components/notification-drawer.tsx
-
 import { useEffect, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
@@ -38,7 +36,7 @@ const Toast = Swal.mixin({
 
 // Types
 
-type Tab = 'unread' | 'pending' | 'all';
+type Tab = 'all' | 'unread' | 'pending';
 
 interface AuthUser { id: number; roles: string[]; }
 interface PageProps { auth: { user: AuthUser }; [key: string]: unknown; }
@@ -150,13 +148,13 @@ function UserDetailModal({
                         onClick={() => { onDeny(user); onClose(); }}
                         className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
                     >
-                        Deny
+                        Decline
                     </button>
                     <button
                         onClick={() => { onApprove(user); onClose(); }}
                         className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                     >
-                        Approve Account
+                        Approve
                     </button>
                 </div>
             </div>
@@ -386,10 +384,10 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         });
     }
 
-    // Deny
+    // Decline
     function denyUser(user: PendingUser) {
         Swal.fire({
-            title: 'Deny & Delete?',
+            title: 'Decline Registration?',
             html: 'This will permanently delete <strong>' + fullName(user) + '</strong>. This cannot be undone.',
             icon: 'warning',
             showCancelButton: true,
@@ -446,10 +444,19 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-100 px-5">
+                    
+                     {/* All tab */}
+                    <button
+                        onClick={() => setTab('all')}
+                        className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 ' + (tab === 'all' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
+                    >
+                        All
+                    </button>
+
                     {/* Unread tab */}
                     <button
                         onClick={() => setTab('unread')}
-                        className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 mr-5 ' + (tab === 'unread' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
+                        className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 ml-5 ' + (tab === 'unread' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
                     >
                         Unread
                         {unreadCount > 0 && (
@@ -463,7 +470,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                     {isAdmin && (
                         <button
                             onClick={() => setTab('pending')}
-                            className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 mr-5 ' + (tab === 'pending' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
+                            className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 ml-5 ' + (tab === 'pending' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
                         >
                             Pending
                             {pendingCount > 0 && (
@@ -474,13 +481,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
                         </button>
                     )}
 
-                    {/* All tab */}
-                    <button
-                        onClick={() => setTab('all')}
-                        className={'cursor-pointer flex items-center gap-1.5 pb-3 pt-1 text-sm font-medium transition border-b-2 ' + (tab === 'all' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-400 hover:text-gray-600')}
-                    >
-                        All
-                    </button>
+                   
                 </div>
 
                 {/* Content */}

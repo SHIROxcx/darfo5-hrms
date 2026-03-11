@@ -41,7 +41,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
             </picture>
 
             {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50" />
+            <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50 opacity-50" />
 
             {/* Left Side — Tagline (desktop only) */}
             <div className="hidden lg:flex flex-col justify-center w-1/2 px-16 relative z-10 text-white">

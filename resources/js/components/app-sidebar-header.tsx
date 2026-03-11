@@ -50,12 +50,6 @@ export function AppSidebarHeader({
     const [drawerOpen, setDrawerOpen]   = useState(false);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
 
-    const today = new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-    });
-
     useEffect(() => {
         if (!userId) return;
 
@@ -103,11 +97,7 @@ export function AppSidebarHeader({
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />
                 </div>
-
-                <span className="hidden select-none text-sm text-white/80 md:block whitespace-nowrap">
-                    {today}
-                </span>
-
+                
                 <div className="ml-auto flex items-center gap-2">
 
                     <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white transition hover:bg-white/20 hover:text-white">
@@ -120,7 +110,7 @@ export function AppSidebarHeader({
                     >
                         <Bell className="h-4 w-4" />
                         {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-green-800 animate-pulse">
+                            <span className="absolute -right-0.5 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-green-800 animate-pulse">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -128,7 +118,7 @@ export function AppSidebarHeader({
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="cursor-pointer rounded-full ring-2 ring-white/70 transition hover:ring-white/90 hover:">
+                            <button className="cursor-pointer rounded-full ring-2 ring-white/70 transition hover:ring-white/90 ml-3">
                                 <Avatar className="h-8 w-8 bg-white">
                                     <AvatarImage src={user?.avatar} alt={user?.name} />
                                     <AvatarFallback className="bg-green-600 text-xs font-semibold text-white hover:bg-green-500">
