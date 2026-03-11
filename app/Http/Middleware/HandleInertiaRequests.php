@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                     'email'       => $user->email,
                     'roles'       => $user->getRoleNames()->values()->toArray(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->values()->toArray(),
+                    'avatar'      => $user->photo ? '/storage/' . $user->photo : null,
                 ] : null,
             ],
             'unreadNotificationsCount' => function () use ($request) {

@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Division extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'abbreviation'
+    ];
 
     public function sections()
     {

@@ -110,13 +110,13 @@ export function AppSidebarHeader({
 
                 <div className="ml-auto flex items-center gap-2">
 
-                    <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white/90 transition hover:bg-white/20 hover:text-white">
+                    <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white transition hover:bg-white/20 hover:text-white">
                         <MessagesSquare className="h-4 w-4" />
                     </button>
 
                     <button
                         onClick={() => setDrawerOpen(true)}
-                        className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white/90 transition hover:bg-white/20 hover:text-white"
+                        className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white transition hover:bg-white/20 hover:text-white"
                     >
                         <Bell className="h-4 w-4" />
                         {unreadCount > 0 && (
@@ -128,10 +128,10 @@ export function AppSidebarHeader({
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="cursor-pointer rounded-full ring-2 ring-white/40 transition hover:ring-white/40">
-                                <Avatar className="h-8 w-8">
+                            <button className="cursor-pointer rounded-full ring-2 ring-white/70 transition hover:ring-white/90 hover:">
+                                <Avatar className="h-8 w-8 bg-white">
                                     <AvatarImage src={user?.avatar} alt={user?.name} />
-                                    <AvatarFallback className="bg-green-600 text-xs font-semibold text-white">
+                                    <AvatarFallback className="bg-green-600 text-xs font-semibold text-white hover:bg-green-500">
                                         {getInitials(user?.name ?? '')}
                                     </AvatarFallback>
                                 </Avatar>

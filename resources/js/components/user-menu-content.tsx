@@ -1,7 +1,7 @@
 // resources/js/components/user-menu-content.tsx
 
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings, UserCircle } from 'lucide-react';
+import { Bolt, LogOut, UserRound } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -46,7 +46,7 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <UserCircle className="mr-2 h-4 w-4" />
+                        <UserRound className="mr-2 h-4 w-4" />
                         Profile
                     </Link>
                 </DropdownMenuItem>
@@ -59,7 +59,7 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2 h-4 w-4" />
+                        <Bolt className="mr-2 h-4 w-4" />
                         Settings
                     </Link>
                 </DropdownMenuItem>

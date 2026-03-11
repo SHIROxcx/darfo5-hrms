@@ -25,6 +25,10 @@ class UserProfileController extends Controller
         return Inertia::render('Profile/Show', [
             'profileUser'    => $this->format($target),
             'canEditCompany' => $authUser->hasRole('admin'),
+            'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
+            'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
+            'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
+            'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
         ]);
     }
 
