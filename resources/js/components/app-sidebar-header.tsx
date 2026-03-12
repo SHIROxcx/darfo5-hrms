@@ -1,5 +1,3 @@
-// resources/js/components/app-sidebar-header.tsx
-
 import { usePage } from '@inertiajs/react';
 import { MessagesSquare, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -92,7 +90,7 @@ export function AppSidebarHeader({
                 onUnreadChange={setUnreadCount}
             />
 
-            <header className="sticky top-2 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5 rounded-t-xl">
+            <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5 sm:rounded-t-xl">
 
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />

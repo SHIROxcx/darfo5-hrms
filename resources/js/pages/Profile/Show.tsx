@@ -1,6 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Camera, Edit2, Plus, Shield, X, Dot, Pencil,
+    GraduationCap,
+    Award,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -161,7 +163,6 @@ function SectionBlock({ title, action, children }: {
                 {action}
             </div>
             {children}
-            <Separator />
         </div>
     );
 }
@@ -483,7 +484,7 @@ function EligibilityModal({ userId, item, eligibilityTitles, onClose }: { userId
     );
 }
 
-// ─── Completion Donut ─────────────────────────────────────────────────────────
+// Completion Donut
 
 function CompletionDonut({ percent }: { percent: number }) {
     const r = 54; const circ = 2 * Math.PI * r;
@@ -509,7 +510,7 @@ function CompletionDonut({ percent }: { percent: number }) {
     );
 }
 
-// ─── Nav config ───────────────────────────────────────────────────────────────
+// Nav config
 
 type Section = 'personal' | 'company' | 'education' | 'eligibility' | 'government';
 
@@ -521,7 +522,7 @@ const navItems: { id: Section; label: string }[] = [
     { id: 'government',  label: 'Government IDs' },
 ];
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// Main Page
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Profile', href: '/profile' }];
 
@@ -535,7 +536,7 @@ export default function ProfileShow() {
     const isOwn   = auth.user.id === user.id;
     const name    = fullName(user);
     const avatar  = user.photo ? '/storage/' + user.photo : null;
-    const pct     = calcCompletion(user);
+    const progress= calcCompletion(user);
 
     const photoRef  = useRef<HTMLInputElement>(null);
     const tabBarRef = useRef<HTMLDivElement>(null);
@@ -575,53 +576,111 @@ export default function ProfileShow() {
     );
 
     // Tab bar
-    const TabBar = ({ sticky = false }: { sticky?: boolean }) => (
-        <div className={cn(
-            'bg-white border-b border-gray-200',
-            sticky && 'shadow-sm'
-        )}>
-            <div className={cn(
-                'flex items-center',
-                sticky ? 'max-w-5xl mx-auto px-4 sm:px-6' : 'px-4 sm:px-6'
-            )}>
-                {/* On sticky, show compact name */}
-                {sticky && (
-                    <div className="mr-6 shrink-0 hidden sm:flex items-center gap-2.5 py-3">
-                        <div className="h-8 w-8 rounded-full overflow-hidden bg-green-700 shrink-0">
-                            {avatar
-                                ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
-                                : <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{getInitials(user)}</div>
-                            }
+    const TabBar = ({ sticky = false }: { sticky?: boolean }) => {
+        const [moreOpen, setMoreOpen] = useState(false);
+
+        // Split nav: first 3 visible on mobile, rest go into "More"
+        const mobileVisible = visibleNav.slice(0, 3);
+        const mobileHidden  = visibleNav.slice(3);
+
+        return (
+            <div className={cn('bg-white border-b border-gray-200', sticky && 'shadow-sm')}>
+                <div className={cn(
+                    'flex items-center',
+                    sticky ? 'max-w-5xl mx-auto px-4 sm:px-6' : 'px-4 sm:px-6'
+                )}>
+                    {/* Compact name shown only in sticky mode */}
+                    {sticky && (
+                        <div className="mr-6 shrink-0 hidden sm:flex items-center gap-2.5 py-3">
+                            <div className="h-8 w-8 rounded-full overflow-hidden bg-green-700 shrink-0">
+                                {avatar
+                                    ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
+                                    : <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{getInitials(user)}</div>
+                                }
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900 truncate max-w-40">{name}</span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-900 truncate max-w-40">{name}</span>
-                    </div>
-                )}
-                <nav className="flex overflow-x-auto scrollbar-none flex-1">
-                    {visibleNav.map(({ id, label }) => (
-                        <button key={id} onClick={() => setActiveSection(id)}
-                            className={cn(
-                                'relative shrink-0 cursor-pointer px-4 py-3.5 text-sm font-semibold transition whitespace-nowrap',
-                                activeSection === id
-                                    ? 'text-green-700'
-                                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-                            )}>
-                            {label}
-                            {activeSection === id && (
-                                <span className="absolute bottom-0 left-0 right-0 h-0.75 rounded-t-full bg-green-600" />
-                            )}
+                    )}
+
+                    <nav className="flex flex-1 relative">
+                        {/* On desktop: show all tabs. On mobile: show first 3 only */}
+                        {visibleNav.map(({ id, label }, idx) => (
+                            <button key={id}
+                                onClick={() => setActiveSection(id)}
+                                className={cn(
+                                    'relative shrink-0 cursor-pointer px-4 py-3.5 text-sm font-semibold transition whitespace-nowrap',
+                                    // Hide tabs beyond index 2 on mobile
+                                    idx >= 3 ? 'hidden sm:block' : '',
+                                    activeSection === id
+                                        ? 'text-green-700'
+                                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                                )}>
+                                {label}
+                                {activeSection === id && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-green-600" />
+                                )}
+                            </button>
+                        ))}
+
+                        {/* More button — mobile only, hidden on sm+ */}
+                        {mobileHidden.length > 0 && (
+                            <div className="relative sm:hidden">
+                                <button
+                                    onClick={() => setMoreOpen(o => !o)}
+                                    className={cn(
+                                        'relative flex shrink-0 cursor-pointer items-center gap-1 px-4 py-3.5 text-sm font-semibold transition whitespace-nowrap',
+                                        mobileHidden.some(n => n.id === activeSection)
+                                            ? 'text-green-700'
+                                            : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                                    )}>
+                                    More
+                                    <svg className={cn('h-3.5 w-3.5 transition-transform', moreOpen && 'rotate-180')}
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                                    </svg>
+                                    
+                                    {/* Green underline indicator when a hidden tab is active */}
+                                    {mobileHidden.some(n => n.id === activeSection) && (
+                                        <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-green-600" />
+                                    )}
+                                </button>
+
+                                {/* Dropdown menu */}
+                                {moreOpen && (
+                                    <>
+                                        {/* Backdrop to close on outside click */}
+                                        <div className="fixed inset-10 z-10" onClick={() => setMoreOpen(false)} />
+                                        <div className="absolute right-0 top-full z-20 mt-1 min-w-40 rounded-xl border border-gray-100 bg-white shadow-xl py-1">
+                                            {mobileHidden.map(({ id, label }) => (
+                                                <button key={id}
+                                                    onClick={() => { setActiveSection(id); setMoreOpen(false); }}
+                                                    className={cn(
+                                                        'flex w-full cursor-pointer items-center px-4 py-2.5 text-sm font-semibold transition',
+                                                        activeSection === id
+                                                            ? 'text-green-700 bg-green-50'
+                                                            : 'text-gray-700 hover:bg-gray-50'
+                                                    )}>
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </nav>
+
+                    {/* Edit profile shortcut — sticky mode only */}
+                    {sticky && isOwn && (
+                        <button onClick={() => setModal('personal')}
+                            className="ml-4 shrink-0 hidden sm:flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition">
+                            <Pencil className="h-3.5 w-3.5" /> Edit profile
                         </button>
-                    ))}
-                </nav>
-                {/* Edit profile shortcut on sticky bar */}
-                {sticky && isOwn && (
-                    <button onClick={() => setModal('personal')}
-                        className="ml-4 shrink-0 hidden sm:flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition">
-                        <Pencil className="h-3.5 w-3.5" /> Edit profile
-                    </button>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -638,14 +697,7 @@ export default function ProfileShow() {
             {modal !== null && typeof modal === 'object' && modal.type === 'eligibility' &&
                 <EligibilityModal userId={user.id} item={modal.item} eligibilityTitles={eligibilityTitles} onClose={() => setModal(null)} />}
 
-            {/* ── Sticky tab bar (portal-style, fixed to top) ── */}
-            {/* {tabSticky && (
-                <div className="fixed top-0 left-0 right-0 z-40">
-                    <TabBar sticky />
-                </div>
-            )} */}
-
-            <div className=" sm:px-6 sm:py-4 space-y-0">
+            <div className=" sm:px-6 sm:py-4 space-y-0 h-full">
 
                 {/* ── HERO CARD ── */}
                 <div className="sm:rounded-t-2xl bg-white shadow-sm overflow-hidden">
@@ -686,191 +738,201 @@ export default function ProfileShow() {
                             <div className="min-w-0">
                                 <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
                                 <p className="text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
-
-                                {/* Completion bar — compact, inline below name */}
-                                {pct < 100 && (
-                                    <div className="mt-2 flex items-center gap-2 max-w-xs">
-                                        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                            <div className="h-full rounded-full bg-green-500 transition-all duration-700" style={{ width: `${pct}%` }} />
-                                        </div>
-                                        <span className="text-xs font-semibold text-green-700 shrink-0">{pct}% complete</span>
-                                    </div>
-                                )}
                             </div>
 
                             {/* Action buttons */}
                             {isOwn && (
-                                <div className="flex items-center justify-end gap-2 shrink-0 :ml-4 mt-5">
-                                    <button onClick={() => setModal('personal')}
-                                        className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
-                                        <Pencil className="h-4 w-4" />
-                                        <span className="inline">Edit profile</span>
-                                    </button>
-                                </div>
+                            <div className="flex items-center justify-end gap-2 shrink-0 :ml-4 mt-5">
+                                <button onClick={() => setModal('personal')}
+                                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="inline">Edit profile</span>
+                                </button>
+                            </div>
                             )}
                         </div>
                     </div>
                 </div>
 
                 {/* TAB BAR */}
-                <div ref={tabBarRef} className="rounded:none sm:rounded-b-2xl overflow-clip shadow-sm mb-4">
+                <div ref={tabBarRef} className="rounded-none sm:rounded-b-2xl overflow-visible mb-4">
                     <TabBar />
                 </div>
 
-                {/* CONTENT */}
-                <div className="rounded:none sm:rounded-2xl bg-white shadow-sm px-5 sm:px-8 py-8 min-h-64">
+                {/* Completion bar — mobile only, shown above content between tab bar and cards */}
+                {progress < 100 && (
+                    <div className="flex lg:hidden items-center gap-3 mb-4 px-4 p-2 rounded-lg shadow-sm sm:mx-1 mx-3">
+                        <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div className="h-full rounded-full bg-green-500 transition-all duration-700" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-xs font-semibold text-green-700 shrink-0">{progress}% complete</span>
+                    </div>
+                )}
 
-                    {/* PERSONAL INFO */}
-                    {activeSection === 'personal' && (
-                        <div className="space-y-5">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-base font-semibold text-green-800">Overview</h2>
-                                </div>
-                                {isOwn && <EditBtn onClick={() => setModal('personal')} />}
-                            </div>
-                            <Separator />
-                            <InfoGrid items={[
-                                { label: 'Full Name',      value: name },
-                                { label: 'Sex',            value: ep?.sex },
-                                { label: 'Civil Status',   value: ep?.civil_status },
-                                { label: 'Place of Birth', value: ep?.birth_place },
-                                { label: 'Mobile Number',  value: ep?.mobile_number },
-                                { label: 'Email',          value: user.email},
-                            ]} />
+                <div className="flex flex-col lg:flex-row gap-4 items-start">
+
+                    {/* LEFT: Completion Donut Card — desktop only, hidden once complete */}
+                    {progress < 100 && (
+                        <div className="hidden lg:block w-56 shrink-0 rounded-2xl bg-white shadow-sm py-6">
+                            <p className="text-xs font-semibold text-green-800 text-center mb-4 uppercase tracking-wide">
+                                Profile Completion
+                            </p>
+                            <CompletionDonut percent={progress} />
                         </div>
                     )}
 
-                    {/* COMPANY INFO */}
-                    {activeSection === 'company' && (
-                        <div className="space-y-6">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-base font-semibold text-green-800">Company Information</h2>
-                                </div>
-                                {canEditCompany && <EditBtn onClick={() => setModal('company')} />}
-                            </div>
-                            <Separator />
-                            <InfoGrid items={[
-                                { label: 'Employee No.',        value: ep?.employee_number },
-                                { label: 'Position',            value: ep?.position },
-                                { label: 'Employment Type',     value: ep?.employment_type },
-                                { label: 'Salary Grade',        value: ep?.salary_grade },
-                                { label: 'Agency',              value: ep?.place_assign },
-                                { label: 'Division / Office',   value: ep?.division },
-                                { label: 'Section / Unit',      value: ep?.section },
-                                { label: 'Date Hired',          value: ep?.date_hired ? new Date(ep.date_hired).toLocaleDateString      ('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
-                            ]} />
-                        </div>
-                    )}
+                    {/* RIGHT: Active Section Block */}
+                    <div className="flex-1 min-w-0 w-full rounded-2xl bg-white shadow-sm px-5 sm:px-8 py-8">
 
-                    {/* EDUCATION */}
-                    {activeSection === 'education' && (
-                        <div className="space-y-6">
-                            <div>
-                                <h2 className="text-base font-semibold text-green-800">Education</h2>
-                            </div>
-                            <Separator />
-
-                            <SectionBlock title="Bachelor's Degree"
-                                action={isOwn ? <AddBtn onClick={() => setModal({ type: 'degree' })} /> : undefined}>
-                                {user.degrees.length === 0
-                                    ? <p className="text-sm text-gray-400 italic">No education records added yet.</p>
-                                    : <div className="space-y-3">
-                                        {user.degrees.map(d => (
-                                            <div key={d.id} className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white font-bold text-sm">{d.degree[0]?.toUpperCase()}</div>
-                                                    <div>
-                                                        <p className="font-semibold text-gray-700 text-sm">{d.degree}</p>
-                                                        <p className="text-xs text-gray-400">{dateRange(d.start_month, d.start_year, d.end_month, d.end_year)}</p>
-                                                    </div>
-                                                </div>
-                                                {isOwn && <button onClick={() => setModal({ type: 'degree', item: d })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
-                                            </div>
-                                        ))}
+                        {/* PERSONAL INFO */}
+                        {activeSection === 'personal' && (
+                            <div className="space-y-5">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-green-800">Overview</h2>
                                     </div>
-                                }
-                            </SectionBlock>
-
-                            <SectionBlock title="Graduate Studies"
-                                action={isOwn ? <AddBtn onClick={() => setModal({ type: 'program' })} label="Add" /> : undefined}>
-                                {user.graduate_studies.length === 0
-                                    ? <p className="text-sm text-gray-400 italic">No graduate studies added yet.</p>
-                                    : <div className="space-y-3">
-                                        {user.graduate_studies.map(g => (
-                                            <div key={g.id} className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white font-bold text-sm">{g.program[0]?.toUpperCase()}</div>
-                                                    <div>
-                                                        <p className="font-semibold text-gray-900 text-sm">{g.program}</p>
-                                                        <p className="text-xs text-gray-400 mt-0.5">{dateRange(g.start_month, g.start_year, g.end_month, g.end_year)}</p>
-                                                    </div>
-                                                </div>
-                                                {isOwn && <button onClick={() => setModal({ type: 'program', item: g })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                }
-                            </SectionBlock>
-                        </div>
-                    )}
-
-                    {/* ELIGIBILITY */}
-                    {activeSection === 'eligibility' && (
-                        <div className="space-y-6 max-w-3xl">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-base font-semibold text-gray-900">Eligibilities & Licenses</h2>
+                                    {isOwn && <EditBtn onClick={() => setModal('personal')} />}
                                 </div>
-                                {isOwn && <AddBtn onClick={() => setModal({ type: 'eligibility' })} label="Add" />}
+                                <Separator />
+                                <InfoGrid items={[
+                                    { label: 'Full Name',      value: name },
+                                    { label: 'Sex',            value: ep?.sex },
+                                    { label: 'Civil Status',   value: ep?.civil_status },
+                                    { label: 'Place of Birth', value: ep?.birth_place },
+                                    { label: 'Mobile Number',  value: ep?.mobile_number },
+                                    { label: 'Email',          value: user.email},
+                                ]} />
                             </div>
-                            <Separator />
-                            {user.eligibilities.length === 0
-                                ? <p className="text-sm text-gray-400 italic">No eligibilities added yet.</p>
-                                : <div className="space-y-3">
-                                    {user.eligibilities.map(e => (
-                                        <div key={e.id} className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3 hover:bg-gray-50 transition">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-700">
-                                                    <Shield className="h-4 w-4" />
+                        )}
+
+                        {/* COMPANY INFO */}
+                        {activeSection === 'company' && (
+                            <div className="space-y-6">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-green-800">Company Information</h2>
+                                    </div>
+                                    {canEditCompany && <EditBtn onClick={() => setModal('company')} />}
+                                </div>
+                                <Separator />
+                                <InfoGrid items={[
+                                    { label: 'Employee No.',        value: ep?.employee_number },
+                                    { label: 'Position',            value: ep?.position },
+                                    { label: 'Employment Type',     value: ep?.employment_type },
+                                    { label: 'Salary Grade',        value: ep?.salary_grade },
+                                    { label: 'Agency',              value: ep?.place_assign },
+                                    { label: 'Division / Office',   value: ep?.division },
+                                    { label: 'Section / Unit',      value: ep?.section },
+                                    { label: 'Date Hired',          value: ep?.date_hired ? new Date(ep.date_hired).toLocaleDateString      ('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
+                                ]} />
+                            </div>
+                        )}
+
+                        {/* EDUCATION */}
+                        {activeSection === 'education' && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-base font-semibold text-green-800">Education</h2>
+                                </div>
+                                <Separator />
+
+                                <SectionBlock title="Bachelor's Degree"
+                                    action={isOwn ? <AddBtn onClick={() => setModal({ type: 'degree' })} /> : undefined}>
+                                    {user.degrees.length === 0
+                                        ? <p className="text-sm text-gray-400 italic">No education records added yet.</p>
+                                        : <div className="space-y-3">
+                                            {user.degrees.map(d => (
+                                                <div key={d.id} className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white/80 font-bold text-sm"><GraduationCap /></div>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-700 text-sm">{d.degree}</p>
+                                                            <p className="text-xs text-gray-400">{dateRange(d.start_month, d.start_year, d.end_month, d.end_year)}</p>
+                                                        </div>
+                                                    </div>
+                                                    {isOwn && <button onClick={() => setModal({ type: 'degree', item: d })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-900">{e.eligibility}</p>
-                                                    <p className="text-xs text-gray-400">
-                                                        {e.date_issued ? new Date(e.date_issued).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
-                                                        {e.place_issued ? ' | ' + e.place_issued : ''}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            {isOwn && <button onClick={() => setModal({ type: 'eligibility', item: e })} className="cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            }
-                        </div>
-                    )}
+                                    }
+                                </SectionBlock>
 
-                    {/* GOVERNMENT IDs */}
-                    {activeSection === 'government' && (canEditCompany || isOwn) && (
-                        <div className="space-y-6 max-w-3xl">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-base font-semibold text-gray-900">Government Issued IDs</h2>
-                                </div>
-                                {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('government')} />}
+                                <SectionBlock title="Graduate Studies"
+                                    action={isOwn ? <AddBtn onClick={() => setModal({ type: 'program' })} label="Add" /> : undefined}>
+                                    {user.graduate_studies.length === 0
+                                        ? <p className="text-sm text-gray-400 italic">No graduate studies added yet.</p>
+                                        : <div className="space-y-3">
+                                            {user.graduate_studies.map(g => (
+                                                <div key={g.id} className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white/80 font-bold text-sm"><GraduationCap /></div>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900 text-sm">{g.program}</p>
+                                                            <p className="text-xs text-gray-400 mt-0.5">{dateRange(g.start_month, g.start_year, g.end_month, g.end_year)}</p>
+                                                        </div>
+                                                    </div>
+                                                    {isOwn && <button onClick={() => setModal({ type: 'program', item: g })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    }
+                                </SectionBlock>
                             </div>
-                            <Separator />
-                            <InfoGrid items={[
-                                { label: 'GSIS Number',       value: ep?.gsis_number },
-                                { label: 'SSS Number',        value: ep?.sss_number },
-                                { label: 'Pag-IBIG Number',   value: ep?.pagibig_number },
-                                { label: 'TIN Number',        value: ep?.tin_number },
-                                { label: 'PhilHealth Number', value: ep?.philhealth_number },
-                            ]} />
-                        </div>
-                    )}
+                        )}
 
+                        {/* ELIGIBILITY */}
+                        {activeSection === 'eligibility' && (
+                            <div className="space-y-6">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-green-800">Eligibilities & Licenses</h2>
+                                    </div>
+                                    {isOwn && <AddBtn onClick={() => setModal({ type: 'eligibility' })} label="Add" />}
+                                </div>
+                                <Separator />
+                                {user.eligibilities.length === 0
+                                    ? <p className="text-sm text-gray-400 italic">No eligibilities added yet.</p>
+                                    : <div className="space-y-3">
+                                        {user.eligibilities.map(e => (
+                                            <div key={e.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white/80 font-bold text-sm"><Award /></div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-900">{e.eligibility}</p>
+                                                        <p className="text-xs text-gray-400">
+                                                            {e.date_issued ? new Date(e.date_issued).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+                                                            {e.place_issued ? ' | ' + e.place_issued : ''}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {isOwn && <button onClick={() => setModal({ type: 'eligibility', item: e })} className="cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                }
+                            </div>
+                        )}
+
+                        {/* GOVERNMENT IDs */}
+                        {activeSection === 'government' && (canEditCompany || isOwn) && (
+                            <div className="space-y-6">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-green-800">Government Issued IDs</h2>
+                                    </div>
+                                    {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('government')} />}
+                                </div>
+                                <Separator />
+                                <InfoGrid items={[
+                                    { label: 'GSIS Number',       value: ep?.gsis_number },
+                                    { label: 'SSS Number',        value: ep?.sss_number },
+                                    { label: 'Pag-IBIG Number',   value: ep?.pagibig_number },
+                                    { label: 'TIN Number',        value: ep?.tin_number },
+                                    { label: 'PhilHealth Number', value: ep?.philhealth_number },
+                                ]} />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </AppLayout>
