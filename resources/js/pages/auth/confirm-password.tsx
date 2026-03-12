@@ -23,7 +23,7 @@ export default function ConfirmPassword() {
             </picture>
 
             {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-30 z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-30 z-10" />
 
             {/* Card */}
             <div className="relative z-20 w-full max-w-md bg-white border border-gray-200 rounded-md p-8 sm:p-10 shadow-2xl text-black/80">

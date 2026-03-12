@@ -7,14 +7,15 @@ type Props = React.ComponentProps<'main'> & {
 
 export function AppContent({ variant = 'header', children, ...props }: Props) {
     if (variant === 'sidebar') {
-        return <SidebarInset className="overflow-hidden" {...props}>{children}</SidebarInset>; //updated
+        return (
+            <SidebarInset {...props} style={{ overflow: 'unset' }} className="overflow-x-hidden">
+                {children}
+            </SidebarInset>
+        );
     }
 
     return (
-        <main
-            className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl"
-            {...props}
-        >
+        <main className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl" {...props}>
             {children}
         </main>
     );

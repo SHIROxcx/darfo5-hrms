@@ -204,7 +204,7 @@ export default function EmployeeDashboard({ user }: Props) {
 
                 {/* Greeting Header */}
                 <div className="mb-6">
-                    <h1 className="text-xl font-bold leading-snug">
+                    <h1 className="text-xl xl:text-2xl font-semibold leading-snug">
                         <span className="text-green-700">{greeting}, </span>
                         <span className="text-orange-500">{firstName}!</span>
                     </h1>

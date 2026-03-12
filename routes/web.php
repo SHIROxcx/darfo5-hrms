@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/employees/{user}/toggle-approval', [EmployeeController::class, 'toggleApproval'])->name('employees.toggle-approval');
         Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
     });
+
+// Authenticated Routes for verified users
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

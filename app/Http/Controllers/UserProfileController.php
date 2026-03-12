@@ -29,6 +29,7 @@ class UserProfileController extends Controller
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
             'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
             'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
+            'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
@@ -95,7 +96,8 @@ class UserProfileController extends Controller
     // Government IDs (admin only)
     public function updateGovernment(Request $request, int $id)
     {
-        abort_unless($request->user()->hasRole('admin'), 403);
+        $authUser = $request->user();
+        abort_unless($authUser->hasRole('admin') || $authUser->id === $id, 403);
 
         $user = User::findOrFail($id);
         $data = $request->validate([

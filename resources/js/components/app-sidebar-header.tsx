@@ -92,7 +92,7 @@ export function AppSidebarHeader({
                 onUnreadChange={setUnreadCount}
             />
 
-            <header className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5">
+            <header className="sticky top-2 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5 rounded-t-xl">
 
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />
