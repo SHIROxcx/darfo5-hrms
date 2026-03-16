@@ -41,13 +41,22 @@ export function AppSidebarHeader({
     const user    = auth?.user;
     const roles   = Array.isArray(user?.roles) ? user.roles : [];
     const userId  = user?.id;
-    const isAdmin = roles.includes('admin');
+    const isAdmin = roles.includes('admin') || roles.includes('superadmin');
 
     const getInitials = useInitials();
+
+    const { openMobile, setOpenMobile } = useSidebar();
 
     const [drawerOpen, setDrawerOpen]   = useState(false);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount ?? 0);
 
+    const today = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    });
+
+    // ── Existing notification channels ────────────────────────────────────────
     useEffect(() => {
         if (!userId) return;
 
@@ -74,6 +83,30 @@ export function AppSidebarHeader({
         };
     }, [userId, isAdmin]);
 
+    // ── Announcements channel (public — all users receive it) ─────────────────
+    // Subscribed here so the channel stays alive across Inertia navigations.
+    // Dispatches two window events:
+    //   'announcement:new'  → dashboards prepend the item to their list
+    //   'notif:new-announcement' → notification drawer adds a notification entry
+    useEffect(() => {
+        echo
+            .channel('announcements')
+            .listen('.AnnouncementPosted', function(data: { announcement: {
+                id: number; title: string; body: string; date: string; tag: string; tagColor: string;
+            }}) {
+                // 1. Update dashboard announcement lists
+                window.dispatchEvent(new CustomEvent('announcement:new', { detail: data.announcement }));
+
+                // 2. Push a notification into the drawer + bump the badge
+                setUnreadCount(function(prev) { return prev + 1; });
+                window.dispatchEvent(new CustomEvent('notif:new-announcement', { detail: data.announcement }));
+            });
+
+        return function() {
+            echo.leaveChannel('announcements');
+        };
+    }, []); // intentionally no deps — channel is static and never needs to re-subscribe
+
     useEffect(() => {
         function onDecrement() {
             setUnreadCount(function(prev) { return Math.max(0, prev - 1); });
@@ -95,7 +128,7 @@ export function AppSidebarHeader({
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />
                 </div>
-                
+
                 <div className="ml-auto flex items-center gap-2">
 
                     <button className="relative flex cursor-pointer h-9 w-9 items-center justify-center rounded-full hover:border border-white/15 text-white transition hover:bg-white/20 hover:text-white">

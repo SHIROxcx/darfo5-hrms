@@ -4,6 +4,18 @@ import {
     TicketsPlane, BriefcaseMedical, Award, Activity,
     Megaphone, Clock, Monitor, Clock8, Clock12, Clock5
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface Announcement {
+    id: number;
+    title: string;
+    body: string;
+    date: string;
+    tag: string;
+    tagColor: string;
+}
 
 interface Props {
     user: {
@@ -11,63 +23,31 @@ interface Props {
         email: string;
         roles: string[];
     };
+    announcements: Announcement[];
 }
 
-// Greeting Logic
-const MORNING_GREETINGS = [
-    'Good morning',
-    'Rise and shine',
-    'Starting the day strong',
-    'A wonderful morning to you',
-    'Great morning to see you',
-];
+// ── Greeting ─────────────────────────────────────────────────────────────────
 
-const AFTERNOON_GREETINGS = [
-    'Afternoon',
-    'Good afternoon',
-    'Enjoy the rest of your day',
-    'A bright afternoon to you',
-    'You\'re doing great today',
-    'Halfway through the day',
-];
-
-const EVENING_GREETINGS = [
-    'Evening',
-    'Hey, good evening!',
-    'Good evening',
-    'Great job today',
-    'Almost time to rest',
-    ' How\'s your shift going?',
-    'Good to see you this evening',
-    'Great work today',
-    'Wrapping up for the day',
-    'Winding down for the evening',
-];
+const MORNING_GREETINGS   = ['Good morning','Rise and shine','Starting the day strong','A wonderful morning to you','Great morning to see you'];
+const AFTERNOON_GREETINGS = ['Afternoon','Good afternoon','Enjoy the rest of your day','A bright afternoon to you','You\'re doing great today','Halfway through the day'];
+const EVENING_GREETINGS   = ['Evening','Hey, good evening!','Good evening','Great job today','Almost time to rest','How\'s your shift going?','Good to see you this evening','Great work today','Wrapping up for the day','Winding down for the evening'];
 
 function getGreeting(firstName: string): string {
     const now  = new Date();
     const hour = now.getHours();
-
-    const pool =
-        hour < 12 ? MORNING_GREETINGS :
-        hour < 18 ? AFTERNOON_GREETINGS :
-        EVENING_GREETINGS;
-
-    const seed = now.getTime();
-    const index = seed % pool.length;
-
-    return pool[index];
+    const pool = hour < 12 ? MORNING_GREETINGS : hour < 18 ? AFTERNOON_GREETINGS : EVENING_GREETINGS;
+    return pool[now.getTime() % pool.length];
 }
 
-// Leave Balances
+// ── Static data ───────────────────────────────────────────────────────────────
+
 const leaveBalances = [
-    { label: 'Vacation Leave',  value: 5, icon: 'vacation',  color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-600' },
-    { label: 'Sick Leave',      value: 3, icon: 'sick',      color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-600' },
-    { label: 'Privilege Leave', value: 5, icon: 'privilege', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-600' },
-    { label: 'Wellness Leave',  value: 5, icon: 'wellness',  color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-600' },
+    { label: 'Vacation Leave',  value: 5, icon: 'vacation',  color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Sick Leave',      value: 3, icon: 'sick',      color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Privilege Leave', value: 5, icon: 'privilege', color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Wellness Leave',  value: 5, icon: 'wellness',  color: 'text-green-600', bg: 'bg-green-50' },
 ];
 
-// DTR
 const dtrs = [
     { date: '2025-01-10', timeIn: '08:01 AM', breakTime: '12:00 PM | 01:00 PM', timeOut: '05:02 PM', remarks: '', late: false },
     { date: '2025-01-11', timeIn: '07:59 AM', breakTime: '12:00 PM | 01:00 PM', timeOut: '05:03 PM', remarks: '', late: false },
@@ -76,7 +56,6 @@ const dtrs = [
     { date: '2025-12-08', timeIn: '00:00 AM', breakTime: '00:00 PM | 00:00 PM', timeOut: '00:00 PM', remarks: 'Holiday', late: false },
 ];
 
-// Properties
 const properties = [
     { number: 'PE-001', description: 'Laptop Dell Latitude 3420',  acquired: '2022-05-10', status: 'Serviceable' },
     { number: 'PE-002', description: 'HP LaserJet Printer',         acquired: '2021-08-15', status: 'For Repair' },
@@ -85,15 +64,8 @@ const properties = [
     { number: 'PE-005', description: 'Projector – Acer',            acquired: '2023-02-18', status: 'Not Serviceable' },
 ];
 
-// Announcements
-const announcements = [
-    { id: 1, title: 'Submission of IPCR for Q1 2026',           body: 'All employees are required to submit their IPCR for Q1 2026 on or before March 31, 2026.',                                                                          date: 'Feb 25, 2026', tag: 'Reminder', tagColor: 'bg-yellow-100 text-yellow-700' },
-    { id: 2, title: 'Office Memorandum: Updated Dress Code Policy', body: 'Effective March 1, 2026, all employees are required to observe the updated office dress code as stated in Office Memorandum No. 2026-02.',                        date: 'Feb 20, 2026', tag: 'Policy',   tagColor: 'bg-blue-100 text-blue-700'   },
-    { id: 3, title: 'Annual Physical Examination Schedule',       body: 'The Annual Physical Examination will be conducted from March 10–14, 2026.',                                                                                          date: 'Feb 18, 2026', tag: 'Health',   tagColor: 'bg-green-100 text-green-700' },
-    { id: 4, title: 'Holiday Notice: Araw ng Kagitingan',         body: 'April 9, 2026 (Thursday) is a Regular Holiday. Government offices will be closed.',                                                                                  date: 'Feb 15, 2026', tag: 'Holiday',  tagColor: 'bg-red-100 text-red-700'     },
-];
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-// Leave Icon
 function LeaveIcon({ type }: { type: string }) {
     if (type === 'vacation')  return <TicketsPlane className="h-7 w-7" />;
     if (type === 'sick')      return <BriefcaseMedical className="h-7 w-7" />;
@@ -101,8 +73,7 @@ function LeaveIcon({ type }: { type: string }) {
     return <Activity className="h-7 w-7" />;
 }
 
-interface LeaveCardProps { label: string; value: number; icon: string; color: string; bg: string; }
-function LeaveCard({ label, value, icon, color, bg }: LeaveCardProps) {
+function LeaveCard({ label, value, icon, color, bg }: { label: string; value: number; icon: string; color: string; bg: string }) {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
             <span className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 border border-green-200 ${bg} ${color}`}>
@@ -118,8 +89,7 @@ function LeaveCard({ label, value, icon, color, bg }: LeaveCardProps) {
 
 function TimeInBadge({ time, late }: { time: string; late: boolean }) {
     return (
-        <div className={`flex items-center gap-1 px-2 py-1 border rounded-lg max-w-28 text-xs
-            ${late ? 'border-red-300 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
+        <div className={`flex items-center gap-1 px-2 py-1 border rounded-lg max-w-28 text-xs ${late ? 'border-red-300 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
             <Clock8 className="h-3.5 w-3.5 shrink-0" /><span>{time}</span>
         </div>
     );
@@ -142,10 +112,7 @@ function TimeOutBadge({ time }: { time: string }) {
 function DtrRow({ date, timeIn, breakTime, timeOut, remarks, late }: typeof dtrs[0]) {
     const formatted = new Date(date).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
     const remarksBadge = remarks
-        ? <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-            ${remarks === 'Late'    ? 'bg-red-50 text-red-600'   : ''}
-            ${remarks === 'Holiday' ? 'bg-blue-50 text-blue-600' : ''}
-            ${!['Late','Holiday'].includes(remarks) ? 'bg-gray-100 text-gray-600' : ''}`}>{remarks}</span>
+        ? <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${remarks === 'Late' ? 'bg-red-50 text-red-600' : remarks === 'Holiday' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>{remarks}</span>
         : null;
     return (
         <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
@@ -159,10 +126,7 @@ function DtrRow({ date, timeIn, breakTime, timeOut, remarks, late }: typeof dtrs
 }
 
 function PropertyRow({ number, description, acquired, status }: typeof properties[0]) {
-    const statusColor =
-        status === 'Serviceable' ? 'bg-green-50 text-green-700' :
-        status === 'For Repair'  ? 'bg-yellow-50 text-yellow-700' :
-        'bg-red-50 text-red-600';
+    const statusColor = status === 'Serviceable' ? 'bg-green-50 text-green-700' : status === 'For Repair' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-600';
     return (
         <tr className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
             <td className="px-4 py-3 text-xs font-medium text-gray-700">{number}</td>
@@ -173,7 +137,7 @@ function PropertyRow({ number, description, acquired, status }: typeof propertie
     );
 }
 
-function AnnouncementItem({ title, body, date, tag, tagColor }: typeof announcements[0]) {
+function AnnouncementItem({ title, body, date, tag, tagColor }: Omit<Announcement, 'id'>) {
     return (
         <div className="px-5 py-4 hover:bg-gray-50 transition border-b border-gray-100">
             <div className="flex items-start justify-between gap-2 mb-1">
@@ -186,8 +150,9 @@ function AnnouncementItem({ title, body, date, tag, tagColor }: typeof announcem
     );
 }
 
-// Main Dashboard
-export default function EmployeeDashboard({ user }: Props) {
+// ── Main Dashboard ────────────────────────────────────────────────────────────
+
+export default function EmployeeDashboard({ user, announcements: initialAnnouncements }: Props) {
     const firstName  = user.name.split(' ')[0];
     const greeting   = getGreeting(firstName);
     const hour       = new Date().getHours();
@@ -195,6 +160,23 @@ export default function EmployeeDashboard({ user }: Props) {
     const timeString = new Date().toLocaleDateString('en-PH', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
+
+    const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements ?? []);
+
+    // ── Real-time listener ────────────────────────────────────────────────────
+    // The Echo subscription lives in app-sidebar-header (always-mounted).
+    // It dispatches 'announcement:new' so we just listen to the window event.
+    useEffect(() => {
+        function onNew(e: Event) {
+            const announcement = (e as CustomEvent<Announcement>).detail;
+            setAnnouncements(prev => {
+                if (prev.some(a => a.id === announcement.id)) return prev;
+                return [announcement, ...prev];
+            });
+        }
+        window.addEventListener('announcement:new', onNew);
+        return () => window.removeEventListener('announcement:new', onNew);
+    }, []);
 
     return (
         <AppLayout>
@@ -226,10 +208,9 @@ export default function EmployeeDashboard({ user }: Props) {
                         </div>
                     </div>
 
-                    {/* Left Column: DTR + Properties */}
+                    {/* Left: DTR + Properties */}
                     <div className="flex flex-col gap-4 lg:col-span-3">
 
-                        {/* Daily Time Record */}
                         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                             <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-green-700" />
@@ -253,7 +234,6 @@ export default function EmployeeDashboard({ user }: Props) {
                             </div>
                         </div>
 
-                        {/* Property Equipment */}
                         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                             <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
                                 <Monitor className="h-4 w-4 text-green-700" />
@@ -277,21 +257,35 @@ export default function EmployeeDashboard({ user }: Props) {
                         </div>
                     </div>
 
-                    {/* Right Column: Announcements */}
-                    <div className="flex flex-col gap-4 lg:col-span-1">
+                    {/* Right: Announcements — real-time */}
+                    <div className="flex flex-col gap-4 lg:col-span-1" id="announcements-panel">
                         <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
                             <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
                                 <Megaphone className="h-4 w-4 text-green-700" />
                                 <h2 className="text-sm font-semibold text-green-800">Announcements</h2>
                             </div>
                             <div className="overflow-y-auto max-h-150 flex-1">
-                                {announcements.map(item => (
-                                    <AnnouncementItem key={item.id} title={item.title} body={item.body}
-                                        date={item.date} tag={item.tag} tagColor={item.tagColor} />
-                                ))}
+                                {announcements.length === 0 ? (
+                                    <div className="px-5 py-8 text-center text-xs text-gray-400">
+                                        No announcements yet.
+                                    </div>
+                                ) : (
+                                    announcements.map(item => (
+                                        <AnnouncementItem
+                                            key={item.id}
+                                            title={item.title}
+                                            body={item.body}
+                                            date={item.date}
+                                            tag={item.tag}
+                                            tagColor={item.tagColor}
+                                        />
+                                    ))
+                                )}
                             </div>
                             <div className="px-5 py-3 border-t text-center">
-                                <button className="text-xs text-green-600 hover:underline">View all announcements</button>
+                                <button className="text-xs text-green-600 hover:underline">
+                                    View all announcements
+                                </button>
                             </div>
                         </div>
                     </div>

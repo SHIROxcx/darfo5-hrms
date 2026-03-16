@@ -584,7 +584,7 @@ export default function ProfileShow() {
         const mobileHidden  = visibleNav.slice(3);
 
         return (
-            <div className={cn('bg-white border-b border-gray-200', sticky && 'shadow-sm')}>
+            <div className={cn('bg-white border-b border-gray-200 rounded-none sm:rounded-b-2xl  shadow-sm', sticky && 'shadow-sm')}>
                 <div className={cn(
                     'flex items-center',
                     sticky ? 'max-w-5xl mx-auto px-4 sm:px-6' : 'px-4 sm:px-6'
@@ -638,7 +638,7 @@ export default function ProfileShow() {
                                         viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
                                     </svg>
-                                    
+
                                     {/* Green underline indicator when a hidden tab is active */}
                                     {mobileHidden.some(n => n.id === activeSection) && (
                                         <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-green-600" />
@@ -762,10 +762,11 @@ export default function ProfileShow() {
                 {/* Completion bar — mobile only, shown above content between tab bar and cards */}
                 {progress < 100 && (
                     <div className="flex lg:hidden items-center gap-3 mb-4 px-4 p-2 rounded-lg shadow-sm sm:mx-1 mx-3">
+                        <p className='uppercase text-sm text-green-700 font-semibold'>Profile Completion</p>
                         <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
                             <div className="h-full rounded-full bg-green-500 transition-all duration-700" style={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-xs font-semibold text-green-700 shrink-0">{progress}% complete</span>
+                        <span className="text-xs font-semibold text-green-700 shrink-0">{progress}% </span>
                     </div>
                 )}
 

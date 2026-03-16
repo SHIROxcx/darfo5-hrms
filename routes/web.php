@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
@@ -72,6 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/notifications',                 [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all',       [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::post('/notifications/{id}/read',      [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // Announcement Route
+    Route::post('/announcements', [AnnouncementController::class, 'store']);
 });
 
 // Email Verification (OTP-based)

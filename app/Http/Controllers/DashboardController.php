@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmployeeProfile;
+use App\Http\Controllers\AnnouncementController;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,11 +29,13 @@ class DashboardController extends Controller
             return Inertia::render('Dashboards/AdminDashboard', [
                 'user'  => $user,
                 'stats' => $stats,
+                'announcements' => AnnouncementController::latest(30),
             ]);
         }
  
         return Inertia::render('Dashboards/EmployeeDashboard', [
             'user' => $user,
+            'announcements' => AnnouncementController::latest(30),
         ]);
 
     }
