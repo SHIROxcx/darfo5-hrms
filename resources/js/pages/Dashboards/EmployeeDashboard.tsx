@@ -2,11 +2,15 @@ import AppLayout from "@/layouts/app-layout";
 import { Head } from '@inertiajs/react';
 import {
     TicketsPlane, BriefcaseMedical, Award, Activity,
-    Megaphone, Clock, Monitor, Clock8, Clock12, Clock5
+    Megaphone, Clock, Monitor, Clock8, Clock12, Clock5,
+    Paperclip, Link as LinkIcon, ExternalLink, FileText, Image, File, X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+interface AttachmentFile { path: string; url: string; name: string; }
+interface AnnouncementLink { label: string; url: string; }
 
 interface Announcement {
     id: number;
@@ -15,6 +19,9 @@ interface Announcement {
     date: string;
     tag: string;
     tagColor: string;
+    attachments: AttachmentFile[];
+    auto_delete: boolean;
+    delete_after: string | null;
 }
 
 interface Props {
@@ -26,11 +33,13 @@ interface Props {
     announcements: Announcement[];
 }
 
-// ── Greeting ─────────────────────────────────────────────────────────────────
+// Greeting
 
 const MORNING_GREETINGS   = ['Good morning','Rise and shine','Starting the day strong','A wonderful morning to you','Great morning to see you'];
-const AFTERNOON_GREETINGS = ['Afternoon','Good afternoon','Enjoy the rest of your day','A bright afternoon to you','You\'re doing great today','Halfway through the day'];
-const EVENING_GREETINGS   = ['Evening','Hey, good evening!','Good evening','Great job today','Almost time to rest','How\'s your shift going?','Good to see you this evening','Great work today','Wrapping up for the day','Winding down for the evening'];
+const AFTERNOON_GREETINGS = ['Afternoon','Good afternoon','Enjoy the rest of your day','A bright afternoon to you',"You're doing great today",'Halfway through the day'];
+const EVENING_GREETINGS   = ['Evening','Hey, good evening!','Good evening','Great job today','Almost time to rest',"How's your shift going?",'Good to see you this evening','Great work today','Wrapping up for the day','Winding down for the evening'];
+
+const PREVIEW = 3;
 
 function getGreeting(firstName: string): string {
     const now  = new Date();
@@ -64,7 +73,7 @@ const properties = [
     { number: 'PE-005', description: 'Projector – Acer',            acquired: '2023-02-18', status: 'Not Serviceable' },
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Sub-components
 
 function LeaveIcon({ type }: { type: string }) {
     if (type === 'vacation')  return <TicketsPlane className="h-7 w-7" />;
@@ -137,16 +146,108 @@ function PropertyRow({ number, description, acquired, status }: typeof propertie
     );
 }
 
-function AnnouncementItem({ title, body, date, tag, tagColor }: Omit<Announcement, 'id'>) {
+function fileIcon(name: string) {
+    const ext = name.split('.').pop()?.toLowerCase() ?? '';
+    if (['jpg','jpeg','png','gif','webp'].includes(ext)) return <Image className="h-4 w-4" />;
+    if (['pdf'].includes(ext)) return <FileText className="h-4 w-4" />;
+    return <File className="h-4 w-4" />;
+}
+
+// View Modal
+
+function AnnouncementViewModal({ announcement, onClose }: { announcement: Announcement; onClose: () => void }) {
+    const parsed  = new Date(announcement.date);
+    const dayNum  = parsed.toLocaleDateString('en-US', { day: '2-digit' });
+    const dayAbbr = parsed.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+
     return (
-        <div className="px-5 py-4 hover:bg-gray-50 transition border-b border-gray-100">
-            <div className="flex items-start justify-between gap-2 mb-1">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
-                <span className="text-xs text-gray-400 shrink-0">{date}</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
+
+                <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 gap-4">
+                    <div className="flex items-start gap-3">
+                        <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
+                            <span className="text-2xl font-bold text-gray-700 leading-none">{dayNum}</span>
+                            <span className="text-xs text-gray-500 mt-0.5">{dayAbbr}</span>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-green-800 text-base leading-snug">{announcement.title}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${announcement.tagColor}`}>{announcement.tag}</span>
+                                <span className="text-xs text-gray-400">Posted: {announcement.date}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="cursor-pointer text-gray-400 hover:text-gray-600 transition shrink-0">
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                    <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
+                    </div>
+
+                    {announcement.attachments.length > 0 && (
+                        <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                <Paperclip className="h-3 w-3" /> Attachments
+                            </p>
+                            <div className="space-y-1.5">
+                                {announcement.attachments.map((f, i) => (
+                                    <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-green-400 hover:bg-green-50 transition text-sm text-gray-700 group">
+                                        <span className="text-green-600 shrink-0">{fileIcon(f.name)}</span>
+                                        <span className="truncate flex-1">{f.name}</span>
+                                        <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-green-600 shrink-0" />
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="flex justify-end border-t px-6 py-4">
+                    <button onClick={onClose}
+                        className="cursor-pointer rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">
+                        Close
+                    </button>
+                </div>
             </div>
-            <p className="text-sm font-semibold text-gray-800 mt-2 mb-1">{title}</p>
-            <p className="text-xs text-gray-500 leading-relaxed">{body}</p>
         </div>
+    );
+}
+
+// Announcement list item
+
+function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: Omit<Announcement, 'id' | 'body' | 'auto_delete' | 'delete_after'> & { onClick: () => void }) {
+    const parsed   = new Date(date);
+    const dayNum   = parsed.toLocaleDateString('en-US', { day: '2-digit' });
+    const dayAbbr  = parsed.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+    const hasExtras = attachments.length > 0;
+
+    return (
+        <li className="py-3 border-b border-gray-100 last:border-0 px-4 cursor-pointer hover:bg-gray-50 transition" onClick={onClick}>
+            <div className="flex items-start gap-3">
+                <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-green-800 leading-none">{dayNum}</span>
+                    <span className="text-xs text-gray-500 mt-0.5">{dayAbbr}</span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <p className="font-semibold text-green-700 leading-tight mb-1 text-sm">{title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
+                        <p className="text-xs text-gray-400">Posted: {date}</p>
+                        {hasExtras && (
+                            <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                {attachments.length > 0 && <><Paperclip className="h-3 w-3" />{attachments.length}</>}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </li>
     );
 }
 
@@ -162,10 +263,13 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
     });
 
     const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements ?? []);
+    const [expanded,      setExpanded]      = useState(false);
+    const [viewing,       setViewing]       = useState<Announcement | undefined>(undefined);
 
-    // ── Real-time listener ────────────────────────────────────────────────────
-    // The Echo subscription lives in app-sidebar-header (always-mounted).
-    // It dispatches 'announcement:new' so we just listen to the window event.
+    const hasMore = announcements.length > PREVIEW;
+    const visible = expanded ? announcements : announcements.slice(0, PREVIEW);
+
+    // Real-time listener
     useEffect(() => {
         function onNew(e: Event) {
             const announcement = (e as CustomEvent<Announcement>).detail;
@@ -174,13 +278,28 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                 return [announcement, ...prev];
             });
         }
+        function onDeleted(e: Event) {
+            const { id } = (e as CustomEvent<{ id: number }>).detail;
+            setAnnouncements(prev => prev.filter(a => a.id !== id));
+        }
         window.addEventListener('announcement:new', onNew);
-        return () => window.removeEventListener('announcement:new', onNew);
+        window.addEventListener('announcement:deleted', onDeleted);
+        return () => {
+            window.removeEventListener('announcement:new', onNew);
+            window.removeEventListener('announcement:deleted', onDeleted);
+        };
     }, []);
 
     return (
         <AppLayout>
             <Head title="Employee Dashboard" />
+
+            {viewing && (
+                <AnnouncementViewModal
+                    announcement={viewing}
+                    onClose={() => setViewing(undefined)}
+                />
+            )}
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
@@ -263,30 +382,45 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                             <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
                                 <Megaphone className="h-4 w-4 text-green-700" />
                                 <h2 className="text-sm font-semibold text-green-800">Announcements</h2>
+                                {announcements.length > 0 && (
+                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                                        {announcements.length}
+                                    </span>
+                                )}
                             </div>
-                            <div className="overflow-y-auto max-h-150 flex-1">
+
+                            <ul className="flex-1">
                                 {announcements.length === 0 ? (
-                                    <div className="px-5 py-8 text-center text-xs text-gray-400">
-                                        No announcements yet.
-                                    </div>
+                                    <li className="px-5 py-8 text-center text-xs text-gray-400 italic">
+                                        No announcements posted.
+                                    </li>
                                 ) : (
-                                    announcements.map(item => (
+                                    visible.map(item => (
                                         <AnnouncementItem
                                             key={item.id}
                                             title={item.title}
-                                            body={item.body}
                                             date={item.date}
                                             tag={item.tag}
                                             tagColor={item.tagColor}
+                                            attachments={item.attachments} 
+                                            onClick={() => setViewing(item)}
                                         />
                                     ))
                                 )}
-                            </div>
-                            <div className="px-5 py-3 border-t text-center">
-                                <button className="text-xs text-green-600 hover:underline">
-                                    View all announcements
-                                </button>
-                            </div>
+                            </ul>
+
+                            {hasMore && (
+                                <div className="px-5 py-3 border-t text-center">
+                                    <button
+                                        onClick={() => setExpanded(prev => !prev)}
+                                        className="text-xs text-green-700 font-medium hover:underline transition"
+                                    >
+                                        {expanded
+                                            ? 'Show less'
+                                            : `View all ${announcements.length} announcements`}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

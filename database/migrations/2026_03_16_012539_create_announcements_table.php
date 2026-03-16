@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('body', 200);
             $table->date('date');
             $table->string('tag')->default('General');
+            $table->json('attachments')->nullable();
+            $table->boolean('auto_delete')->default(false);
+            $table->date('delete_after')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
@@ -27,6 +30,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('announcements');
+        Schema::table('announcements', function (Blueprint $table) {
+            $table->dropColumn(['attachments', 'links', 'auto_delete', 'delete_after']);
+        });
     }
 };

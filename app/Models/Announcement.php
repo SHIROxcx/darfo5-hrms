@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Announcement extends Model
 {
-    protected $fillable = ['title', 'body', 'date', 'tag', 'created_by'];
+    protected $fillable = [
+        'title', 
+        'body', 
+        'date', 
+        'tag',
+        'attachments', 
+        'auto_delete', 
+        'delete_after',
+        'created_by'
+        ];
 
     protected $casts = [
         'date' => 'date',

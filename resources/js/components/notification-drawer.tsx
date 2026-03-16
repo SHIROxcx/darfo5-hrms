@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { Check, X, UserCheck, Clock, Bell, Megaphone } from 'lucide-react';
 import type { AppNotification, PendingUser, AnnouncementNotifData } from '@/types/notification';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 function fullName(u: PendingUser) {
     return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
@@ -34,14 +34,14 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 type Tab = 'all' | 'unread' | 'pending';
 
 interface AuthUser { id: number; roles: string[]; }
 interface PageProps { auth: { user: AuthUser }; [key: string]: unknown; }
 
-// ── User Detail Modal ─────────────────────────────────────────────────────────
+// User Detail Modal
 
 function UserDetailModal({
     user, onClose, onApprove, onDeny,
@@ -129,7 +129,7 @@ function UserDetailModal({
     );
 }
 
-// ── Pending row ───────────────────────────────────────────────────────────────
+// Pending row
 
 function PendingRow({ user, onApprove, onDeny, onClick }: {
     user: PendingUser;
@@ -161,7 +161,7 @@ function PendingRow({ user, onApprove, onDeny, onClick }: {
     );
 }
 
-// ── Regular notification row ──────────────────────────────────────────────────
+// Regular notification row
 
 function NotifRow({ notif, onClick }: { notif: AppNotification; onClick: (n: AppNotification) => void }) {
     const isUnread = notif.read_at === null;
@@ -188,7 +188,7 @@ function NotifRow({ notif, onClick }: { notif: AppNotification; onClick: (n: App
     );
 }
 
-// ── Announcement notification row ─────────────────────────────────────────────
+// Announcement notification row
 
 function AnnouncementNotifRow({ notif, onClick }: { notif: AppNotification; onClick: (n: AppNotification) => void }) {
     const isUnread = notif.read_at === null;
@@ -229,7 +229,7 @@ function AnnouncementNotifRow({ notif, onClick }: { notif: AppNotification; onCl
     );
 }
 
-// ── Main drawer ───────────────────────────────────────────────────────────────
+// Main drawer
 
 interface Props {
     open: boolean;
@@ -249,7 +249,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
     const [loading,       setLoading]       = useState(false);
     const [detailUser,    setDetailUser]    = useState<PendingUser | null>(null);
 
-    // ── Load from server ──────────────────────────────────────────────────────
+    // Load from server
     useEffect(() => {
         if (!open) return;
         setLoading(true);
@@ -266,7 +266,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             .finally(() => setLoading(false));
     }, [open]);
 
-    // ── Real-time window events ───────────────────────────────────────────────
+    // Real-time window events
     useEffect(() => {
         // New pending registration
         function onNewPending(e: Event) {
@@ -275,7 +275,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             Toast.fire({ icon: 'info', title: 'New registration pending approval.' });
         }
 
-        // General notification (e.g. account approved)
+        // General notification
         function onNewNotification(e: Event) {
             const data = (e as CustomEvent<{ message: string; url: string }>).detail;
             const n: AppNotification = {
@@ -288,8 +288,6 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             Toast.fire({ icon: 'success', title: data.message });
         }
 
-        // New announcement — prepend a synthetic notif so it shows instantly
-        // before the next drawer open/reload fetches it from the DB.
         function onNewAnnouncement(e: Event) {
             const data = (e as CustomEvent<{
                 id: number; title: string; body: string; date: string; tag: string; tagColor: string;
@@ -344,7 +342,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         return () => window.removeEventListener('keydown', handler);
     }, [onClose, detailUser]);
 
-    // ── Mark as read ──────────────────────────────────────────────────────────
+    // Mark as read
     function handleNotifClick(notif: AppNotification) {
         if (notif.read_at) return;
 
@@ -354,7 +352,6 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         ));
         window.dispatchEvent(new CustomEvent('notif:decrement'));
 
-        // Persist — skip synthetic live-ids that aren't in the DB yet
         if (!String(notif.id).startsWith('ann-live-') && !String(notif.id).startsWith('live-')) {
             axios.post('/notifications/' + notif.id + '/read').catch(() => {
                 // Revert on failure
@@ -366,7 +363,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         }
     }
 
-    // ── Pending user actions ──────────────────────────────────────────────────
+    // Pending user actions
     function removePending(userId: number) {
         setPendingUsers(prev => prev.filter(u => u.id !== userId));
         window.dispatchEvent(new CustomEvent('notif:decrement'));
@@ -413,7 +410,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
         });
     }
 
-    // ── Derived counts ────────────────────────────────────────────────────────
+    // Derived counts
     const allUnread    = notifications.filter(n => !n.read_at);
     const unreadCount  = allUnread.length;
     const pendingCount = pendingUsers.length;
@@ -448,7 +445,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             <div className={drawerCls}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                    <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
+                    <h2 className="text-xl font-bold text-green-800">Notifications</h2>
                     <button onClick={onClose} className="cursor-pointer rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
                         <X className="h-5 w-5" />
                     </button>

@@ -74,8 +74,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read-all',       [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::post('/notifications/{id}/read',      [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
-    // Announcement Route
-    Route::post('/announcements', [AnnouncementController::class, 'store']);
+    // Announcement Routes
+    Route::post('/announcements',                   [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::put('/announcements/{announcement}',     [AnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('/announcements/{announcement}',  [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 });
 
 // Email Verification (OTP-based)

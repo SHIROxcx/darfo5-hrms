@@ -100,6 +100,9 @@ export function AppSidebarHeader({
                 // 2. Push a notification into the drawer + bump the badge
                 setUnreadCount(function(prev) { return prev + 1; });
                 window.dispatchEvent(new CustomEvent('notif:new-announcement', { detail: data.announcement }));
+            })
+            .listen('.AnnouncementDeleted', function(data: { id: number }) {
+                window.dispatchEvent(new CustomEvent('announcement:deleted', { detail: { id: data.id } }));
             });
 
         return function() {
