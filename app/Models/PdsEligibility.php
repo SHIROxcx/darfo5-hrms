@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PdsEligibility extends Model {
+    protected $table = 'pds_eligibilities';
+    protected $fillable = [
+        'user_id','career_service','rating','date_of_examination',
+        'place_of_examination','license_number','license_validity','sort_order',
+    ];
+    protected $casts = ['date_of_examination' => 'date', 'license_validity' => 'date'];
+}

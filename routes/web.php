@@ -5,6 +5,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\PdsController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
 use App\Models\Division;
@@ -80,6 +81,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/announcements',                   [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{announcement}',     [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{announcement}',  [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    // PDS Routes
+    Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
+    Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
+    Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
+    
 });
 
 // Email Verification (OTP-based)
