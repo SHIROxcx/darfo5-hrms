@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             DivisionSectionSeeder::class,
             PositionSeeder::class,
+            BachelorsDegreeSeeder::class,
+            GraduateProgramSeeder::class,
+            EligibilitySeeder::class,
         ]);
     }
 }

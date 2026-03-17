@@ -151,7 +151,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                 </div>
 
                 {/* Footer — shows View Profile for approved, Approve for pending */}
-                <div className="px-6 py-4 border-t flex items-center justify-between gap-2">
+                <div className="px-6 py-4 border-t flex items-center justify-end gap-2">
                     {/* Left side: approve button only if pending + verified */}
                     <div>
                         {employee.email_verified_at && !employee.is_approved && (
@@ -170,7 +170,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         <button
                             onClick={() => {
                                 onClose();
-                                router.visit(`/admin/employees/${employee.id}/profile`);
+                                router.visit(`/admin/employees/${employee.id}/view`);
                             }}
                             className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition ml-auto"
                         >

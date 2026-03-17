@@ -5,6 +5,7 @@ import {
     Award,
     MessageSquare,
     MessagesSquare,
+    BadgeCheck,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -82,7 +83,7 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function getInitials(u: ProfileUser) {
     return ((u.first_name?.[0] ?? '') + (u.last_name?.[0] ?? '')).toUpperCase()
@@ -270,7 +271,6 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
         employment_type: ep?.employment_type ?? '',
         position:        ep?.position        ?? '',
         salary_grade:    ep?.salary_grade    ?? '',
-        place_assign:    ep?.place_assign    ?? '',
         division:        ep?.division        ?? '',
         section:         ep?.section         ?? '',
         date_hired:      ep?.date_hired ? ep.date_hired.substring(0, 10) : '',
@@ -343,7 +343,7 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
             <Field label="Position">
                 <SearchInput refEl={posRef} value={posSearch} disabled={loadingPos} loading={loadingPos}
                     onChange={(e: any) => { setPosSearch(e.target.value); openPos(); setForm(f => ({ ...f, position: e.target.value })); }}
-                    onFocus={openPos} placeholder={loadingPos ? 'Loading positions...' : 'Search position title...'} />
+                    onFocus={openPos} placeholder={loadingPos ? 'Loading positions...' : 'Search position title'} />
                 {posOpen && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setPosOpen(false)} />}
                 {posOpen && filteredPos.length > 0 && (
                     <ul style={posStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
@@ -352,11 +352,10 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
                 )}
             </Field>
             <Field label="Salary Grade"><input value={form.salary_grade ? `SG ${form.salary_grade}` : ''} readOnly className={`${inputCls} bg-gray-50 text-gray-500 cursor-default`} placeholder="Auto-filled from position" /></Field>
-            <Field label="Agency / Place Assigned"><input value={form.place_assign} onChange={e => setForm(f => ({ ...f, place_assign: e.target.value }))} className={inputCls} placeholder="e.g. DA RFO 5" /></Field>
             <Field label="Division">
                 <SearchInput refEl={divRef} value={divSearch} disabled={loadingDivs} loading={loadingDivs}
                     onChange={(e: any) => { setDivSearch(e.target.value); openDiv(); setForm(f => ({ ...f, division: e.target.value, section: '' })); setSecSearch(''); }}
-                    onFocus={openDiv} placeholder={loadingDivs ? 'Loading divisions...' : 'Search division...'} />
+                    onFocus={openDiv} placeholder={loadingDivs ? 'Loading divisions...' : 'Search division/office'} />
                 {divOpen && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setDivOpen(false)} />}
                 {divOpen && filteredDiv.length > 0 && (
                     <ul style={divStyle} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-sm">
@@ -728,7 +727,7 @@ export default function ProfileShow() {
                                 {isOwn && (
                                     <>
                                         <button onClick={() => photoRef.current?.click()}
-                                            className="absolute bottom-1 right-1 xl:right-3 flex cursor-pointer h-8 w-8 items-center justify-center rounded-full bg-green-600 border-2 border-white shadow text-white hover:bg-green-700 transition">
+                                            className="absolute bottom-1 right-1 lg:right-3 xl:right-3 flex cursor-pointer h-8 w-8 items-center justify-center rounded-full bg-green-600 border-2 border-white text-white hover:bg-green-700 transition">
                                             <Camera className="h-4 w-4" />
                                         </button>
                                         <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
@@ -740,7 +739,14 @@ export default function ProfileShow() {
                         {/* Name / position / actions row */}
                         <div className="pt-10 sm:pt-4 pb-4 sm:pl-36 lg:pl-44">
                             <div className="min-w-0">
-                                <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
+                                    {progress === 100 && (
+                                        <span className="inline-flex items-center gap-1 rounded-full text-xs font-semibold text-green-700 overflow-clip">
+                                            <BadgeCheck className='text-white bg-green-600 w-5 h-5'/>
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
                             </div>
 

@@ -31,6 +31,7 @@ class UserProfileController extends Controller
             'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
             'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
+        
     }
 
     // Personal info (owner only)
@@ -209,6 +210,45 @@ class UserProfileController extends Controller
             'place_issued' => 'nullable|string|max:255',
         ]);
         $item->update($data);
+        return back();
+    }
+
+     public function updatePersonalFor(Request $request, int $id)
+    {
+        abort_unless($request->user()->hasAnyRole(['admin', 'superadmin']), 403);
+ 
+        $user = User::findOrFail($id);
+        $data = $request->validate([
+            'first_name'    => 'required|string|max:255',
+            'middle_name'   => 'nullable|string|max:255',
+            'last_name'     => 'required|string|max:255',
+            'name_ext'      => 'nullable|string|max:20',
+            'email'         => 'required|email|unique:users,email,' . $user->id,
+            'sex'           => 'nullable|in:Male,Female',
+            'birth_place'   => 'nullable|string|max:255',
+            'civil_status'  => 'nullable|in:Single,Married,Widowed,Separated,Other',
+            'mobile_number' => 'nullable|string|max:20',
+        ]);
+ 
+        $user->update([
+            'first_name'  => $data['first_name'],
+            'middle_name' => $data['middle_name'],
+            'last_name'   => $data['last_name'],
+            'name_ext'    => $data['name_ext'],
+            'name'        => trim($data['first_name'] . ' ' . $data['last_name']),
+            'email'       => $data['email'],
+        ]);
+ 
+        $user->employeeProfile()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'sex'           => $data['sex'],
+                'birth_place'   => $data['birth_place'],
+                'civil_status'  => $data['civil_status'],
+                'mobile_number' => $data['mobile_number'],
+            ]
+        );
+ 
         return back();
     }
 

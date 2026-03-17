@@ -45,7 +45,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-        Route::get('/employees/{user}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::get('/employees/{user}/view', [EmployeeController::class, 'show'])->name('employees.show');
         Route::post('/employees/{user}/approve', [EmployeeController::class, 'approve'])->name('employees.approve');
         Route::post('/employees/{user}/toggle-approval', [EmployeeController::class, 'toggleApproval'])->name('employees.toggle-approval');
         Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/{id}',                  [UserProfileController::class, 'show'])->name('profile.show.user');
     Route::post('/profile/photo',                [UserProfileController::class, 'updatePhoto'])->name('profile.photo');
     Route::post('/profile/personal',             [UserProfileController::class, 'updatePersonal'])->name('profile.personal');
+    Route::post('/profile/{id}/personal',        [UserProfileController::class, 'updatePersonalFor'])->name('profile.personal.for');
     Route::post('/profile/{id}/company',         [UserProfileController::class, 'updateCompany'])->name('profile.company');
     Route::post('/profile/{id}/government',      [UserProfileController::class, 'updateGovernment'])->name('profile.government');
     Route::post('/profile/{userId}/degree',      [UserProfileController::class, 'storeDegree'])->name('profile.degree.store');
