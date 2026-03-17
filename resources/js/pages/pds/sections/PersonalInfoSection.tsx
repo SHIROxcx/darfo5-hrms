@@ -49,7 +49,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         onSave('personal', form as Record<string, unknown>);
     };
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white";
     const labelClass = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
     const sectionClass = "mb-6";
 
@@ -63,8 +63,8 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             </div>
 
             {/* Name — Read-only from users table */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                <p className="text-xs font-medium text-blue-700 uppercase tracking-wide mb-3">Name (from employee profile)</p>
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name (from employee profile)</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
                         <label className={labelClass}>Surname</label>
@@ -83,7 +83,6 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.name_ext ?? '—'}</div>
                     </div>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">To update your name, please contact HR.</p>
             </div>
 
             {/* Basic Info */}
@@ -152,7 +151,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                                     <input type="radio" name="citizenship" value={c}
                                         checked={form.citizenship === c}
                                         onChange={e => set('citizenship', e.target.value)}
-                                        className="accent-blue-600" />
+                                        className="accent-green-600" />
                                     {c}
                                 </label>
                             ))}
@@ -168,7 +167,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                                             <input type="radio" name="citizenship_type" value={t}
                                                 checked={form.citizenship_type === t}
                                                 onChange={e => set('citizenship_type', e.target.value)}
-                                                className="accent-blue-600" />
+                                                className="accent-green-600" />
                                             {t === 'by_birth' ? 'By Birth' : 'By Naturalization'}
                                         </label>
                                     ))}
@@ -229,7 +228,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         perm_subdivision: prev.res_subdivision, perm_barangay: prev.res_barangay,
                         perm_city: prev.res_city, perm_province: prev.res_province, perm_zipcode: prev.res_zipcode,
                     }))}
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        className="text-xs text-green-600 hover:text-green-800 font-medium">
                         Same as Residential ↑
                     </button>
                 </div>
@@ -301,7 +300,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
 
             <div className="flex justify-end">
                 <button type="submit" disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
                     <Save className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Save Personal Information'}
                 </button>

@@ -11,7 +11,7 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
     const [rows, setRows] = useState<PdsVoluntaryWork[]>(
         pdsData.voluntary_work?.length ? pdsData.voluntary_work : [{ ...EMPTY_VW }]
     );
-    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 bg-white";
     const setRow = (i: number, key: keyof PdsVoluntaryWork, val: string) =>
         setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
 
@@ -28,7 +28,7 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
                     <p className="text-xs text-gray-500">Involvement in civic/non-government/people/voluntary organizations.</p>
                 </div>
                 <button type="button" onClick={() => setRows(p => [...p, { ...EMPTY_VW }])}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium mt-1">
+                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1">
                     <Plus className="w-3.5 h-3.5" /> Add Row
                 </button>
             </div>
@@ -64,7 +64,7 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
                 </table>
             </div>
             <div className="flex justify-end">
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
                     <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Voluntary Work'}
                 </button>
             </div>

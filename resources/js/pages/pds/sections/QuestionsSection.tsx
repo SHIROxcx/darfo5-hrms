@@ -15,12 +15,12 @@ function YesNo({ label, yesVal, noVal, onYes, onNo, showDetails, detailsVal, onD
             <div className="flex gap-6 mb-2">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="radio" name={`q_${label.slice(0,10)}`} checked={yesVal === true}
-                        onChange={() => onYes(true)} className="accent-blue-600" />
-                    <span className={yesVal === true ? 'text-blue-700 font-medium' : 'text-gray-600'}>YES</span>
+                        onChange={() => onYes(true)} className="accent-green-600" />
+                    <span className={yesVal === true ? 'text-green-700 font-medium' : 'text-gray-600'}>YES</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="radio" name={`q_${label.slice(0,10)}`} checked={yesVal === false}
-                        onChange={() => onNo(false)} className="accent-blue-600" />
+                        onChange={() => onNo(false)} className="accent-green-600" />
                     <span className={yesVal === false ? 'text-gray-700 font-medium' : 'text-gray-600'}>NO</span>
                 </label>
             </div>
@@ -28,7 +28,7 @@ function YesNo({ label, yesVal, noVal, onYes, onNo, showDetails, detailsVal, onD
                 <div className="mt-2">
                     <label className="block text-xs text-gray-500 mb-1">{detailsLabel}</label>
                     <input type="text" value={detailsVal ?? ''} onChange={e => onDetails(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
             )}
         </div>
@@ -70,7 +70,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
         onSave('questions', form as unknown as Record<string, unknown>);
     };
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white";
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,7 +89,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q34_a === v} onChange={() => set('q34_a', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q34_a === v} onChange={() => set('q34_a', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -100,7 +100,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q34_b === v} onChange={() => set('q34_b', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q34_b === v} onChange={() => set('q34_b', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -124,7 +124,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6 mb-1">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q35_a === v} onChange={() => set('q35_a', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q35_a === v} onChange={() => set('q35_a', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -141,7 +141,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6 mb-1">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q35_b === v} onChange={() => set('q35_b', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q35_b === v} onChange={() => set('q35_b', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -172,7 +172,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                         <div className="flex gap-6">
                             {[true, false].map(v => (
                                 <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                    <input type="radio" checked={form[key] === v} onChange={() => set(key, v)} className="accent-blue-600" />
+                                    <input type="radio" checked={form[key] === v} onChange={() => set(key, v)} className="accent-green-600" />
                                     <span>{v ? 'YES' : 'NO'}</span>
                                 </label>
                             ))}
@@ -195,7 +195,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6 mb-1">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q37_a === v} onChange={() => set('q37_a', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q37_a === v} onChange={() => set('q37_a', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -212,7 +212,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             <div className="flex gap-6 mb-1">
                                 {[true, false].map(v => (
                                     <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" checked={form.q37_b === v} onChange={() => set('q37_b', v)} className="accent-blue-600" />
+                                        <input type="radio" checked={form.q37_b === v} onChange={() => set('q37_b', v)} className="accent-green-600" />
                                         <span>{v ? 'YES' : 'NO'}</span>
                                     </label>
                                 ))}
@@ -241,7 +241,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                                 <div className="flex gap-6 mb-1">
                                     {[true, false].map(v => (
                                         <label key={String(v)} className="flex items-center gap-2 text-sm cursor-pointer">
-                                            <input type="radio" checked={form[key] === v} onChange={() => set(key, v)} className="accent-blue-600" />
+                                            <input type="radio" checked={form[key] === v} onChange={() => set(key, v)} className="accent-green-600" />
                                             <span>{v ? 'YES' : 'NO'}</span>
                                         </label>
                                     ))}
@@ -259,7 +259,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
             </div>
 
             <div className="flex justify-end">
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
                     <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Answers'}
                 </button>
             </div>

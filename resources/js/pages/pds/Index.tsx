@@ -26,11 +26,6 @@ interface Props {
     pdsData: PdsData;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Personal Data Sheet', href: '/pds' },
-];
-
 const SECTIONS = [
     { id: 'personal', label: 'I. Personal Information', icon: UserIcon, page: 1 },
     { id: 'family', label: 'II. Family Background', icon: Users, page: 1 },
@@ -102,7 +97,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const currentSectionIdx = SECTIONS.findIndex(s => s.id === activeSection);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Personal Data Sheet" />
 
             <div className="flex flex-col h-full">
@@ -110,7 +105,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <div className="bg-white border-b border-gray-200 px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
                                 <FileText className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -130,7 +125,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 <div className="text-sm font-medium text-gray-700">{progressPct}% Complete</div>
                                 <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
                                     <div
-                                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                                        className="h-full bg-green-600 rounded-full transition-all duration-500"
                                         style={{ width: `${progressPct}%` }}
                                     />
                                 </div>
@@ -141,7 +136,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar Navigation */}
-                    <aside className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto flex-shrink-0">
+                    <aside className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
                         <nav className="p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
                                 const Icon = section.icon;
@@ -154,16 +149,16 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                         onClick={() => setActiveSection(section.id)}
                                         className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all group ${
                                             isActive
-                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                ? 'bg-green-600 text-white shadow-sm'
                                                 : 'text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm'
                                         }`}
                                     >
-                                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-blue-100' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-green-100' : 'text-gray-400 group-hover:text-gray-500'}`} />
                                         <span className="flex-1 truncate font-medium">{section.label}</span>
                                         {isDone ? (
-                                            <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-green-500'}`} />
+                                            <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-green-200' : 'text-green-500'}`} />
                                         ) : (
-                                            <Circle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-300' : 'text-gray-300'}`} />
+                                            <Circle className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-green-300' : 'text-gray-300'}`} />
                                         )}
                                     </button>
                                 );
@@ -171,9 +166,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
                         </nav>
 
                         <div className="p-3 border-t border-gray-200 mt-2">
-                            <div className="bg-blue-50 rounded-lg p-3">
-                                <p className="text-xs text-blue-700 font-medium mb-1">{completedCount}/{SECTIONS.length} sections filled</p>
-                                <p className="text-xs text-blue-600">CS Form 212 (Revised 2017)</p>
+                            <div className="bg-green-50 rounded-lg p-3">
+                                <p className="text-xs text-green-700 font-medium mb-1">{completedCount}/{SECTIONS.length} sections filled</p>
+                                <p className="text-xs text-green-600">CS Form 212 (Revised 2025)</p>
                             </div>
                         </div>
                     </aside>

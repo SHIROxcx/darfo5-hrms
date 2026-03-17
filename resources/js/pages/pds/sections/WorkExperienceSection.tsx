@@ -14,7 +14,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
         pdsData.work_experience?.length ? pdsData.work_experience : [{ ...EMPTY }]
     );
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 bg-white";
 
     const setRow = (i: number, key: keyof PdsWorkExperience, val: string | boolean) =>
         setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
@@ -32,7 +32,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                     <p className="text-xs text-gray-500">Include private employment. Start from your most recent work.</p>
                 </div>
                 <button type="button" onClick={() => setRows(p => [{ ...EMPTY }, ...p])}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium mt-1">
+                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1">
                     <Plus className="w-3.5 h-3.5" /> Add Row
                 </button>
             </div>
@@ -59,7 +59,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                                     disabled={!!row.is_present} className={inputClass} />
                                 <label className="flex items-center gap-1 mt-1 text-xs text-gray-600 cursor-pointer">
                                     <input type="checkbox" checked={!!row.is_present} onChange={e => setRow(i, 'is_present', e.target.checked)}
-                                        className="accent-blue-600" />
+                                        className="accent-green-600" />
                                     Present
                                 </label>
                             </div>
@@ -91,7 +91,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                             <div className="flex items-end pb-1.5">
                                 <label className="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
                                     <input type="checkbox" checked={!!row.is_government_service} onChange={e => setRow(i, 'is_government_service', e.target.checked)}
-                                        className="accent-blue-600" />
+                                        className="accent-green-600" />
                                     Government Service
                                 </label>
                             </div>
@@ -100,7 +100,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                 ))}
             </div>
             <div className="flex justify-end">
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
                     <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Work Experience'}
                 </button>
             </div>

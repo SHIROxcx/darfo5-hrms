@@ -21,7 +21,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         place_of_issuance: pdsData.government_id?.place_of_issuance ?? '',
     });
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white";
     const labelClass = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
 
     const setRef = (i: number, key: keyof PdsReference, val: string) =>
@@ -47,7 +47,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-gray-700">41. References</h3>
                     <button type="button" onClick={() => setRefs(p => [...p, { name: '', address: '', telephone: '' }])}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium">
                         <Plus className="w-3.5 h-3.5" /> Add Reference
                     </button>
                 </div>
@@ -117,7 +117,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             </div>
 
             <div className="flex justify-end">
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
                     <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save References & ID'}
                 </button>
             </div>
