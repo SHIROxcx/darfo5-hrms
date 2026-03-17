@@ -53,9 +53,62 @@ class EmployeeController extends Controller
             'eligibilities',
         ]);
 
-        return Inertia::render('Admin/Employees/Show', [
-            'employee' => $user,
+        // Reuse the same format helper from UserProfileController
+        $profileController = new \App\Http\Controllers\UserProfileController();
+
+        return Inertia::render('Profile/Show', [
+            // Pass as profileUser so Profile/Show.tsx works unchanged
+            'profileUser'    => $this->formatUser($user),
+            // Admin can always edit company + government IDs
+            'canEditCompany' => true,
+            'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
+            'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
+            'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
+            'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
+            'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
+            // Let the view know we're in admin context so it can show a back button
+            'adminContext'   => true,
         ]);
+    }
+
+    private function formatUser(User $u): array
+    {
+        $ep = $u->employeeProfile;
+        return [
+            'id'          => $u->id,
+            'name'        => $u->name,
+            'first_name'  => $u->first_name,
+            'middle_name' => $u->middle_name,
+            'last_name'   => $u->last_name,
+            'name_ext'    => $u->name_ext,
+            'email'       => $u->email,
+            'photo'       => $u->photo,
+            'is_approved' => $u->is_approved,
+            'roles'       => $u->getRoleNames()->values()->toArray(),
+            'employee_profile' => $ep ? [
+                'sex'               => $ep->sex,
+                'birth_place'       => $ep->birth_place,
+                'civil_status'      => $ep->civil_status,
+                'mobile_number'     => $ep->mobile_number,
+                'employee_number'   => $ep->employee_number,
+                'employment_type'   => $ep->employment_type,
+                'position'          => $ep->position,
+                'salary_grade'      => $ep->salary_grade,
+                'place_assign'      => $ep->place_assign,
+                'division'          => $ep->division,
+                'section'           => $ep->section,
+                'date_hired'        => $ep->date_hired,
+                'is_active'         => $ep->is_active,
+                'gsis_number'       => $ep->gsis_number,
+                'sss_number'        => $ep->sss_number,
+                'pagibig_number'    => $ep->pagibig_number,
+                'tin_number'        => $ep->tin_number,
+                'philhealth_number' => $ep->philhealth_number,
+            ] : null,
+            'degrees'          => $u->degrees->toArray(),
+            'graduate_studies' => $u->graduateStudies->toArray(),
+            'eligibilities'    => $u->eligibilities->toArray(),
+        ];
     }
 
     public function approve(User $user)

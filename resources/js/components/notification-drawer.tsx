@@ -78,7 +78,7 @@ function UserDetailModal({
                         {[
                             { label: 'Email',    value: 'Verified',  cls: 'text-green-700 bg-green-50' },
                             { label: 'Approval', value: 'Pending',   cls: 'text-yellow-700 bg-yellow-50' },
-                            { label: 'Active',   value: ep?.is_active ? 'Active' : 'Inactive', cls: ep?.is_active ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50' },
+                            { label: 'Status',   value: ep?.is_active ? 'Active' : 'Inactive', cls: ep?.is_active ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50' },
                         ].map(({ label, value, cls }) => (
                             <div key={label} className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
                                 <p className="text-xs text-gray-400 mb-1">{label}</p>
@@ -101,8 +101,8 @@ function UserDetailModal({
                         ))}
                         {[
                             ['Agency',       ep?.place_assign],
-                            ['Division',     ep?.division],
-                            ['Section/Unit', ep?.section],
+                            ['Division/Office',     ep?.division],
+                            ['Section/Unit/Office', ep?.section],
                         ].map(([label, val]) => (
                             <div key={label as string} className="col-span-2">
                                 <p className="text-xs text-gray-400">{label}</p>
@@ -344,22 +344,30 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
 
     // Mark as read
     function handleNotifClick(notif: AppNotification) {
-        if (notif.read_at) return;
-
-        // Optimistic update
-        setNotifications(prev => prev.map(n =>
-            n.id === notif.id ? { ...n, read_at: new Date().toISOString() } : n
-        ));
-        window.dispatchEvent(new CustomEvent('notif:decrement'));
-
-        if (!String(notif.id).startsWith('ann-live-') && !String(notif.id).startsWith('live-')) {
-            axios.post('/notifications/' + notif.id + '/read').catch(() => {
-                // Revert on failure
-                setNotifications(prev => prev.map(n =>
-                    n.id === notif.id ? { ...n, read_at: null } : n
-                ));
-                window.dispatchEvent(new CustomEvent('notif:increment'));
-            });
+        // Extract the URL from general notifications before doing anything else
+        const url = 'url' in notif.data ? notif.data.url : null;
+ 
+        if (!notif.read_at) {
+            setNotifications(prev => prev.map(n =>
+                n.id === notif.id ? { ...n, read_at: new Date().toISOString() } : n
+            ));
+            window.dispatchEvent(new CustomEvent('notif:decrement'));
+ 
+            if (!String(notif.id).startsWith('ann-live-') && !String(notif.id).startsWith('live-')) {
+                axios.post('/notifications/' + notif.id + '/read').catch(() => {
+                    // Revert on failure
+                    setNotifications(prev => prev.map(n =>
+                        n.id === notif.id ? { ...n, read_at: null } : n
+                    ));
+                    window.dispatchEvent(new CustomEvent('notif:increment'));
+                });
+            }
+        }
+ 
+        // Navigate to the notification's URL if it has one
+        if (url) {
+            onClose();
+            router.visit(url);
         }
     }
 

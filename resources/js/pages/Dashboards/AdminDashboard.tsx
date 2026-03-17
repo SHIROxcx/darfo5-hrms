@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import {
     Users, ShieldCheck, Briefcase, SquareUserRound,
     Megaphone, Zap, ChevronRight, Plus, X,
-    Paperclip, Link as LinkIcon, Trash2, ExternalLink, FileText, Image, File,
+    Paperclip, Trash2, ExternalLink, FileText, Image, File,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
@@ -11,7 +11,6 @@ import Swal from 'sweetalert2';
 // Types
 
 interface AttachmentFile { path: string; url: string; name: string; }
-interface AnnouncementLink { label: string; url: string; }
 
 interface Announcement {
     id: number;
@@ -40,7 +39,7 @@ const EVENING_GREETINGS   = ['Evening','Hey, good evening!','Good evening','Grea
 function getGreeting(): { text: string; emoji: string } {
     const now = new Date(); const hour = now.getHours();
     const pool = hour < 12 ? MORNING_GREETINGS : hour < 18 ? AFTERNOON_GREETINGS : EVENING_GREETINGS;
-    const emoji = hour < 12 ? '🌤️' : hour < 18 ? '☀️' : '🌙';
+    const emoji  = hour < 12 ? '⛅' : hour < 18 ? '🌤️' : '🌙';
     return { text: pool[now.getTime() % pool.length], emoji };
 }
 
@@ -49,19 +48,19 @@ const MAX_BODY = 200;
 const PREVIEW  = 3;
 
 const TAG_COLOR_MAP: Record<string, string> = {
-    Reminder: 'bg-yellow-100 text-yellow-700',
-    Policy:   'bg-blue-100 text-blue-700',
-    Health:   'bg-green-100 text-green-700',
-    Holiday:  'bg-red-100 text-red-700',
-    General:  'bg-gray-100 text-gray-600',
+    Reminder: 'bg-yellow-50 text-yellow-600',
+    Policy:   'bg-blue-50 text-blue-600',
+    Health:   'bg-green-50 text-green-600',
+    Holiday:  'bg-red-50 text-red-600',
+    General:  'bg-gray-50 text-gray-600',
 };
 
-// Shared helpers
+// Helpers
 
 function fileIcon(name: string) {
     const ext = name.split('.').pop()?.toLowerCase() ?? '';
     if (['jpg','jpeg','png','gif','webp'].includes(ext)) return <Image className="h-4 w-4" />;
-    if (['pdf'].includes(ext)) return <FileText className="h-4 w-4" />;
+    if (ext === 'pdf') return <FileText className="h-4 w-4" />;
     return <File className="h-4 w-4" />;
 }
 
@@ -103,12 +102,9 @@ function AnnouncementItem({
     const parsed  = new Date(date);
     const dayNum  = parsed.toLocaleDateString('en-US', { day: '2-digit' });
     const dayAbbr = parsed.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const hasExtras = attachments.length > 0;
 
     return (
         <li className="relative group py-3 border-b border-gray-100 last:border-0 px-4">
-
-            {/* Hover action buttons */}
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
                 <button onClick={() => onEdit(id)}
                     className="p-1 bg-green-50 border border-green-200 text-green-600 rounded-md hover:bg-green-700 hover:text-white transition" title="Edit">
@@ -124,7 +120,6 @@ function AnnouncementItem({
                 </button>
             </div>
 
-            {/* Clickable body */}
             <div className="flex items-start gap-3 cursor-pointer" onClick={() => onView(id)}>
                 <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-gray-700 leading-none">{dayNum}</span>
@@ -135,9 +130,9 @@ function AnnouncementItem({
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
                         <p className="text-xs text-gray-400">Posted: {date}</p>
-                        {hasExtras && (
+                        {attachments.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                {attachments.length > 0 && <><Paperclip className="h-3 w-3" />{attachments.length}</>}
+                                <Paperclip className="h-3 w-3" />{attachments.length}
                             </span>
                         )}
                     </div>
@@ -147,7 +142,7 @@ function AnnouncementItem({
     );
 }
 
-// ── View Modal ────────────────────────────────────────────────────────────────
+// View Modal
 
 function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelete }: {
     announcement: Announcement;
@@ -164,8 +159,6 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
             <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
-
-                {/* Header */}
                 <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 gap-4">
                     <div className="flex items-start gap-3">
                         <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
@@ -188,16 +181,12 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
                     </button>
                 </div>
 
-                {/* Body */}
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-
-                    {/* Description */}
                     <div>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
                         <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
                     </div>
 
-                    {/* Attachments */}
                     {announcement.attachments.length > 0 && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
@@ -217,7 +206,6 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
                     )}
                 </div>
 
-                {/* Footer — admin actions */}
                 {isAdmin && (
                     <div className="flex justify-end gap-2 border-t px-6 py-4">
                         <button onClick={() => { onClose(); onDelete(announcement.id, announcement.title); }}
@@ -235,7 +223,7 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
     );
 }
 
-// ── Post / Edit Modal ─────────────────────────────────────────────────────────
+// Post / Edit Modal
 
 interface ModalProps {
     editing?: Announcement;
@@ -246,20 +234,18 @@ interface ModalProps {
 function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
     const isEdit = editing !== undefined;
 
-    const [title,       setTitle]       = useState(editing?.title  ?? '');
-    const [body,        setBody]        = useState(editing?.body   ?? '');
-    const [date,        setDate]        = useState(
+    const [title,        setTitle]        = useState(editing?.title  ?? '');
+    const [body,         setBody]         = useState(editing?.body   ?? '');
+    const [date,         setDate]         = useState(
         editing?.date
             ? (() => { const d = new Date(editing.date); return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10); })()
             : ''
     );
-    const [tag,         setTag]         = useState(editing?.tag ?? 'General');
-    const [newLinkLabel, setNewLinkLabel] = useState('');
-    const [newLinkUrl,   setNewLinkUrl]   = useState('');
-    const [files,       setFiles]       = useState<File[]>([]);
+    const [tag,          setTag]          = useState(editing?.tag ?? 'General');
+    const [files,        setFiles]        = useState<File[]>([]);
     const [removedPaths, setRemovedPaths] = useState<string[]>([]);
-    const [autoDelete,  setAutoDelete]  = useState(editing?.auto_delete ?? false);
-    const [deleteAfter, setDeleteAfter] = useState(
+    const [autoDelete,   setAutoDelete]   = useState(editing?.auto_delete ?? false);
+    const [deleteAfter,  setDeleteAfter]  = useState(
         editing?.delete_after
             ? (() => { const d = new Date(editing.delete_after!); return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10); })()
             : ''
@@ -268,63 +254,72 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
     const [errors,  setErrors]  = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const bodyLeft    = MAX_BODY - body.length;
-    const inputCls    = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600';
+    const bodyLeft            = MAX_BODY - body.length;
+    const inputCls            = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600';
     const existingAttachments = (editing?.attachments ?? []).filter(a => !removedPaths.includes(a.path));
 
     function validate() {
         const e: Record<string, string> = {};
-        if (!title.trim())           e.title = 'Title is required.';
-        if (!body.trim())            e.body  = 'Description is required.';
-        if (body.length > MAX_BODY)  e.body  = `Max ${MAX_BODY} characters.`;
-        if (!date)                   e.date  = 'Date is required.';
+        if (!title.trim())              e.title       = 'Title is required.';
+        if (!body.trim())               e.body        = 'Description is required.';
+        if (body.length > MAX_BODY)     e.body        = `Max ${MAX_BODY} characters.`;
+        if (!date)                      e.date        = 'Date is required.';
         if (autoDelete && !deleteAfter) e.deleteAfter = 'Please specify the delete-after date.';
         return e;
     }
 
     function removeExistingAttachment(path: string) { setRemovedPaths(prev => [...prev, path]); }
-    function removeNewFile(i: number) { setFiles(prev => prev.filter((_, idx) => idx !== i)); }
+    function removeNewFile(i: number)               { setFiles(prev => prev.filter((_, idx) => idx !== i)); }
 
     function handleSubmit() {
         const e = validate();
         if (Object.keys(e).length) { setErrors(e); return; }
         setSaving(true);
 
+        // Build FormData — pass directly to router.post (no "as any", no forceFormData)
+        // Inertia detects FormData natively and sends it as multipart/form-data
         const formData = new FormData();
         formData.append('title', title);
-        formData.append('body', body);
-        formData.append('date', date);
-        formData.append('tag', tag);
+        formData.append('body',  body);
+        formData.append('date',  date);
+        formData.append('tag',   tag);
         formData.append('auto_delete', autoDelete ? '1' : '0');
         if (autoDelete && deleteAfter) formData.append('delete_after', deleteAfter);
         files.forEach(f => formData.append('attachments[]', f));
         if (isEdit && removedPaths.length) formData.append('removed_attachments', JSON.stringify(removedPaths));
-
-        const url    = isEdit ? `/announcements/${editing!.id}` : '/announcements';
-        const method = isEdit ? 'post' : 'post';  // Laravel needs POST + _method for PUT with files
-
         if (isEdit) formData.append('_method', 'PUT');
 
-        router.post(url, formData as any, {
+        // Debug: log what we're sending
+        console.log('[Announcement] Submitting', { isEdit, fileCount: files.length, url: isEdit ? `/announcements/${editing!.id}` : '/announcements' });
+        files.forEach((f, i) => console.log(`[Announcement] File ${i}:`, f.name, f.size, f.type));
+
+        const url = isEdit ? `/announcements/${editing!.id}` : '/announcements';
+
+        router.post(url, formData, {
             preserveScroll: true,
-            forceFormData: true,
             onSuccess: () => {
-                const updated: Announcement = {
+                console.log('[Announcement] Success');
+                onSaved({
                     id:          isEdit ? editing!.id : 0,
                     title, body, tag,
                     date:        new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                    tagColor:    TAG_COLOR_MAP[tag] ?? 'bg-gray-100 text-gray-600',
+                    tagColor:    TAG_COLOR_MAP[tag] ?? 'bg-gray-50 text-gray-600',
                     attachments: existingAttachments,
                     auto_delete: autoDelete,
                     delete_after: autoDelete && deleteAfter
                         ? new Date(deleteAfter).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
                         : null,
-                };
-                onSaved(updated);
+                });
                 setSaving(false);
                 onClose();
+                // Reload to populate server-assigned URLs for newly uploaded files
+                router.reload({ only: ['announcements'] });
             },
-            onError: (errs) => { setErrors(errs as Record<string, string>); setSaving(false); },
+            onError: (errs) => {
+                console.error('[Announcement] Validation errors:', errs);
+                setErrors(errs as Record<string, string>);
+                setSaving(false);
+            },
         });
     }
 
@@ -359,7 +354,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         {errors.body && <p className="mt-1 text-xs text-red-500">{errors.body}</p>}
                     </div>
 
-                    {/* Date + Tag row */}
+                    {/* Date + Tag */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="mb-1 block text-xs font-medium text-gray-500">Announcement Date</label>
@@ -381,7 +376,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                             <span className="text-gray-400 font-normal">(PDF, images, docs — max 10MB each)</span>
                         </label>
 
-                        {/* Existing attachments (edit mode) */}
                         {existingAttachments.length > 0 && (
                             <div className="mb-2 space-y-1">
                                 {existingAttachments.map((f, i) => (
@@ -395,7 +389,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                             </div>
                         )}
 
-                        {/* New files queued */}
                         {files.length > 0 && (
                             <div className="mb-2 space-y-1">
                                 {files.map((f, i) => (
@@ -431,8 +424,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         </label>
                         {autoDelete && (
                             <div>
-                                <input type="date" value={deleteAfter}
-                                    min={date || undefined}
+                                <input type="date" value={deleteAfter} min={date || undefined}
                                     onChange={e => { setDeleteAfter(e.target.value); setErrors(p => ({ ...p, deleteAfter: '' })); }}
                                     className={inputCls} />
                                 {errors.deleteAfter && <p className="mt-1 text-xs text-red-500">{errors.deleteAfter}</p>}
@@ -492,7 +484,10 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
     }
 
     function handleSaved(updated: Announcement) {
-        setAnnouncements(prev => prev.map(a => a.id === updated.id ? updated : a));
+        setAnnouncements(prev => {
+            const exists = prev.some(a => a.id === updated.id);
+            return exists ? prev.map(a => a.id === updated.id ? updated : a) : [updated, ...prev];
+        });
     }
 
     function handleDelete(id: number, title: string) {

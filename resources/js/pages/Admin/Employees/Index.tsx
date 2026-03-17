@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import {
-    Check, Lock,
+    Check, Lock, ExternalLink,
     Search, Trash2, UserCheck, UserX, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -150,14 +150,32 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t flex justify-end">
-                    {employee.email_verified_at && !employee.is_approved && (
+                {/* Footer — shows View Profile for approved, Approve for pending */}
+                <div className="px-6 py-4 border-t flex items-center justify-between gap-2">
+                    {/* Left side: approve button only if pending + verified */}
+                    <div>
+                        {employee.email_verified_at && !employee.is_approved && (
+                            <button
+                                onClick={() => { onApprove(employee); onClose(); }}
+                                className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                            >
+                                <Check className="h-4 w-4" />
+                                Approve Account
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Right side: View Profile always visible for approved employees */}
+                    {employee.is_approved && (
                         <button
-                            onClick={() => { onApprove(employee); onClose(); }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                            onClick={() => {
+                                onClose();
+                                router.visit(`/admin/employees/${employee.id}/profile`);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition ml-auto"
                         >
-                            <Check className="h-4 w-4" />
-                            Approve Account
+                            <ExternalLink className="h-4 w-4" />
+                            View Profile
                         </button>
                     )}
                 </div>
@@ -173,59 +191,35 @@ export default function Index({ employees, filters }: Props) {
     const [status, setStatus]           = useState(filters.status ?? '');
     const [detailModal, setDetailModal] = useState<Employee | null>(null);
 
-    // ── Local employee list state (starts from server data) ───────────────────
     const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees.data);
     const [localTotal, setLocalTotal]         = useState<number>(employees.total);
 
-    // Keep in sync when Inertia navigates (filters change etc.)
     useEffect(() => {
         setLocalEmployees(employees.data);
         setLocalTotal(employees.total);
     }, [employees.data]);
 
-    // ── Real-time DOM event listeners ─────────────────────────────────────────
     useEffect(() => {
-        // New employee registered — prepend to table
         function onEmployeeAdded(e: Event) {
             const data = (e as CustomEvent<Employee>).detail;
-            setLocalEmployees(function(prev) {
-                // Avoid duplicates
-                if (prev.some(function(emp) { return emp.id === data.id; })) return prev;
-                return [data, ...prev];
-            });
-            setLocalTotal(function(prev) { return prev + 1; });
+            setLocalEmployees(prev => prev.some(emp => emp.id === data.id) ? prev : [data, ...prev]);
+            setLocalTotal(prev => prev + 1);
         }
-
-        // Employee approved from drawer — update their row status
         function onEmployeeApproved(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
-            setLocalEmployees(function(prev) {
-                return prev.map(function(emp) {
-                    if (emp.id === id) return Object.assign({}, emp, { is_approved: true });
-                    return emp;
-                });
-            });
-            // Also update the detail modal if it's open for this employee
-            setDetailModal(function(prev) {
-                if (prev && prev.id === id) return Object.assign({}, prev, { is_approved: true });
-                return prev;
-            });
+            setLocalEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, is_approved: true } : emp));
+            setDetailModal(prev => prev && prev.id === id ? { ...prev, is_approved: true } : prev);
         }
-
-        // Employee denied/deleted from drawer — remove their row
         function onEmployeeRemoved(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
-            setLocalEmployees(function(prev) { return prev.filter(function(emp) { return emp.id !== id; }); });
-            setLocalTotal(function(prev) { return Math.max(0, prev - 1); });
-            // Close modal if open for this employee
-            setDetailModal(function(prev) { return prev && prev.id === id ? null : prev; });
+            setLocalEmployees(prev => prev.filter(emp => emp.id !== id));
+            setLocalTotal(prev => Math.max(0, prev - 1));
+            setDetailModal(prev => prev && prev.id === id ? null : prev);
         }
-
         window.addEventListener('notif:employee-added',    onEmployeeAdded);
         window.addEventListener('notif:employee-approved', onEmployeeApproved);
         window.addEventListener('notif:employee-removed',  onEmployeeRemoved);
-
-        return function() {
+        return () => {
             window.removeEventListener('notif:employee-added',    onEmployeeAdded);
             window.removeEventListener('notif:employee-approved', onEmployeeApproved);
             window.removeEventListener('notif:employee-removed',  onEmployeeRemoved);
@@ -236,7 +230,6 @@ export default function Index({ employees, filters }: Props) {
         router.get('/admin/employees', { search, status }, { preserveState: true, replace: true });
     };
 
-    // ── Approve ───────────────────────────────────────────────────────────────
     const approve = (emp: Employee) => {
         Swal.fire({
             title: 'Approve Account?',
@@ -252,7 +245,6 @@ export default function Index({ employees, filters }: Props) {
                 router.post('/admin/employees/' + emp.id + '/approve', {}, {
                     preserveScroll: true,
                     onSuccess: () => {
-                        // Update row immediately without reload
                         setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: true } : e));
                         Toast.fire({ icon: 'success', title: getFullName(emp) + ' has been approved.' });
                     },
@@ -262,7 +254,6 @@ export default function Index({ employees, filters }: Props) {
         });
     };
 
-    // ── Toggle approval ───────────────────────────────────────────────────────
     const toggleApproval = (emp: Employee) => {
         const isRevoking = emp.is_approved;
         Swal.fire({
@@ -284,7 +275,9 @@ export default function Index({ employees, filters }: Props) {
                         setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: !e.is_approved } : e));
                         Toast.fire({
                             icon: 'success',
-                            title: isRevoking ? 'Access revoked for ' + getFullName(emp) + '.' : getFullName(emp) + ' has been approved.',
+                            title: isRevoking
+                                ? 'Access revoked for ' + getFullName(emp) + '.'
+                                : getFullName(emp) + ' has been approved.',
                         });
                     },
                     onError: () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
@@ -293,7 +286,6 @@ export default function Index({ employees, filters }: Props) {
         });
     };
 
-    // ── Delete ────────────────────────────────────────────────────────────────
     const deleteEmployee = (emp: Employee) => {
         Swal.fire({
             title: 'Delete Employee?',
@@ -319,7 +311,6 @@ export default function Index({ employees, filters }: Props) {
         });
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <AppLayout>
             <Head title="Employees" />

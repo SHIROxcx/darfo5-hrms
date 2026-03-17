@@ -3,6 +3,8 @@ import {
     Camera, Edit2, Plus, Shield, X, Dot, Pencil,
     GraduationCap,
     Award,
+    MessageSquare,
+    MessagesSquare,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -203,7 +205,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-function EditPersonalModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
+function EditPersonalModal({ user, isOwn, onClose }: { user: ProfileUser; isOwn: boolean; onClose: () => void })  {
     const ep = user.employee_profile;
     const [form, setForm] = useState({
         first_name: user.first_name ?? '', middle_name: user.middle_name ?? '',
@@ -217,7 +219,8 @@ function EditPersonalModal({ user, onClose }: { user: ProfileUser; onClose: () =
         setForm(f => ({ ...f, [k]: e.target.value }));
     function save() {
         setSaving(true);
-        router.post('/profile/personal', form, {
+        const url = isOwn ? '/profile/personal' : '/profile/' + user.id + '/personal';
+        router.post(url, form,  {
             preserveScroll: true,
             onSuccess: () => { setSaving(false); onClose(); },
             onError: () => setSaving(false),
@@ -534,6 +537,7 @@ export default function ProfileShow() {
 
     const ep      = user.employee_profile;
     const isOwn   = auth.user.id === user.id;
+    const canEdit = isOwn || canEditCompany;
     const name    = fullName(user);
     const avatar  = user.photo ? '/storage/' + user.photo : null;
     const progress= calcCompletion(user);
@@ -687,7 +691,7 @@ export default function ProfileShow() {
             <Head title="My Profile" />
 
             {/* Modals */}
-            {modal === 'personal'   && <EditPersonalModal   user={user} onClose={() => setModal(null)} />}
+            {modal === 'personal'   && <EditPersonalModal   user={user} isOwn={isOwn} onClose={() => setModal(null)} />}
             {modal === 'company'    && <EditCompanyModal    user={user} onClose={() => setModal(null)} />}
             {modal === 'government' && <EditGovernmentModal user={user} onClose={() => setModal(null)} />}
             {modal !== null && typeof modal === 'object' && modal.type === 'degree' &&
@@ -741,15 +745,23 @@ export default function ProfileShow() {
                             </div>
 
                             {/* Action buttons */}
-                            {isOwn && (
-                            <div className="flex items-center justify-end gap-2 shrink-0 :ml-4 mt-5">
+                            <div className="flex items-center justify-end gap-2 shrink-0 mt-5">
+                            {isOwn ? (
                                 <button onClick={() => setModal('personal')}
                                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
                                     <Pencil className="h-4 w-4" />
                                     <span className="inline">Edit profile</span>
                                 </button>
+                            ) : (
+                                <button
+                                    disabled
+                                    title="Messaging coming soon"
+                                    className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400 transition">
+                                    <MessagesSquare className='w-4 h-4' />
+                                    Message
+                                </button>
+                                )}
                             </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -792,7 +804,7 @@ export default function ProfileShow() {
                                     <div>
                                         <h2 className="text-base font-semibold text-green-800">Overview</h2>
                                     </div>
-                                    {isOwn && <EditBtn onClick={() => setModal('personal')} />}
+                                    {canEdit && <EditBtn onClick={() => setModal('personal')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[
@@ -838,7 +850,7 @@ export default function ProfileShow() {
                                 <Separator />
 
                                 <SectionBlock title="Bachelor's Degree"
-                                    action={isOwn ? <AddBtn onClick={() => setModal({ type: 'degree' })} /> : undefined}>
+                                    action={canEdit ? <AddBtn onClick={() => setModal({ type: 'degree' })} /> : undefined}>
                                     {user.degrees.length === 0
                                         ? <p className="text-sm text-gray-400 italic">No education records added yet.</p>
                                         : <div className="space-y-3">
@@ -851,7 +863,7 @@ export default function ProfileShow() {
                                                             <p className="text-xs text-gray-400">{dateRange(d.start_month, d.start_year, d.end_month, d.end_year)}</p>
                                                         </div>
                                                     </div>
-                                                    {isOwn && <button onClick={() => setModal({ type: 'degree', item: d })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                                    {canEdit && <button onClick={() => setModal({ type: 'degree', item: d })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
                                                 </div>
                                             ))}
                                         </div>
@@ -859,7 +871,7 @@ export default function ProfileShow() {
                                 </SectionBlock>
 
                                 <SectionBlock title="Graduate Studies"
-                                    action={isOwn ? <AddBtn onClick={() => setModal({ type: 'program' })} label="Add" /> : undefined}>
+                                    action={canEdit ? <AddBtn onClick={() => setModal({ type: 'program' })} label="Add" /> : undefined}>
                                     {user.graduate_studies.length === 0
                                         ? <p className="text-sm text-gray-400 italic">No graduate studies added yet.</p>
                                         : <div className="space-y-3">
@@ -872,7 +884,7 @@ export default function ProfileShow() {
                                                             <p className="text-xs text-gray-400 mt-0.5">{dateRange(g.start_month, g.start_year, g.end_month, g.end_year)}</p>
                                                         </div>
                                                     </div>
-                                                    {isOwn && <button onClick={() => setModal({ type: 'program', item: g })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                                    {canEdit && <button onClick={() => setModal({ type: 'program', item: g })} className="shrink-0 cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
                                                 </div>
                                             ))}
                                         </div>
@@ -888,7 +900,7 @@ export default function ProfileShow() {
                                     <div>
                                         <h2 className="text-base font-semibold text-green-800">Eligibilities & Licenses</h2>
                                     </div>
-                                    {isOwn && <AddBtn onClick={() => setModal({ type: 'eligibility' })} label="Add" />}
+                                    {canEdit && <AddBtn onClick={() => setModal({ type: 'eligibility' })} label="Add" />}
                                 </div>
                                 <Separator />
                                 {user.eligibilities.length === 0
@@ -906,7 +918,7 @@ export default function ProfileShow() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                {isOwn && <button onClick={() => setModal({ type: 'eligibility', item: e })} className="cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
+                                                {canEdit && <button onClick={() => setModal({ type: 'eligibility', item: e })} className="cursor-pointer text-xs font-medium text-green-700 hover:text-green-800">Edit</button>}
                                             </div>
                                         ))}
                                     </div>

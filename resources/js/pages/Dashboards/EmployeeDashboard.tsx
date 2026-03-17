@@ -208,6 +208,7 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
                         </div>
                     )}
                 </div>
+
                 <div className="flex justify-end border-t px-6 py-4">
                     <button onClick={onClose}
                         className="cursor-pointer rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">
@@ -231,7 +232,7 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
         <li className="py-3 border-b border-gray-100 last:border-0 px-4 cursor-pointer hover:bg-gray-50 transition" onClick={onClick}>
             <div className="flex items-start gap-3">
                 <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-green-800 leading-none">{dayNum}</span>
+                    <span className="text-2xl font-bold text-gray-700 leading-none">{dayNum}</span>
                     <span className="text-xs text-gray-500 mt-0.5">{dayAbbr}</span>
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -251,7 +252,7 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
     );
 }
 
-// ── Main Dashboard ────────────────────────────────────────────────────────────
+// Main Dashboard
 
 export default function EmployeeDashboard({ user, announcements: initialAnnouncements }: Props) {
     const firstName  = user.name.split(' ')[0];
@@ -305,7 +306,7 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
 
                 {/* Greeting Header */}
                 <div className="mb-6">
-                    <h1 className="text-xl xl:text-2xl font-semibold leading-snug">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                         <span className="text-green-700">{greeting}, </span>
                         <span className="text-orange-500">{firstName}!</span>
                     </h1>

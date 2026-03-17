@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler, useEffect, useRef } from 'react';
 import { Eye, EyeOff, Check, ChevronRight, ChevronLeft, TriangleAlert } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 // Types
 interface FormData {
@@ -643,7 +644,7 @@ export default function Register() {
                                 <ReviewRow label="Mobile Number" value={data.mobile_number} />
                             </div>
                             <div className="mt-6 bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-xs text-green-700 text-center">
-                                After submitting, you will receive a <strong>verification email</strong>. Once verified, an HR Administrator will review and approve your account before you can log in.
+                                After submitting, you will receive a <strong>One-Time Password (OTP)</strong>. Once verified, an HR Administrator will review and approve your account before you can log in.
                             </div>
                         </div>
                         <div className="flex justify-end gap-2 bg-gray-50 border-t px-6 py-4">
@@ -653,8 +654,7 @@ export default function Register() {
                             </button>
                             <button type="button" disabled={processing} onClick={submit}
                                 className="flex items-center gap-1 px-6 py-2 rounded-lg cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50">
-                                <Check className="h-4 w-4" />
-                                {processing ? 'Submitting...' : 'Submit Registration'}
+                                {processing ? <><Spinner />Submitting...</> : <><Check className="h-4 w-4" />Submit Registration</>}
                             </button>
                         </div>
                     </div>

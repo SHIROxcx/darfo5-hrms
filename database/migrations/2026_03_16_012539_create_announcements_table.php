@@ -31,7 +31,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('announcements', function (Blueprint $table) {
-            $table->dropColumn(['attachments', 'links', 'auto_delete', 'delete_after']);
+            $table->dropColumn(['attachments', 'auto_delete', 'delete_after']);
         });
     }
 };

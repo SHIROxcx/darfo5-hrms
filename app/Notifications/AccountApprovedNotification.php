@@ -18,8 +18,8 @@ class AccountApprovedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'message' => 'Welcome to HRMS!',
-            'url'     => '/dashboard',
+            'message' => 'Welcome to DA RFO 5 - HRMS!',
+            'url'     => '/profile',
         ];
     }
     
