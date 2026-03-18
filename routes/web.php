@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PdsController;
@@ -84,6 +85,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
     Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
+
+    // Location Routes
+    Route::prefix('api/locations')->middleware(['auth'])->group(function () {
+    Route::get('/provinces',           [LocationController::class, 'provinces']);
+    Route::get('/cities/{provinceId}', [LocationController::class, 'cities']);
+    Route::get('/barangays/{cityId}',  [LocationController::class, 'barangays']);
+});
     
 });
 

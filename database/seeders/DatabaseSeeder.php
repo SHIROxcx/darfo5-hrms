@@ -27,6 +27,8 @@ class DatabaseSeeder extends Seeder
             BachelorsDegreeSeeder::class,
             GraduateProgramSeeder::class,
             EligibilitySeeder::class,
+            PhilippineLocationSeeder::class,
+            PhilippineBarangaySeeder::class,
         ]);
     }
 }

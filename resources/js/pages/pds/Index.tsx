@@ -130,7 +130,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 </span>
                             )}
                             <div className="text-right">
-                                <div className="text-sm font-medium text-gray-700">{progressPct}% Complete</div>
+                                <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
                                 <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
                                     <div
                                         className="h-full bg-green-600 rounded-full transition-all duration-500"
@@ -175,7 +175,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                         <div className="p-3 border-t border-gray-200 mt-2">
                             <div className="bg-green-50 rounded-lg p-3">
-                                <p className="text-xs text-green-700 font-medium mb-1">{completedCount}/{SECTIONS.length} Sections filled</p>
+                                <p className="text-xs text-green-700 font-medium mb-1">{completedCount} of {SECTIONS.length} Sections Completed</p>
                                 <p className="text-xs text-green-600">CS Form 212 (Revised 2025)</p>
                             </div>
                         </div>
