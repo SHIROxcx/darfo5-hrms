@@ -3,14 +3,21 @@
 export interface PdsPersonalInfo {
     id?: number;
     user_id?: number;
+    // Personal info (moved from employee_profiles)
     date_of_birth?: string;
+    sex?: string;
+    birth_place?: string;
+    civil_status?: string;
+    mobile_number?: string;
+    // Citizenship
     citizenship?: string;
     citizenship_type?: string;
     citizenship_country?: string;
+    // Physical
     height?: number | string;
     weight?: number | string;
     blood_type?: string;
-    agency_employee_no?: string;
+    agency_employee_no?: string; // read-only for employees
     res_house_no?: string;
     res_street?: string;
     res_subdivision?: string;
@@ -27,6 +34,12 @@ export interface PdsPersonalInfo {
     perm_zipcode?: string;
     telephone?: string;
     email?: string;
+    // Government IDs (moved from employee_profiles)
+    umid_number?: string;
+    pagibig_number?: string;
+    philhealth_number?: string;
+    philsys_number?: string;
+    tin_number?: string;
 }
 
 export interface PdsFamilyBackground {
@@ -155,11 +168,6 @@ export interface PdsGovernmentId {
     place_of_issuance?: string;
 }
 
-/**
- * Shared callback type used by all PDS section components.
- * Using `string` (not the SectionId union) so the parent's typed handler
- * is assignable to a section component's looser `Props`.
- */
 export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => void;
 
 export interface PdsData {
@@ -187,10 +195,6 @@ export interface User {
     name_ext?: string;
     photo?: string;
     employee_profile?: {
-        sex?: string;
-        birth_place?: string;
-        civil_status?: string;
-        mobile_number?: string;
         employee_number?: string;
         employment_type?: string;
         position?: string;
@@ -199,10 +203,5 @@ export interface User {
         division?: string;
         section?: string;
         date_hired?: string;
-        gsis_number?: string;
-        sss_number?: string;
-        pagibig_number?: string;
-        tin_number?: string;
-        philhealth_number?: string;
     };
 }

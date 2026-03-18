@@ -53,20 +53,17 @@ class EmployeeController extends Controller
             'eligibilities',
         ]);
 
-        // Reuse the same format helper from UserProfileController
         $profileController = new \App\Http\Controllers\UserProfileController();
 
         return Inertia::render('Profile/Show', [
-            // Pass as profileUser so Profile/Show.tsx works unchanged
             'profileUser'    => $this->formatUser($user),
-            // Admin can always edit company + government IDs
+            // Admin can always edit company and government IDs
             'canEditCompany' => true,
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
             'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
             'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
             'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
-            // Let the view know we're in admin context so it can show a back button
             'adminContext'   => true,
         ]);
     }

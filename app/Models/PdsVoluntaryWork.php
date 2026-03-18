@@ -10,5 +10,5 @@ class PdsVoluntaryWork extends Model {
         'user_id','organization_name','organization_address','date_from','date_to',
         'number_of_hours','position','sort_order',
     ];
-    protected $casts = ['date_from' => 'date','date_to' => 'date'];
+     protected $casts = ['date_from' => 'date:Y-m-d','date_to' => 'date:Y-m-d'];
 }

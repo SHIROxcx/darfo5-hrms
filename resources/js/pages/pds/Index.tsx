@@ -103,7 +103,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const currentSectionIdx = SECTIONS.findIndex(s => s.id === activeSection);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Personal Data Sheet" />
 
             <div className="flex flex-col h-full">
@@ -111,11 +111,11 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <div className="bg-white border-b border-gray-200 px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
-                                <FileText className="w-5 h-5 text-white" />
+                            <div className="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center">
+                                <FileText className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-semibold text-gray-900">CS Form No. 212 — Personal Data Sheet</h1>
+                                <h1 className="text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
                                 <p className="text-sm text-gray-500">
                                     {user.last_name}, {user.first_name} {user.middle_name} · {user.employee_profile?.employee_number ?? 'No employee number'}
                                 </p>

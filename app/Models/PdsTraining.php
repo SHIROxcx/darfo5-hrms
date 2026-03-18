@@ -9,5 +9,5 @@ class PdsTraining extends Model {
     protected $fillable = [
         'user_id','title','date_from','date_to','number_of_hours','type_of_ld','conducted_by','sort_order',
     ];
-    protected $casts = ['date_from' => 'date','date_to' => 'date'];
+    protected $casts = ['date_from' => 'date:Y-m-d','date_to' => 'date:Y-m-d'];
 }

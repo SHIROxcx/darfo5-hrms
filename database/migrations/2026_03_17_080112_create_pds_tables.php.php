@@ -7,18 +7,24 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // PDS Personal Info (supplementary to users + employee_profiles)
+        // PDS Personal Info — single source of truth for personal details
         Schema::create('pds_personal_info', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('date_of_birth')->nullable();
+            $table->enum('sex', ['Male', 'Female'])->nullable();
+            $table->string('birth_place')->nullable();
+            $table->enum('civil_status', ['Single', 'Married', 'Widowed', 'Separated', 'Other'])->nullable();
+            $table->string('mobile_number', 20)->nullable();
+            // Citizenship
             $table->string('citizenship')->nullable();
             $table->string('citizenship_type')->nullable(); // by_birth, by_naturalization
             $table->string('citizenship_country')->nullable();
+            // Physical
             $table->float('height')->nullable();
             $table->float('weight')->nullable();
             $table->string('blood_type', 5)->nullable();
-            $table->string('agency_employee_no')->nullable();
+            $table->string('agency_employee_no')->nullable(); // admin-only
             // Residential Address
             $table->string('res_house_no')->nullable();
             $table->string('res_street')->nullable();
@@ -35,8 +41,15 @@ return new class extends Migration {
             $table->string('perm_city')->nullable();
             $table->string('perm_province')->nullable();
             $table->string('perm_zipcode', 10)->nullable();
+            // Contact
             $table->string('telephone')->nullable();
             $table->string('email')->nullable();
+            // Government IDs (formerly in employee_profiles)
+            $table->string('umid_number')->nullable();
+            $table->string('pagibig_number')->nullable();
+            $table->string('philhealth_number')->nullable();
+            $table->string('philsys_number')->nullable();
+            $table->string('tin_number')->nullable();
             $table->timestamps();
         });
 

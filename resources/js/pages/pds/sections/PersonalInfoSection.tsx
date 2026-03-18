@@ -9,19 +9,52 @@ interface Props {
     saving: boolean;
 }
 
+// Extends PdsPersonalInfo to also carry the name fields from the users table
+interface PersonalForm extends PdsPersonalInfo {
+    last_name: string;
+    first_name: string;
+    middle_name: string;
+    name_ext: string;
+}
+
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 export default function PersonalInfoSection({ user, pdsData, onSave, saving }: Props) {
     const profile = user.employee_profile;
 
-    const [form, setForm] = useState<PdsPersonalInfo>({
-        date_of_birth: pdsData.personal?.date_of_birth ?? '',
+    const [sameAsResidential, setSameAsResidential] = useState(() => {
+        const p = pdsData.personal;
+        if (!p?.perm_city) return false; // nothing filled in yet — default unchecked
+        return (
+            p.perm_house_no   === p.res_house_no   &&
+            p.perm_street     === p.res_street     &&
+            p.perm_subdivision=== p.res_subdivision&&
+            p.perm_barangay   === p.res_barangay   &&
+            p.perm_city       === p.res_city       &&
+            p.perm_province   === p.res_province   &&
+            p.perm_zipcode    === p.res_zipcode
+        );
+    });
+    const [form, setForm] = useState<PersonalForm>({
+        // Name — editable, pre-filled from users table
+        last_name: user.last_name ?? '',
+        first_name: user.first_name ?? '',
+        middle_name: user.middle_name ?? '',
+        name_ext: user.name_ext ?? '',
+        // Personal info (now in pds_personal_info, editable by employee)
+        sex: pdsData.personal?.sex ?? '',
+        birth_place: pdsData.personal?.birth_place ?? '',
+        civil_status: pdsData.personal?.civil_status ?? '',
+        mobile_number: pdsData.personal?.mobile_number ?? '',
+        // PDS-specific
+        date_of_birth: pdsData.personal?.date_of_birth?.slice(0, 10) ?? '',
         citizenship: pdsData.personal?.citizenship ?? 'Filipino',
         citizenship_type: pdsData.personal?.citizenship_type ?? '',
         citizenship_country: pdsData.personal?.citizenship_country ?? '',
         height: pdsData.personal?.height ?? '',
         weight: pdsData.personal?.weight ?? '',
         blood_type: pdsData.personal?.blood_type ?? '',
+        // agency_employee_no is read-only — only admin can edit via employee profile
         agency_employee_no: pdsData.personal?.agency_employee_no ?? profile?.employee_number ?? '',
         res_house_no: pdsData.personal?.res_house_no ?? '',
         res_street: pdsData.personal?.res_street ?? '',
@@ -39,51 +72,98 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         perm_zipcode: pdsData.personal?.perm_zipcode ?? '',
         telephone: pdsData.personal?.telephone ?? '',
         email: pdsData.personal?.email ?? user.email ?? '',
+        // Government IDs (now in pds_personal_info)
+        umid_number: pdsData.personal?.umid_number ?? '',
+        pagibig_number: pdsData.personal?.pagibig_number ?? '',
+        philhealth_number: pdsData.personal?.philhealth_number ?? '',
+        philsys_number: pdsData.personal?.philsys_number ?? '',
+        tin_number: pdsData.personal?.tin_number ?? '',
     });
 
-    const set = (key: keyof PdsPersonalInfo, value: string) =>
-        setForm(prev => ({ ...prev, [key]: value }));
+    const RES_TO_PERM: Partial<Record<keyof PersonalForm, keyof PersonalForm>> = {
+        res_house_no:    'perm_house_no',
+        res_street:      'perm_street',
+        res_subdivision: 'perm_subdivision',
+        res_barangay:    'perm_barangay',
+        res_city:        'perm_city',
+        res_province:    'perm_province',
+        res_zipcode:     'perm_zipcode',
+    };
+
+    const set = (key: keyof PersonalForm, value: string) =>
+        setForm(prev => {
+            const next: PersonalForm = { ...prev, [key]: value };
+            // Mirror residential - permanent while checkbox is on
+            if (sameAsResidential && key in RES_TO_PERM) {
+                const permKey = RES_TO_PERM[key]!;
+                next[permKey] = value as never;
+            }
+            return next;
+        });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave('personal', form as Record<string, unknown>);
+        onSave('personal', form as unknown as Record<string, unknown>);
     };
 
     const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white";
+    const readonlyClass = "w-full border border-gray-100 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed select-none";
     const labelClass = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
     const sectionClass = "mb-6";
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-                <h2 className="text-base font-semibold text-gray-900 mb-1">I. Personal Information</h2>
+                <h2 className="text-base font-semibold text-green-800 mb-1">I. Personal Information</h2>
                 <p className="text-xs text-gray-500">
                     Some fields are pre-filled from your employee profile. Update any missing details.
                 </p>
             </div>
 
-            {/* Name — Read-only from users table */}
+            {/* Name — editable, pre-filled from users table */}
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-                <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name (from employee profile)</p>
+                <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
-                        <label className={labelClass}>Surname</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.last_name ?? '—'}</div>
+                        <label className={labelClass}>Surname *</label>
+                        <input
+                            type="text"
+                            value={form.last_name}
+                            onChange={e => set('last_name', e.target.value)}
+                            className={inputClass}
+                            required
+                        />
                     </div>
                     <div>
-                        <label className={labelClass}>First Name</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.first_name ?? '—'}</div>
+                        <label className={labelClass}>First Name *</label>
+                        <input
+                            type="text"
+                            value={form.first_name}
+                            onChange={e => set('first_name', e.target.value)}
+                            className={inputClass}
+                            required
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Middle Name</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.middle_name ?? '—'}</div>
+                        <input
+                            type="text"
+                            value={form.middle_name}
+                            onChange={e => set('middle_name', e.target.value)}
+                            className={inputClass}
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Extension (Jr./Sr.)</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.name_ext ?? '—'}</div>
+                        <input
+                            type="text"
+                            value={form.name_ext}
+                            onChange={e => set('name_ext', e.target.value)}
+                            placeholder="Jr., Sr., II, III"
+                            className={inputClass}
+                        />
                     </div>
                 </div>
-                <p className="text-xs text-green-600 mt-2">To update your name, please contact HR.</p>
             </div>
 
             {/* Basic Info */}
@@ -92,50 +172,76 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <label className={labelClass}>Date of Birth *</label>
-                        <input type="date" value={form.date_of_birth as string} onChange={e => set('date_of_birth', e.target.value)}
-                            className={inputClass} required />
+                        <input
+                            type="date"
+                            value={form.date_of_birth as string}
+                            onChange={e => set('date_of_birth', e.target.value)}
+                            className={inputClass}
+                            required
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Place of Birth</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>
-                            {profile?.birth_place ?? '—'}
-                        </div>
+                        <input type="text" value={form.birth_place ?? ''} onChange={e => set('birth_place', e.target.value)} className={inputClass} />
                     </div>
                     <div>
                         <label className={labelClass}>Sex</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>
-                            {profile?.sex ?? '—'}
-                        </div>
+                        <select value={form.sex ?? ''} onChange={e => set('sex', e.target.value)} className={inputClass}>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
                     </div>
                     <div>
                         <label className={labelClass}>Civil Status</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>
-                            {profile?.civil_status ?? '—'}
-                        </div>
+                        <select value={form.civil_status ?? ''} onChange={e => set('civil_status', e.target.value)} className={inputClass}>
+                            <option value="">Select</option>
+                            {['Single', 'Married', 'Widowed', 'Separated', 'Other'].map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className={labelClass}>Height (m)</label>
-                        <input type="number" step="0.01" min="0" max="3"
-                            value={form.height as string} onChange={e => set('height', e.target.value)}
-                            placeholder="e.g. 1.65" className={inputClass} />
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="3"
+                            value={form.height as string}
+                            onChange={e => set('height', e.target.value)}
+                            placeholder="e.g. 1.65"
+                            className={inputClass}
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Weight (kg)</label>
-                        <input type="number" step="0.1" min="0"
-                            value={form.weight as string} onChange={e => set('weight', e.target.value)}
-                            placeholder="e.g. 60.5" className={inputClass} />
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            value={form.weight as string}
+                            onChange={e => set('weight', e.target.value)}
+                            placeholder="e.g. 60.5"
+                            className={inputClass}
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Blood Type</label>
-                        <select value={form.blood_type} onChange={e => set('blood_type', e.target.value)} className={inputClass}>
+                        <select
+                            value={form.blood_type}
+                            onChange={e => set('blood_type', e.target.value)}
+                            className={inputClass}
+                        >
                             <option value="">Select</option>
                             {BLOOD_TYPES.map(bt => <option key={bt} value={bt}>{bt}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label className={labelClass}>Agency Employee No.</label>
-                        <input type="text" value={form.agency_employee_no} onChange={e => set('agency_employee_no', e.target.value)}
-                            className={inputClass} />
+                        <label className={labelClass}>
+                            Agency Employee No.{' '}
+                        </label>
+                        <div className={readonlyClass}>{form.agency_employee_no || '—'}</div>
                     </div>
                 </div>
             </div>
@@ -149,10 +255,14 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         <div className="flex gap-4 mt-2">
                             {['Filipino', 'Dual Citizenship'].map(c => (
                                 <label key={c} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                                    <input type="radio" name="citizenship" value={c}
+                                    <input
+                                        type="radio"
+                                        name="citizenship"
+                                        value={c}
                                         checked={form.citizenship === c}
                                         onChange={e => set('citizenship', e.target.value)}
-                                        className="accent-green-600" />
+                                        className="accent-green-600"
+                                    />
                                     {c}
                                 </label>
                             ))}
@@ -165,10 +275,14 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                                 <div className="flex gap-4 mt-2">
                                     {['by_birth', 'by_naturalization'].map(t => (
                                         <label key={t} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                                            <input type="radio" name="citizenship_type" value={t}
+                                            <input
+                                                type="radio"
+                                                name="citizenship_type"
+                                                value={t}
                                                 checked={form.citizenship_type === t}
                                                 onChange={e => set('citizenship_type', e.target.value)}
-                                                className="accent-green-600" />
+                                                className="accent-green-600"
+                                            />
                                             {t === 'by_birth' ? 'By Birth' : 'By Naturalization'}
                                         </label>
                                     ))}
@@ -176,8 +290,13 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                             </div>
                             <div>
                                 <label className={labelClass}>Country</label>
-                                <input type="text" value={form.citizenship_country} onChange={e => set('citizenship_country', e.target.value)}
-                                    placeholder="Indicate country" className={inputClass} />
+                                <input
+                                    type="text"
+                                    value={form.citizenship_country}
+                                    onChange={e => set('citizenship_country', e.target.value)}
+                                    placeholder="Indicate country"
+                                    className={inputClass}
+                                />
                             </div>
                         </>
                     )}
@@ -223,85 +342,123 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             <div className={sectionClass}>
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-gray-700">Permanent Address</h3>
-                    <button type="button" onClick={() => setForm(prev => ({
-                        ...prev,
-                        perm_house_no: prev.res_house_no, perm_street: prev.res_street,
-                        perm_subdivision: prev.res_subdivision, perm_barangay: prev.res_barangay,
-                        perm_city: prev.res_city, perm_province: prev.res_province, perm_zipcode: prev.res_zipcode,
-                    }))}
-                        className="text-xs text-green-600 hover:text-green-800 font-medium">
-                        Same as Residential ↑
-                    </button>
+                    <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={sameAsResidential}
+                            onChange={e => {
+                                setSameAsResidential(e.target.checked);
+                                if (e.target.checked) {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        perm_house_no: prev.res_house_no,
+                                        perm_street: prev.res_street,
+                                        perm_subdivision: prev.res_subdivision,
+                                        perm_barangay: prev.res_barangay,
+                                        perm_city: prev.res_city,
+                                        perm_province: prev.res_province,
+                                        perm_zipcode: prev.res_zipcode,
+                                    }));
+                                } else {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        perm_house_no: '',
+                                        perm_street: '',
+                                        perm_subdivision: '',
+                                        perm_barangay: '',
+                                        perm_city: '',
+                                        perm_province: '',
+                                        perm_zipcode: '',
+                                    }));
+                                }
+                            }}
+                            className="w-3.5 h-3.5 accent-green-600"
+                        />
+                        Same as Residential Address
+                    </label>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className={labelClass}>House/Block/Lot No.</label>
-                        <input type="text" value={form.perm_house_no} onChange={e => set('perm_house_no', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Street</label>
-                        <input type="text" value={form.perm_street} onChange={e => set('perm_street', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Subdivision/Village</label>
-                        <input type="text" value={form.perm_subdivision} onChange={e => set('perm_subdivision', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Barangay</label>
-                        <input type="text" value={form.perm_barangay} onChange={e => set('perm_barangay', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>City/Municipality</label>
-                        <input type="text" value={form.perm_city} onChange={e => set('perm_city', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Province</label>
-                        <input type="text" value={form.perm_province} onChange={e => set('perm_province', e.target.value)} className={inputClass} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Zip Code</label>
-                        <input type="text" value={form.perm_zipcode} onChange={e => set('perm_zipcode', e.target.value)} className={inputClass} maxLength={10} />
-                    </div>
+                    {[
+                        { label: 'House/Block/Lot No.', key: 'perm_house_no' as const },
+                        { label: 'Street',              key: 'perm_street' as const },
+                        { label: 'Subdivision/Village', key: 'perm_subdivision' as const },
+                        { label: 'Barangay',            key: 'perm_barangay' as const },
+                        { label: 'City/Municipality',   key: 'perm_city' as const },
+                        { label: 'Province',            key: 'perm_province' as const },
+                        { label: 'Zip Code',            key: 'perm_zipcode' as const, maxLength: 10 },
+                    ].map(({ label, key, maxLength }) => (
+                        <div key={key}>
+                            <label className={labelClass}>{label}</label>
+                            <input
+                                type="text"
+                                value={(form[key] as string) ?? ''}
+                                onChange={e => !sameAsResidential && set(key, e.target.value)}
+                                readOnly={sameAsResidential}
+                                maxLength={maxLength}
+                                className={sameAsResidential ? readonlyClass : inputClass}
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            {/* Contact / Government IDs */}
+            {/* Contact & Government IDs */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-gray-700 mb-3 pb-2 border-b border-gray-100">Contact & Government IDs</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                         <label className={labelClass}>Telephone No.</label>
-                        <input type="text" value={form.telephone} onChange={e => set('telephone', e.target.value)} className={inputClass} />
+                        <input
+                            type="text"
+                            value={form.telephone}
+                            onChange={e => set('telephone', e.target.value)}
+                            className={inputClass}
+                        />
                     </div>
                     <div>
                         <label className={labelClass}>Mobile No.</label>
-                        <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{profile?.mobile_number ?? '—'}</div>
+                        <input type="text" value={form.mobile_number ?? ''} onChange={e => set('mobile_number', e.target.value)} className={inputClass} />
                     </div>
                     <div>
                         <label className={labelClass}>Email Address</label>
-                        <input type="email" value={form.email} onChange={e => set('email', e.target.value)} className={inputClass} />
+                        <input
+                            type="email"
+                            value={form.email}
+                            onChange={e => set('email', e.target.value)}
+                            className={inputClass}
+                        />
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                    {[
-                        { label: 'GSIS ID No.', val: profile?.gsis_number },
-                        { label: 'PAG-IBIG ID No.', val: profile?.pagibig_number },
-                        { label: 'PhilHealth No.', val: profile?.philhealth_number },
-                        { label: 'SSS No.', val: profile?.sss_number },
-                        { label: 'TIN No.', val: profile?.tin_number },
-                    ].map(({ label, val }) => (
-                        <div key={label}>
-                            <label className={labelClass}>{label}</label>
-                            <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{val ?? '—'}</div>
-                        </div>
-                    ))}
+                    <div>
+                        <label className={labelClass}>GSIS ID No.</label>
+                        <input type="text" value={form.umid_number ?? ''} onChange={e => set('umid_number', e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                        <label className={labelClass}>PAG-IBIG ID No.</label>
+                        <input type="text" value={form.pagibig_number ?? ''} onChange={e => set('pagibig_number', e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                        <label className={labelClass}>PhilHealth No.</label>
+                        <input type="text" value={form.philhealth_number ?? ''} onChange={e => set('philhealth_number', e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                        <label className={labelClass}>SSS No.</label>
+                        <input type="text" value={form.philsys_number ?? ''} onChange={e => set('philsys_number', e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                        <label className={labelClass}>TIN No.</label>
+                        <input type="text" value={form.tin_number ?? ''} onChange={e => set('tin_number', e.target.value)} className={inputClass} />
+                    </div>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Government IDs are managed through your employee profile.</p>
             </div>
 
             <div className="flex justify-end">
-                <button type="submit" disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
+                <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+                >
                     <Save className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Save Personal Information'}
                 </button>

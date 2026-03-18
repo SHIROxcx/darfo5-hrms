@@ -86,35 +86,66 @@ class PdsController extends Controller
     private function savePersonal(Request $request, int $userId)
     {
         $data = $request->validate([
-            'date_of_birth' => 'nullable|date',
-            'citizenship' => 'nullable|string',
-            'citizenship_type' => 'nullable|string',
-            'citizenship_country' => 'nullable|string',
-            'height' => 'nullable|numeric',
-            'weight' => 'nullable|numeric',
-            'blood_type' => 'nullable|string|max:5',
-            'agency_employee_no' => 'nullable|string',
-            'res_house_no' => 'nullable|string',
-            'res_street' => 'nullable|string',
-            'res_subdivision' => 'nullable|string',
-            'res_barangay' => 'nullable|string',
-            'res_city' => 'nullable|string',
-            'res_province' => 'nullable|string',
-            'res_zipcode' => 'nullable|string|max:10',
-            'perm_house_no' => 'nullable|string',
-            'perm_street' => 'nullable|string',
-            'perm_subdivision' => 'nullable|string',
-            'perm_barangay' => 'nullable|string',
-            'perm_city' => 'nullable|string',
-            'perm_province' => 'nullable|string',
-            'perm_zipcode' => 'nullable|string|max:10',
-            'telephone' => 'nullable|string',
-            'email' => 'nullable|email',
+            // Name fields
+            'last_name'            => 'nullable|string|max:100',
+            'first_name'           => 'nullable|string|max:100',
+            'middle_name'          => 'nullable|string|max:100',
+            'name_ext'             => 'nullable|string|max:20',
+            // Personal info
+            'sex'                  => 'nullable|in:Male,Female',
+            'birth_place'          => 'nullable|string',
+            'civil_status'         => 'nullable|in:Single,Married,Widowed,Separated,Other',
+            'mobile_number'        => 'nullable|string|max:20',
+            // Citizenship & physical
+            'date_of_birth'        => 'nullable|date',
+            'citizenship'          => 'nullable|string',
+            'citizenship_type'     => 'nullable|string',
+            'citizenship_country'  => 'nullable|string',
+            'height'               => 'nullable|numeric',
+            'weight'               => 'nullable|numeric',
+            'blood_type'           => 'nullable|string|max:5',
+            // agency_employee_no intentionally excluded — admin-only
+            
+            // Addresses
+            'res_house_no'         => 'nullable|string',
+            'res_street'           => 'nullable|string',
+            'res_subdivision'      => 'nullable|string',
+            'res_barangay'         => 'nullable|string',
+            'res_city'             => 'nullable|string',
+            'res_province'         => 'nullable|string',
+            'res_zipcode'          => 'nullable|string|max:10',
+            'perm_house_no'        => 'nullable|string',
+            'perm_street'          => 'nullable|string',
+            'perm_subdivision'     => 'nullable|string',
+            'perm_barangay'        => 'nullable|string',
+            'perm_city'            => 'nullable|string',
+            'perm_province'        => 'nullable|string',
+            'perm_zipcode'         => 'nullable|string|max:10',
+            'telephone'            => 'nullable|string',
+            'email'                => 'nullable|email',
+            // Government IDs
+            'umid_number'          => 'nullable|string',
+            'pagibig_number'       => 'nullable|string',
+            'philhealth_number'    => 'nullable|string',
+            'philsys_number'       => 'nullable|string',
+            'tin_number'           => 'nullable|string',
         ]);
+
+        // Update name fields on the users table
+        \App\Models\User::where('id', $userId)->update([
+            'last_name'   => $data['last_name'] ?? null,
+            'first_name'  => $data['first_name'] ?? null,
+            'middle_name' => $data['middle_name'] ?? null,
+            'name_ext'    => $data['name_ext'] ?? null,
+        ]);
+
+        $pdsFields = collect($data)
+            ->except(['last_name', 'first_name', 'middle_name', 'name_ext'])
+            ->toArray();
 
         PdsPersonalInfo::updateOrCreate(
             ['user_id' => $userId],
-            $data
+            $pdsFields
         );
 
         return back()->with('success', 'Personal information saved.');
