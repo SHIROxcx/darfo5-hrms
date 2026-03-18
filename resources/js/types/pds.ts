@@ -155,6 +155,13 @@ export interface PdsGovernmentId {
     place_of_issuance?: string;
 }
 
+/**
+ * Shared callback type used by all PDS section components.
+ * Using `string` (not the SectionId union) so the parent's typed handler
+ * is assignable to a section component's looser `Props`.
+ */
+export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => void;
+
 export interface PdsData {
     personal?: PdsPersonalInfo | null;
     family?: PdsFamilyBackground | null;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
-import type { User, PdsData, PdsReference, PdsGovernmentId } from '@/types/pds';
+import type { User, PdsData, PdsReference, PdsGovernmentId, PdsSaveCallback } from '@/types/pds';
 
-interface Props { user: User; pdsData: PdsData; onSave: (s: string, d: Record<string, unknown>) => void; saving: boolean; }
+interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
 
 const GOV_IDS = ['Passport', 'GSIS e-Card', 'SSS Card', 'PRC ID', "Driver's License", 'NBI Clearance', 'Police Clearance', 'Postal ID', 'Voter\'s ID', 'PhilHealth ID', 'Senior Citizen ID', 'UMID', 'PWD ID', 'Solo Parent ID', 'Others'];
 

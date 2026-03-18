@@ -1,9 +1,9 @@
 // EducationSection.tsx
 import { useState } from 'react';
 import { Save } from 'lucide-react';
-import type { User, PdsData, PdsEducation } from '@/types/pds';
+import type { User, PdsData, PdsEducation, PdsSaveCallback } from '@/types/pds';
 
-interface Props { user: User; pdsData: PdsData; onSave: (s: string, d: Record<string, unknown>) => void; saving: boolean; }
+interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
 
 const LEVELS: PdsEducation['level'][] = ['Elementary', 'Secondary', 'Vocational', 'College', 'Graduate Studies'];
 

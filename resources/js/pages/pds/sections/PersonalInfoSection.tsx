@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Save } from 'lucide-react';
-import type { User, PdsData, PdsPersonalInfo } from '@/types/pds';
+import type { User, PdsData, PdsPersonalInfo, PdsSaveCallback } from '@/types/pds';
 
 interface Props {
     user: User;
     pdsData: PdsData;
-    onSave: (section: string, data: Record<string, unknown>) => void;
+    onSave: PdsSaveCallback;
     saving: boolean;
 }
 
@@ -83,6 +83,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         <div className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}>{user.name_ext ?? '—'}</div>
                     </div>
                 </div>
+                <p className="text-xs text-green-600 mt-2">To update your name, please contact HR.</p>
             </div>
 
             {/* Basic Info */}
@@ -300,7 +301,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
 
             <div className="flex justify-end">
                 <button type="submit" disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm">
+                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     <Save className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Save Personal Information'}
                 </button>

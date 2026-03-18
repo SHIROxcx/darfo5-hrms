@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import type { User, PdsData } from '@/types/pds';
+import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
 import {
     User as UserIcon, Users, BookOpen, Award, Briefcase,
-    Heart, BookMarked, Info, HelpCircle, UserCheck, CreditCard,
-    CheckCircle2, Circle, ChevronRight, Save, FileText
+    Heart, BookMarked, Info, HelpCircle, UserCheck,
+    CheckCircle2, Circle, ChevronRight, FileText
 } from 'lucide-react';
 
 // Section components
@@ -25,6 +25,11 @@ interface Props {
     user: User;
     pdsData: PdsData;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Personal Data Sheet', href: '/pds' },
+];
 
 const SECTIONS = [
     { id: 'personal', label: 'I. Personal Information', icon: UserIcon, page: 1 },
@@ -65,9 +70,10 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const completedCount = SECTIONS.filter(s => getSectionCompletion(s.id, pdsData)).length;
     const progressPct = Math.round((completedCount / SECTIONS.length) * 100);
 
-    const handleSave = (section: SectionId, data: Record<string, unknown>) => {
+    const handleSave: PdsSaveCallback = (section, data) => {
         setSaving(true);
-        router.post(`/pds/save/${section}`, data, {
+
+        router.post(`/pds/save/${section}`, data as any, {
             preserveScroll: true,
             onSuccess: () => {
                 setFlash('Saved successfully!');
@@ -97,7 +103,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const currentSectionIdx = SECTIONS.findIndex(s => s.id === activeSection);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Personal Data Sheet" />
 
             <div className="flex flex-col h-full">
@@ -167,7 +173,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                         <div className="p-3 border-t border-gray-200 mt-2">
                             <div className="bg-green-50 rounded-lg p-3">
-                                <p className="text-xs text-green-700 font-medium mb-1">{completedCount}/{SECTIONS.length} sections filled</p>
+                                <p className="text-xs text-green-700 font-medium mb-1">{completedCount}/{SECTIONS.length} Sections filled</p>
                                 <p className="text-xs text-green-600">CS Form 212 (Revised 2025)</p>
                             </div>
                         </div>
@@ -176,14 +182,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     {/* Main Content */}
                     <main className="flex-1 overflow-y-auto bg-white">
                         <div className="max-w-5xl mx-auto px-6 py-6">
-                            {/* Section breadcrumb */}
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mb-5">
-                                <span>PDS</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
-                                <span className="font-medium text-gray-700">
-                                    {SECTIONS.find(s => s.id === activeSection)?.label}
-                                </span>
-                            </div>
 
                             {/* Section Content */}
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
