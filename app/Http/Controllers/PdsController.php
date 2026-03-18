@@ -86,52 +86,77 @@ class PdsController extends Controller
     private function savePersonal(Request $request, int $userId)
     {
         $data = $request->validate([
-            // Name fields
-            'last_name'            => 'nullable|string|max:100',
-            'first_name'           => 'nullable|string|max:100',
+            // Name fields — surname and first name required
+            'last_name'            => 'required|string|max:100',
+            'first_name'           => 'required|string|max:100',
             'middle_name'          => 'nullable|string|max:100',
             'name_ext'             => 'nullable|string|max:20',
-            // Personal info
-            'sex'                  => 'nullable|in:Male,Female',
-            'birth_place'          => 'nullable|string',
-            'civil_status'         => 'nullable|in:Single,Married,Widowed,Separated,Other',
-            'mobile_number'        => 'nullable|string|max:20',
+            // Personal info — required
+            'sex'                  => 'required|in:Male,Female',
+            'birth_place'          => 'required|string',
+            'civil_status'         => 'required|in:Single,Married,Widowed,Separated,Other',
+            'mobile_number'        => 'required|string|max:20',
             // Citizenship & physical
-            'date_of_birth'        => 'nullable|date',
-            'citizenship'          => 'nullable|string',
+            'date_of_birth'        => 'required|date',
+            'citizenship'          => 'required|string',
             'citizenship_type'     => 'nullable|string',
             'citizenship_country'  => 'nullable|string',
             'height'               => 'nullable|numeric',
             'weight'               => 'nullable|numeric',
             'blood_type'           => 'nullable|string|max:5',
             // agency_employee_no intentionally excluded — admin-only
-            
-            // Addresses
-            'res_house_no'         => 'nullable|string',
-            'res_street'           => 'nullable|string',
+            // Residential Address — required
+            'res_house_no'         => 'required|string',
+            'res_street'           => 'required|string',
             'res_subdivision'      => 'nullable|string',
-            'res_barangay'         => 'nullable|string',
-            'res_city'             => 'nullable|string',
-            'res_province'         => 'nullable|string',
+            'res_barangay'         => 'required|string',
+            'res_city'             => 'required|string',
+            'res_province'         => 'required|string',
             'res_zipcode'          => 'nullable|string|max:10',
-            'perm_house_no'        => 'nullable|string',
-            'perm_street'          => 'nullable|string',
+            // Permanent Address — required
+            'perm_house_no'        => 'required|string',
+            'perm_street'          => 'required|string',
             'perm_subdivision'     => 'nullable|string',
-            'perm_barangay'        => 'nullable|string',
-            'perm_city'            => 'nullable|string',
-            'perm_province'        => 'nullable|string',
+            'perm_barangay'        => 'required|string',
+            'perm_city'            => 'required|string',
+            'perm_province'        => 'required|string',
             'perm_zipcode'         => 'nullable|string|max:10',
+            // Contact — email not submitted (read-only on form)
             'telephone'            => 'nullable|string',
-            'email'                => 'nullable|email',
-            // Government IDs
+            // Government IDs — required (except UMID/GSIS/SSS)
             'umid_number'          => 'nullable|string',
-            'pagibig_number'       => 'nullable|string',
-            'philhealth_number'    => 'nullable|string',
-            'philsys_number'       => 'nullable|string',
-            'tin_number'           => 'nullable|string',
+            'gsis_number'          => 'nullable|string',
+            'sss_number'           => 'nullable|string',
+            'pagibig_number'       => 'required|string',
+            'philhealth_number'    => 'required|string',
+            'philsys_number'       => 'required|string',
+            'tin_number'           => 'required|string',
+        ], [
+            'last_name.required'         => 'Surname is required.',
+            'first_name.required'        => 'First Name is required.',
+            'sex.required'               => 'Sex is required.',
+            'birth_place.required'       => 'Place of Birth is required.',
+            'civil_status.required'      => 'Civil Status is required.',
+            'mobile_number.required'     => 'Mobile No. is required.',
+            'date_of_birth.required'     => 'Date of Birth is required.',
+            'citizenship.required'       => 'Citizenship is required.',
+            'res_house_no.required'      => 'Residential House/Block/Lot No. is required.',
+            'res_street.required'        => 'Residential Street is required.',
+            'res_barangay.required'      => 'Residential Barangay is required.',
+            'res_city.required'          => 'Residential City/Municipality is required.',
+            'res_province.required'      => 'Residential Province is required.',
+            'perm_house_no.required'     => 'Permanent House/Block/Lot No. is required.',
+            'perm_street.required'       => 'Permanent Street is required.',
+            'perm_barangay.required'     => 'Permanent Barangay is required.',
+            'perm_city.required'         => 'Permanent City/Municipality is required.',
+            'perm_province.required'     => 'Permanent Province is required.',
+            'pagibig_number.required'    => 'PAG-IBIG ID No. is required.',
+            'philhealth_number.required' => 'PhilHealth No. is required.',
+            'philsys_number.required'    => 'PhilSys No. is required.',
+            'tin_number.required'        => 'TIN No. is required.',
         ]);
 
-        // Update name fields on the users table
+        // 1. Update name fields on the users table
         \App\Models\User::where('id', $userId)->update([
             'last_name'   => $data['last_name'] ?? null,
             'first_name'  => $data['first_name'] ?? null,
@@ -139,6 +164,7 @@ class PdsController extends Controller
             'name_ext'    => $data['name_ext'] ?? null,
         ]);
 
+        // 2. Save all PDS personal fields (name fields stripped out, agency_employee_no never touched)
         $pdsFields = collect($data)
             ->except(['last_name', 'first_name', 'middle_name', 'name_ext'])
             ->toArray();

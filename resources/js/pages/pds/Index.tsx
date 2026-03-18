@@ -6,7 +6,9 @@ import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
 import {
     User as UserIcon, Users, BookOpen, Award, Briefcase,
     Heart, BookMarked, Info, HelpCircle, UserCheck,
-    CheckCircle2, Circle, ChevronRight, FileText
+    CheckCircle2, Circle, ChevronRight, FileText,
+    ChevronLeft,
+    Dot
 } from 'lucide-react';
 
 // Section components
@@ -117,7 +119,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             <div>
                                 <h1 className="text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
                                 <p className="text-sm text-gray-500">
-                                    {user.last_name}, {user.first_name} {user.middle_name} · {user.employee_profile?.employee_number ?? 'No employee number'}
+                                    {user.last_name}, {user.first_name} {user.middle_name} <Dot className='inline text-gray-700' /> {user.employee_profile?.employee_number ?? 'No employee number'}
                                 </p>
                             </div>
                         </div>
@@ -153,7 +155,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                     <button
                                         key={section.id}
                                         onClick={() => setActiveSection(section.id)}
-                                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all group ${
+                                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm cursor-pointer transition-all group ${
                                             isActive
                                                 ? 'bg-green-600 text-white shadow-sm'
                                                 : 'text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm'
@@ -193,9 +195,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 <button
                                     onClick={() => currentSectionIdx > 0 && setActiveSection(SECTIONS[currentSectionIdx - 1].id)}
                                     disabled={currentSectionIdx === 0}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                 >
-                                    ← Previous
+                                    <ChevronLeft className='w-4 h-4' /> Previous
                                 </button>
                                 <span className="text-xs text-gray-400">
                                     Section {currentSectionIdx + 1} of {SECTIONS.length}
@@ -203,9 +205,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 <button
                                     onClick={() => currentSectionIdx < SECTIONS.length - 1 && setActiveSection(SECTIONS[currentSectionIdx + 1].id)}
                                     disabled={currentSectionIdx === SECTIONS.length - 1}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                 >
-                                    Next →
+                                    Next <ChevronRight className='w-4 h-4'/>
                                 </button>
                             </div>
                         </div>
