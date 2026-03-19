@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import type { User, PdsData, PdsTraining, PdsSaveCallback } from '@/types/pds';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
 
@@ -11,7 +12,7 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
     const [rows, setRows] = useState<PdsTraining[]>(
         pdsData.trainings?.length ? pdsData.trainings : [{ ...EMPTY }]
     );
-    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white";
+    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 bg-white";
     const setRow = (i: number, key: keyof PdsTraining, val: string) =>
         setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
 
@@ -24,11 +25,11 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">VII. Learning & Development Interventions</h2>
+                    <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">VII. Learning & Development Interventions</h2>
                     <p className="text-xs text-gray-500">Training programs attended. Write titles in full.</p>
                 </div>
                 <button type="button" onClick={() => setRows(p => [...p, { ...EMPTY }])}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium mt-1">
+                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1 cursor-pointer">
                     <Plus className="w-3.5 h-3.5" /> Add Row
                 </button>
             </div>
@@ -60,7 +61,7 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
                                 </td>
                                 <td className="px-2 py-1.5"><input type="text" value={row.conducted_by ?? ''} onChange={e => setRow(i, 'conducted_by', e.target.value)} className={inputClass} /></td>
                                 <td className="px-2 py-1.5">
-                                    {rows.length > 1 && <button type="button" onClick={() => setRows(p => p.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>}
+                                    {rows.length > 1 && <button type="button" onClick={() => setRows(p => p.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>}
                                 </td>
                             </tr>
                         ))}
@@ -68,8 +69,11 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
                 </table>
             </div>
             <div className="flex justify-end">
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
-                    <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Trainings'}
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
+                    {saving
+                        ? <><Spinner />Saving Training</>
+                        : <><Save className="w-4 h-4" />Save Training</>
+                    }
                 </button>
             </div>
         </form>
