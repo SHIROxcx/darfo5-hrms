@@ -116,7 +116,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
             <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
 
                 {/*  PDS Header */}
-                <div className="shrink-0 bg-white border-b border-gray-200 px-6 py-4">
+                <div className="shrink-0 bg-white border-b border-gray-200 p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center">

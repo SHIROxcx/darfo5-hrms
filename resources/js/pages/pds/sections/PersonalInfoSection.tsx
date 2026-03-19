@@ -425,11 +425,18 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                             className={inputClass} />
                     </div>
                     <div>
-                        <label className={labelClass}>Extension (Jr./Sr.)</label>
-                        <input type="text" value={form.name_ext}
-                            onChange={e => set('name_ext', e.target.value)}
-                            placeholder="Jr., Sr., II, III"
-                            className={inputClass} />
+                        <label className={labelClass}>Name Extension</label>
+                        <select value={form.name_ext ?? ''} onChange={e => set('name_ext', e.target.value)}
+                            className={ic('name_ext')}>
+                            <option value="">None</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="I">I</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                        </select>
                     </div>
                 </div>
             </div>
