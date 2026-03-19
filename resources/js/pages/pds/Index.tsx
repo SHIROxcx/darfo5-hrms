@@ -10,6 +10,7 @@ import {
     ChevronLeft,
     Dot
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 // Section components
 import PersonalInfoSection from '@/pages/pds/sections/PersonalInfoSection';
@@ -67,7 +68,6 @@ function getSectionCompletion(sectionId: SectionId, pdsData: PdsData): boolean {
 export default function PdsIndex({ user, pdsData }: Props) {
     const [activeSection, setActiveSection] = useState<SectionId>('personal');
     const [saving, setSaving] = useState(false);
-    const [flash, setFlash] = useState<string | null>(null);
 
     const completedCount = SECTIONS.filter(s => getSectionCompletion(s.id, pdsData)).length;
     const progressPct = Math.round((completedCount / SECTIONS.length) * 100);
@@ -78,8 +78,14 @@ export default function PdsIndex({ user, pdsData }: Props) {
         router.post(`/pds/save/${section}`, data as any, {
             preserveScroll: true,
             onSuccess: () => {
-                setFlash('Saved successfully!');
-                setTimeout(() => setFlash(null), 3000);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Your information has been saved successfully.',
+                    confirmButtonColor: '#16a34a',
+                    timer: 1500,
+                    timerProgressBar: true,
+                });
             },
             onFinish: () => setSaving(false),
         });
@@ -107,10 +113,10 @@ export default function PdsIndex({ user, pdsData }: Props) {
     return (
         <AppLayout>
             <Head title="Personal Data Sheet" />
+            <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
 
-            <div className="flex flex-col h-full">
-                {/* Header */}
-                <div className="bg-white border-b border-gray-200 px-6 py-4">
+                {/*  PDS Header */}
+                <div className="shrink-0 bg-white border-b border-gray-200 px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center">
@@ -124,11 +130,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
-                            {flash && (
-                                <span className="flex items-center gap-1.5 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 animate-in fade-in">
-                                    <CheckCircle2 className="w-4 h-4" /> {flash}
-                                </span>
-                            )}
                             <div className="text-right">
                                 <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
                                 <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
@@ -142,8 +143,10 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     </div>
                 </div>
 
+                {/* Body row */}
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar Navigation */}
+
+                    {/* Sidebar */}
                     <aside className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
                         <nav className="p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
@@ -181,37 +184,40 @@ export default function PdsIndex({ user, pdsData }: Props) {
                         </div>
                     </aside>
 
-                    {/* Main Content */}
-                    <main className="flex-1 overflow-y-auto bg-white">
-                        <div className="max-w-5xl mx-auto px-6 py-6">
+                    {/* Right column */}
+                    <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
-                            {/* Section Content */}
-                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                {renderSection()}
+                        {/* Only this scrolls */}
+                        <main className="flex-1 overflow-y-auto">
+                            <div className="max-w-5xl mx-auto px-6 py-6">
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                    {renderSection()}
+                                </div>
                             </div>
+                        </main>
 
-                            {/* Bottom Navigation */}
-                            <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
-                                <button
-                                    onClick={() => currentSectionIdx > 0 && setActiveSection(SECTIONS[currentSectionIdx - 1].id)}
-                                    disabled={currentSectionIdx === 0}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                >
-                                    <ChevronLeft className='w-4 h-4' /> Previous
-                                </button>
-                                <span className="text-xs text-gray-400">
-                                    Section {currentSectionIdx + 1} of {SECTIONS.length}
-                                </span>
-                                <button
-                                    onClick={() => currentSectionIdx < SECTIONS.length - 1 && setActiveSection(SECTIONS[currentSectionIdx + 1].id)}
-                                    disabled={currentSectionIdx === SECTIONS.length - 1}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                >
-                                    Next <ChevronRight className='w-4 h-4'/>
-                                </button>
-                            </div>
+                        {/* Sticky footer */}
+                        <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-white">
+                            <button
+                                onClick={() => currentSectionIdx > 0 && setActiveSection(SECTIONS[currentSectionIdx - 1].id)}
+                                disabled={currentSectionIdx === 0}
+                                className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                                <ChevronLeft className='w-4 h-4' /> Previous
+                            </button>
+                            <span className="text-xs text-gray-400">
+                                Section {currentSectionIdx + 1} of {SECTIONS.length}
+                            </span>
+                            <button
+                                onClick={() => currentSectionIdx < SECTIONS.length - 1 && setActiveSection(SECTIONS[currentSectionIdx + 1].id)}
+                                disabled={currentSectionIdx === SECTIONS.length - 1}
+                                className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                                Next <ChevronRight className='w-4 h-4'/>
+                            </button>
                         </div>
-                    </main>
+
+                    </div>
                 </div>
             </div>
         </AppLayout>

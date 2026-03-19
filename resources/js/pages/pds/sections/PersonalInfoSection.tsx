@@ -761,7 +761,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             <div className="flex justify-end">
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
-                    {saving ? <><Spinner />Saving...</> : <><Save className="w-4 h-4" />Save Personal Information</>}
+                    {saving ? <><Spinner />Saving Personal Information</> : <><Save className="w-4 h-4" />Save Personal Information</>}
                 </button>
             </div>
         </form>

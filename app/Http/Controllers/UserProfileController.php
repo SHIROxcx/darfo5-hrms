@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\PdsEducation;
-use App\Models\PdsEligibility;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -41,9 +39,7 @@ class UserProfileController extends Controller
             'canEditCompany' => $authUser->hasRole('admin'),
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
-            // These are kept for the searchable dropdowns in the modals.
-            // Editing now only happens in the PDS page, but we still need them
-            // if you ever re-enable inline editing here.
+            // searchable dropdowns in the modals
             'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
             'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
             'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
