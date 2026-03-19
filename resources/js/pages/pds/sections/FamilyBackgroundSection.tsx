@@ -16,6 +16,14 @@ type ChildErrors = Partial<Record<keyof PdsChild, string>>[];
 
 // Every field the user must fill in (at minimum with "N/A")
 const REQUIRED_FIELDS: Array<{ key: keyof FamilyForm; label: string }> = [
+    // Spouse
+    { key: 'spouse_surname',          label: 'Spouse Surname' },
+    { key: 'spouse_first_name',       label: 'Spouse First Name' },
+    { key: 'spouse_middle_name',      label: 'Spouse Middle Name' },
+    { key: 'spouse_occupation',       label: 'Spouse Occupation' },
+    { key: 'spouse_employer',         label: 'Spouse Employer/Business Name' },
+    { key: 'spouse_business_address', label: 'Spouse Business Address' },
+    { key: 'spouse_telephone',        label: 'Spouse Telephone No.' },
     // Father
     { key: 'father_surname',          label: "Father's Surname" },
     { key: 'father_first_name',       label: "Father's First Name" },
@@ -32,7 +40,7 @@ function validate(form: FamilyForm, children: PdsChild[]): { formErrors: FormErr
     for (const { key, label } of REQUIRED_FIELDS) {
         const val = form[key as keyof FamilyForm];
         if (!val || String(val).trim() === '') {
-            formErrors[key as keyof FamilyForm] = `${label} is required. Write N/A if not applicable.`;
+            formErrors[key as keyof FamilyForm] = `Write N/A if not applicable.`;
         }
     }
 
@@ -123,7 +131,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
         }
     };
 
-    // Submit
+    // Submit 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -161,6 +169,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div>
                 <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">II. Family Background</h2>
+                <p className="text-xs text-gray-500">All fields are required. Write <strong>N/A</strong> if not applicable.</p>
             </div>
 
             {/* ── Spouse ── */}
@@ -170,21 +179,21 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div id="field-spouse_surname">
-                        <label className={labelClass}>Surname</label>
+                        <label className={labelClass}>Surname *</label>
                         <input type="text" value={form.spouse_surname}
                             onChange={e => setField('spouse_surname', e.target.value)}
                             className={ic('spouse_surname')} />
                         {err('spouse_surname')}
                     </div>
                     <div id="field-spouse_first_name">
-                        <label className={labelClass}>First Name</label>
+                        <label className={labelClass}>First Name *</label>
                         <input type="text" value={form.spouse_first_name}
                             onChange={e => setField('spouse_first_name', e.target.value)}
                             className={ic('spouse_first_name')} />
                         {err('spouse_first_name')}
                     </div>
                     <div id="field-spouse_middle_name">
-                        <label className={labelClass}>Middle Name</label>
+                        <label className={labelClass}>Middle Name *</label>
                         <input type="text" value={form.spouse_middle_name}
                             onChange={e => setField('spouse_middle_name', e.target.value)}
                             className={ic('spouse_middle_name')} />
@@ -197,28 +206,28 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                             className={inputClass} placeholder="Jr., Sr." />
                     </div>
                     <div id="field-spouse_occupation">
-                        <label className={labelClass}>Occupation</label>
+                        <label className={labelClass}>Occupation *</label>
                         <input type="text" value={form.spouse_occupation}
                             onChange={e => setField('spouse_occupation', e.target.value)}
                             className={ic('spouse_occupation')} />
                         {err('spouse_occupation')}
                     </div>
                     <div id="field-spouse_employer">
-                        <label className={labelClass}>Employer/Business Name</label>
+                        <label className={labelClass}>Employer/Business Name *</label>
                         <input type="text" value={form.spouse_employer}
                             onChange={e => setField('spouse_employer', e.target.value)}
                             className={ic('spouse_employer')} />
                         {err('spouse_employer')}
                     </div>
                     <div id="field-spouse_business_address">
-                        <label className={labelClass}>Business Address</label>
+                        <label className={labelClass}>Business Address *</label>
                         <input type="text" value={form.spouse_business_address}
                             onChange={e => setField('spouse_business_address', e.target.value)}
                             className={ic('spouse_business_address')} />
                         {err('spouse_business_address')}
                     </div>
                     <div id="field-spouse_telephone">
-                        <label className={labelClass}>Telephone No.</label>
+                        <label className={labelClass}>Telephone No. *</label>
                         <input type="text" value={form.spouse_telephone}
                             onChange={e => setField('spouse_telephone', e.target.value)}
                             className={ic('spouse_telephone')} />
@@ -263,7 +272,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 </div>
             </div>
 
-            {/* ── Mother ── */}
+            {/* Mother Maiden Name */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 mb-3 pb-2 border-b border-gray-100 uppercase">
                     Mother's Maiden Name
@@ -293,7 +302,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 </div>
             </div>
 
-            {/* ── Children ── */}
+            {/* Children */}
             <div>
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-green-700 uppercase">Children</h3>
@@ -358,7 +367,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving
-                        ? <><Spinner />Saving Family Background...</>
+                        ? <><Spinner />Saving Family Background</>
                         : <><Save className="w-4 h-4" />Save Family Background</>
                     }
                 </button>
