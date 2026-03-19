@@ -46,23 +46,21 @@ class EmployeeController extends Controller
 
     public function show(User $user)
     {
+        // Load PDS relationships — same as UserProfileController
         $user->load([
             'employeeProfile',
-            'degrees',
-            'graduateStudies',
-            'eligibilities',
+            'pdsPersonalInfo',
+            'pdsEducation',
+            'pdsEligibilities',
         ]);
-
-        $profileController = new \App\Http\Controllers\UserProfileController();
 
         return Inertia::render('Profile/Show', [
             'profileUser'    => $this->formatUser($user),
-            // Admin can always edit company and government IDs
             'canEditCompany' => true,
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
-            'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
-            'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
+            'bachelorsDegrees'  => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
+            'graduatePrograms'  => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
             'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
             'adminContext'   => true,
         ]);
@@ -70,7 +68,9 @@ class EmployeeController extends Controller
 
     private function formatUser(User $u): array
     {
-        $ep = $u->employeeProfile;
+        $ep  = $u->employeeProfile;
+        $pds = $u->pdsPersonalInfo;
+
         return [
             'id'          => $u->id,
             'name'        => $u->name,
@@ -82,46 +82,82 @@ class EmployeeController extends Controller
             'photo'       => $u->photo,
             'is_approved' => $u->is_approved,
             'roles'       => $u->getRoleNames()->values()->toArray(),
+
+            // HR / company data — from employee_profiles
             'employee_profile' => $ep ? [
-                'sex'               => $ep->sex,
-                'birth_place'       => $ep->birth_place,
-                'civil_status'      => $ep->civil_status,
-                'mobile_number'     => $ep->mobile_number,
-                'employee_number'   => $ep->employee_number,
-                'employment_type'   => $ep->employment_type,
-                'position'          => $ep->position,
-                'salary_grade'      => $ep->salary_grade,
-                'place_assign'      => $ep->place_assign,
-                'division'          => $ep->division,
-                'section'           => $ep->section,
-                'date_hired'        => $ep->date_hired,
-                'is_active'         => $ep->is_active,
-                'gsis_number'       => $ep->gsis_number,
-                'sss_number'        => $ep->sss_number,
-                'pagibig_number'    => $ep->pagibig_number,
-                'tin_number'        => $ep->tin_number,
-                'philhealth_number' => $ep->philhealth_number,
+                'employee_number'  => $ep->employee_number,
+                'employment_type'  => $ep->employment_type,
+                'position'         => $ep->position,
+                'salary_grade'     => $ep->salary_grade,
+                'place_assign'     => $ep->place_assign,
+                'division'         => $ep->division,
+                'section'          => $ep->section,
+                'date_hired'       => $ep->date_hired,
+                'is_active'        => $ep->is_active,
             ] : null,
-            'degrees'          => $u->degrees->toArray(),
-            'graduate_studies' => $u->graduateStudies->toArray(),
-            'eligibilities'    => $u->eligibilities->toArray(),
+
+            // Personal / government data — from pds_personal_info
+            'personal_info' => $pds ? [
+                'sex'               => $pds->sex,
+                'birth_place'       => $pds->birth_place,
+                'civil_status'      => $pds->civil_status,
+                'mobile_number'     => $pds->mobile_number,
+                'umid_number'       => $pds->umid_number,
+                'pagibig_number'    => $pds->pagibig_number,
+                'philhealth_number' => $pds->philhealth_number,
+                'philsys_number'    => $pds->philsys_number,
+                'tin_number'        => $pds->tin_number,
+            ] : null,
+
+            // College records — from pds_education where level = College
+            'degrees' => $u->pdsEducation
+                ->where('level', 'College')
+                ->values()
+                ->map(fn($e) => [
+                    'id'              => $e->id,
+                    'degree'          => $e->course,
+                    'school_name'     => $e->school_name,
+                    'period_from'     => $e->period_from,
+                    'period_to'       => $e->period_to,
+                    'year_graduated'  => $e->year_graduated,
+                    'honors_received' => $e->honors_received,
+                ])->toArray(),
+
+            // Graduate studies — from pds_education where level = Graduate Studies
+            'graduate_studies' => $u->pdsEducation
+                ->where('level', 'Graduate Studies')
+                ->values()
+                ->map(fn($e) => [
+                    'id'          => $e->id,
+                    'program'     => $e->course,
+                    'school_name' => $e->school_name,
+                    'period_from' => $e->period_from,
+                    'period_to'   => $e->period_to,
+                ])->toArray(),
+
+            // Eligibilities — from pds_eligibilities
+            'eligibilities' => $u->pdsEligibilities
+                ->map(fn($e) => [
+                    'id'                   => $e->id,
+                    'eligibility'          => $e->career_service,
+                    'rating'               => $e->rating,
+                    'date_of_examination'  => $e->date_of_examination,
+                    'place_of_examination' => $e->place_of_examination,
+                    'license_number'       => $e->license_number,
+                    'license_validity'     => $e->license_validity,
+                ])->toArray(),
         ];
     }
 
     public function approve(User $user)
     {
-        // Make sure email is verified before approving
         if (! $user->hasVerifiedEmail()) {
             return back()->with('error', 'This employee has not verified their email yet.');
         }
 
         $user->update(['is_approved' => true]);
-
-        // Send approval email
         $user->notify(new \App\Notifications\AccountApprovedNotification());
-
-        // Broadcast real-time event to the employee
-        AccountApproved::dispatch($user);  
+        AccountApproved::dispatch($user);
 
         return back()->with('success', "{$user->first_name} {$user->last_name}'s account has been approved.");
     }
@@ -130,11 +166,9 @@ class EmployeeController extends Controller
     {
         $user->update(['is_approved' => ! $user->is_approved]);
 
-        // Only send approval email when toggled to approved
         if ($user->is_approved) {
             $user->notify(new \App\Notifications\AccountApprovedNotification());
-            // Broadcast real-time event to the employee
-            AccountApproved::dispatch($user);  
+            AccountApproved::dispatch($user);
         }
 
         $status = $user->is_approved ? 'approved' : 'revoked';

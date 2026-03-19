@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import type { User, PdsData, PdsPersonalInfo, PdsSaveCallback } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
@@ -18,7 +18,6 @@ interface PersonalForm extends PdsPersonalInfo {
     first_name: string;
     middle_name: string;
     name_ext: string;
-    // Location IDs for the searchable selects (not persisted directly — names are)
     res_province_id: number | null;
     res_city_id: number | null;
     res_barangay_id: number | null;
@@ -32,28 +31,28 @@ type FormErrors = Partial<Record<keyof PersonalForm, string>>;
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const REQUIRED_FIELDS: Array<{ key: keyof PersonalForm; label: string }> = [
-    { key: 'last_name',        label: 'Surname' },
-    { key: 'first_name',       label: 'First Name' },
-    { key: 'date_of_birth',    label: 'Date of Birth' },
-    { key: 'birth_place',      label: 'Place of Birth' },
-    { key: 'sex',              label: 'Sex' },
-    { key: 'civil_status',     label: 'Civil Status' },
-    { key: 'citizenship',      label: 'Citizenship' },
-    { key: 'res_house_no',     label: 'Residential House/Block/Lot No.' },
-    { key: 'res_street',       label: 'Residential Street' },
-    { key: 'res_province',     label: 'Residential Province' },
-    { key: 'res_city',         label: 'Residential City/Municipality' },
-    { key: 'res_barangay',     label: 'Residential Barangay' },
-    { key: 'perm_house_no',    label: 'Permanent House/Block/Lot No.' },
-    { key: 'perm_street',      label: 'Permanent Street' },
-    { key: 'perm_province',    label: 'Permanent Province' },
-    { key: 'perm_city',        label: 'Permanent City/Municipality' },
-    { key: 'perm_barangay',    label: 'Permanent Barangay' },
-    { key: 'mobile_number',    label: 'Mobile No.' },
-    { key: 'pagibig_number',   label: 'PAG-IBIG ID No.' },
-    { key: 'philhealth_number',label: 'PhilHealth No.' },
-    { key: 'philsys_number',   label: 'PhilSys No.' },
-    { key: 'tin_number',       label: 'TIN No.' },
+    { key: 'last_name',         label: 'Surname' },
+    { key: 'first_name',        label: 'First Name' },
+    { key: 'date_of_birth',     label: 'Date of Birth' },
+    { key: 'birth_place',       label: 'Place of Birth' },
+    { key: 'sex',               label: 'Sex' },
+    { key: 'civil_status',      label: 'Civil Status' },
+    { key: 'citizenship',       label: 'Citizenship' },
+    { key: 'res_house_no',      label: 'Residential House/Block/Lot No.' },
+    { key: 'res_street',        label: 'Residential Street' },
+    { key: 'res_province',      label: 'Residential Province' },
+    { key: 'res_city',          label: 'Residential City/Municipality' },
+    { key: 'res_barangay',      label: 'Residential Barangay' },
+    { key: 'perm_house_no',     label: 'Permanent House/Block/Lot No.' },
+    { key: 'perm_street',       label: 'Permanent Street' },
+    { key: 'perm_province',     label: 'Permanent Province' },
+    { key: 'perm_city',         label: 'Permanent City/Municipality' },
+    { key: 'perm_barangay',     label: 'Permanent Barangay' },
+    { key: 'mobile_number',     label: 'Mobile No.' },
+    { key: 'pagibig_number',    label: 'PAG-IBIG ID No.' },
+    { key: 'philhealth_number', label: 'PhilHealth No.' },
+    { key: 'philsys_number',    label: 'PhilSys No.' },
+    { key: 'tin_number',        label: 'TIN No.' },
 ];
 
 function validate(form: PersonalForm): FormErrors {
@@ -70,9 +69,7 @@ function validate(form: PersonalForm): FormErrors {
 export default function PersonalInfoSection({ user, pdsData, onSave, saving }: Props) {
     const profile = user.employee_profile;
 
-    // ── Residential location state ────────────────────────────────────
-    const res = usePhLocations();
-    // ── Permanent location state ──────────────────────────────────────
+    const res  = usePhLocations();
     const perm = usePhLocations();
 
     const [sameAsResidential, setSameAsResidential] = useState(() => {
@@ -90,55 +87,129 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     });
 
     const [form, setForm] = useState<PersonalForm>({
-        last_name:           user.last_name ?? '',
-        first_name:          user.first_name ?? '',
+        last_name:           user.last_name   ?? '',
+        first_name:          user.first_name  ?? '',
         middle_name:         user.middle_name ?? '',
-        name_ext:            user.name_ext ?? '',
-        sex:                 pdsData.personal?.sex ?? '',
-        birth_place:         pdsData.personal?.birth_place ?? '',
+        name_ext:            user.name_ext    ?? '',
+        sex:                 pdsData.personal?.sex          ?? '',
+        birth_place:         pdsData.personal?.birth_place  ?? '',
         civil_status:        pdsData.personal?.civil_status ?? '',
         mobile_number:       pdsData.personal?.mobile_number ?? '',
         date_of_birth:       pdsData.personal?.date_of_birth?.slice(0, 10) ?? '',
-        citizenship:         pdsData.personal?.citizenship ?? 'Filipino',
-        citizenship_type:    pdsData.personal?.citizenship_type ?? '',
+        citizenship:         pdsData.personal?.citizenship   ?? 'Filipino',
+        citizenship_type:    pdsData.personal?.citizenship_type    ?? '',
         citizenship_country: pdsData.personal?.citizenship_country ?? '',
-        height:              pdsData.personal?.height ?? '',
-        weight:              pdsData.personal?.weight ?? '',
+        height:              pdsData.personal?.height     ?? '',
+        weight:              pdsData.personal?.weight     ?? '',
         blood_type:          pdsData.personal?.blood_type ?? '',
         agency_employee_no:  pdsData.personal?.agency_employee_no ?? profile?.employee_number ?? '',
-        // Residential — store text names for the DB, IDs only for UI state
-        res_house_no:        pdsData.personal?.res_house_no ?? '',
-        res_street:          pdsData.personal?.res_street ?? '',
+        res_house_no:        pdsData.personal?.res_house_no    ?? '',
+        res_street:          pdsData.personal?.res_street      ?? '',
         res_subdivision:     pdsData.personal?.res_subdivision ?? '',
-        res_barangay:        pdsData.personal?.res_barangay ?? '',
-        res_city:            pdsData.personal?.res_city ?? '',
-        res_province:        pdsData.personal?.res_province ?? '',
-        res_zipcode:         pdsData.personal?.res_zipcode ?? '',
+        res_barangay:        pdsData.personal?.res_barangay    ?? '',
+        res_city:            pdsData.personal?.res_city        ?? '',
+        res_province:        pdsData.personal?.res_province    ?? '',
+        res_zipcode:         pdsData.personal?.res_zipcode     ?? '',
         res_province_id:     null,
         res_city_id:         null,
         res_barangay_id:     null,
-        // Permanent
-        perm_house_no:       pdsData.personal?.perm_house_no ?? '',
-        perm_street:         pdsData.personal?.perm_street ?? '',
+        perm_house_no:       pdsData.personal?.perm_house_no    ?? '',
+        perm_street:         pdsData.personal?.perm_street      ?? '',
         perm_subdivision:    pdsData.personal?.perm_subdivision ?? '',
-        perm_barangay:       pdsData.personal?.perm_barangay ?? '',
-        perm_city:           pdsData.personal?.perm_city ?? '',
-        perm_province:       pdsData.personal?.perm_province ?? '',
-        perm_zipcode:        pdsData.personal?.perm_zipcode ?? '',
+        perm_barangay:       pdsData.personal?.perm_barangay    ?? '',
+        perm_city:           pdsData.personal?.perm_city        ?? '',
+        perm_province:       pdsData.personal?.perm_province    ?? '',
+        perm_zipcode:        pdsData.personal?.perm_zipcode     ?? '',
         perm_province_id:    null,
         perm_city_id:        null,
         perm_barangay_id:    null,
-        telephone:           pdsData.personal?.telephone ?? '',
+        telephone:           pdsData.personal?.telephone    ?? '',
         email:               pdsData.personal?.email ?? user.email ?? '',
-        umid_number:         pdsData.personal?.umid_number ?? '',
-        pagibig_number:      pdsData.personal?.pagibig_number ?? '',
-        philhealth_number:   pdsData.personal?.philhealth_number ?? '',
-        philsys_number:      pdsData.personal?.philsys_number ?? '',
-        tin_number:          pdsData.personal?.tin_number ?? '',
+        umid_number:         pdsData.personal?.umid_number        ?? '',
+        pagibig_number:      pdsData.personal?.pagibig_number     ?? '',
+        philhealth_number:   pdsData.personal?.philhealth_number  ?? '',
+        philsys_number:      pdsData.personal?.philsys_number     ?? '',
+        tin_number:          pdsData.personal?.tin_number         ?? '',
     });
 
     const [submitted, setSubmitted] = useState(false);
-    const [errors, setErrors] = useState<FormErrors>({});
+    const [errors, setErrors]       = useState<FormErrors>({});
+    
+    // RESIDENTIAL
+    useEffect(() => {
+        if (!res.provinces.length || !form.res_province || form.res_province_id !== null) return;
+        const match = res.provinces.find(
+            p => p.label.toLowerCase() === form.res_province!.toLowerCase()
+        );
+        if (match) {
+            const id = Number(match.value);
+            res.setProvinceId(id);
+            setForm(prev => ({ ...prev, res_province_id: id }));
+        }
+    }, [res.provinces]);
+
+    // RESIDENTIAL
+    useEffect(() => {
+        if (!res.cities.length || !form.res_city || form.res_city_id !== null) return;
+        const match = res.cities.find(
+            c => c.label.toLowerCase() === form.res_city!.toLowerCase()
+        );
+        if (match) {
+            const id = Number(match.value);
+            res.setCityId(id);
+            setForm(prev => ({ ...prev, res_city_id: id }));
+        }
+    }, [res.cities]);
+
+    // RESIDENTIAL
+    useEffect(() => {
+        if (!res.barangays.length || !form.res_barangay || form.res_barangay_id !== null) return;
+        const match = res.barangays.find(
+            b => b.label.toLowerCase() === form.res_barangay!.toLowerCase()
+        );
+        if (match) {
+            setForm(prev => ({ ...prev, res_barangay_id: Number(match.value) }));
+        }
+    }, [res.barangays]);
+
+    // PERMANENT
+    useEffect(() => {
+        if (!perm.provinces.length || !form.perm_province || form.perm_province_id !== null) return;
+        const match = perm.provinces.find(
+            p => p.label.toLowerCase() === form.perm_province!.toLowerCase()
+        );
+        if (match) {
+            const id = Number(match.value);
+            perm.setProvinceId(id);
+            setForm(prev => ({ ...prev, perm_province_id: id }));
+        }
+    }, [perm.provinces]);
+
+    // PERMANENT
+    useEffect(() => {
+        if (!perm.cities.length || !form.perm_city || form.perm_city_id !== null) return;
+        const match = perm.cities.find(
+            c => c.label.toLowerCase() === form.perm_city!.toLowerCase()
+        );
+        if (match) {
+            const id = Number(match.value);
+            perm.setCityId(id);
+            setForm(prev => ({ ...prev, perm_city_id: id }));
+        }
+    }, [perm.cities]);
+
+    // PERMANENT
+    useEffect(() => {
+        if (!perm.barangays.length || !form.perm_barangay || form.perm_barangay_id !== null) return;
+        const match = perm.barangays.find(
+            b => b.label.toLowerCase() === form.perm_barangay!.toLowerCase()
+        );
+        if (match) {
+            setForm(prev => ({ ...prev, perm_barangay_id: Number(match.value) }));
+        }
+    }, [perm.barangays]);
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     const RES_TO_PERM: Partial<Record<keyof PersonalForm, keyof PersonalForm>> = {
         res_house_no:    'perm_house_no',
@@ -161,25 +232,23 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         if (submitted) setErrors(prev => ({ ...prev, [key]: undefined }));
     };
 
-    // ── Location select handlers ──────────────────────────────────────
+    // Location select handlers
 
     const handleResProvince = (opt: SelectOption | null) => {
         res.setProvinceId(opt ? Number(opt.value) : null);
         setForm(prev => ({
             ...prev,
-            res_province_id: opt ? Number(opt.value) : null,
-            res_province: opt?.label ?? '',
-            // Reset city and barangay when province changes
-            res_city_id: null, res_city: '',
-            res_barangay_id: null, res_barangay: '',
-            res_zipcode: '',
-            // Mirror to perm if checkbox on
+            res_province_id:  opt ? Number(opt.value) : null,
+            res_province:     opt?.label ?? '',
+            res_city_id:      null, res_city: '',
+            res_barangay_id:  null, res_barangay: '',
+            res_zipcode:      '',
             ...(sameAsResidential ? {
                 perm_province_id: opt ? Number(opt.value) : null,
-                perm_province: opt?.label ?? '',
-                perm_city_id: null, perm_city: '',
+                perm_province:    opt?.label ?? '',
+                perm_city_id:     null, perm_city: '',
                 perm_barangay_id: null, perm_barangay: '',
-                perm_zipcode: '',
+                perm_zipcode:     '',
             } : {}),
         }));
         if (sameAsResidential && opt) perm.setProvinceId(Number(opt.value));
@@ -191,14 +260,14 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         const zip = opt ? res.getZipCode(opt.value) : '';
         setForm(prev => ({
             ...prev,
-            res_city_id: opt ? Number(opt.value) : null,
-            res_city: opt?.label ?? '',
-            res_zipcode: zip,
-            res_barangay_id: null, res_barangay: '',
+            res_city_id:      opt ? Number(opt.value) : null,
+            res_city:         opt?.label ?? '',
+            res_zipcode:      zip,
+            res_barangay_id:  null, res_barangay: '',
             ...(sameAsResidential ? {
-                perm_city_id: opt ? Number(opt.value) : null,
-                perm_city: opt?.label ?? '',
-                perm_zipcode: zip,
+                perm_city_id:     opt ? Number(opt.value) : null,
+                perm_city:        opt?.label ?? '',
+                perm_zipcode:     zip,
                 perm_barangay_id: null, perm_barangay: '',
             } : {}),
         }));
@@ -210,10 +279,10 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         setForm(prev => ({
             ...prev,
             res_barangay_id: opt ? Number(opt.value) : null,
-            res_barangay: opt?.label ?? '',
+            res_barangay:    opt?.label ?? '',
             ...(sameAsResidential ? {
                 perm_barangay_id: opt ? Number(opt.value) : null,
-                perm_barangay: opt?.label ?? '',
+                perm_barangay:    opt?.label ?? '',
             } : {}),
         }));
         if (submitted) setErrors(prev => ({ ...prev, res_barangay: undefined }));
@@ -224,10 +293,10 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         setForm(prev => ({
             ...prev,
             perm_province_id: opt ? Number(opt.value) : null,
-            perm_province: opt?.label ?? '',
-            perm_city_id: null, perm_city: '',
+            perm_province:    opt?.label ?? '',
+            perm_city_id:     null, perm_city: '',
             perm_barangay_id: null, perm_barangay: '',
-            perm_zipcode: '',
+            perm_zipcode:     '',
         }));
         if (submitted) setErrors(prev => ({ ...prev, perm_province: undefined }));
     };
@@ -237,9 +306,9 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         const zip = opt ? perm.getZipCode(opt.value) : '';
         setForm(prev => ({
             ...prev,
-            perm_city_id: opt ? Number(opt.value) : null,
-            perm_city: opt?.label ?? '',
-            perm_zipcode: zip,
+            perm_city_id:     opt ? Number(opt.value) : null,
+            perm_city:        opt?.label ?? '',
+            perm_zipcode:     zip,
             perm_barangay_id: null, perm_barangay: '',
         }));
         if (submitted) setErrors(prev => ({ ...prev, perm_city: undefined }));
@@ -249,7 +318,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         setForm(prev => ({
             ...prev,
             perm_barangay_id: opt ? Number(opt.value) : null,
-            perm_barangay: opt?.label ?? '',
+            perm_barangay:    opt?.label ?? '',
         }));
         if (submitted) setErrors(prev => ({ ...prev, perm_barangay: undefined }));
     };
@@ -257,7 +326,6 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     const handleSameAsResidential = (checked: boolean) => {
         setSameAsResidential(checked);
         if (checked) {
-            // Mirror residential location state to permanent
             perm.setProvinceId(form.res_province_id);
             perm.setCityId(form.res_city_id);
             setForm(prev => ({
@@ -276,7 +344,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             setErrors(prev => ({
                 ...prev,
                 perm_house_no: undefined, perm_street: undefined,
-                perm_province: undefined, perm_city: undefined,
+                perm_province: undefined, perm_city:   undefined,
                 perm_barangay: undefined,
             }));
         } else {
@@ -286,7 +354,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 ...prev,
                 perm_house_no: '', perm_street: '', perm_subdivision: '',
                 perm_province_id: null, perm_province: '',
-                perm_city_id: null, perm_city: '',
+                perm_city_id:     null, perm_city: '',
                 perm_barangay_id: null, perm_barangay: '',
                 perm_zipcode: '',
             }));
@@ -304,31 +372,27 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             return;
         }
         setErrors({});
-        // Strip UI-only ID fields before sending
-        const { res_province_id, res_city_id, res_barangay_id,
-                perm_province_id, perm_city_id, perm_barangay_id,
-                ...payload } = form;
+        // Strip UI-only ID fields before sending to server
+        const {
+            res_province_id, res_city_id, res_barangay_id,
+            perm_province_id, perm_city_id, perm_barangay_id,
+            ...payload
+        } = form;
         onSave('personal', payload as unknown as Record<string, unknown>);
     };
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white";
-    const errorInputClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all bg-white";
-    const readonlyClass = "w-full border border-gray-100 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed select-none";
-    const labelClass = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
-    const sectionClass = "mb-6";
+    // Styles
 
-    const ic = (key: keyof PersonalForm) => errors[key] ? errorInputClass : inputClass;
+    const inputClass       = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white";
+    const errorInputClass  = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all bg-white";
+    const readonlyClass    = "w-full border border-gray-100 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed select-none";
+    const labelClass       = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
+    const sectionClass     = "mb-6";
+
+    const ic  = (key: keyof PersonalForm) => errors[key] ? errorInputClass : inputClass;
     const err = (key: keyof PersonalForm) => errors[key]
         ? <p className="mt-1 text-xs text-red-500">{errors[key]}</p>
         : null;
-
-    // Convert existing text values to SelectOption for display when provinces load
-    const resProvinceValue = form.res_province_id ?? null;
-    const resCityValue     = form.res_city_id ?? null;
-    const resBarangayValue = form.res_barangay_id ?? null;
-    const permProvinceValue = form.perm_province_id ?? null;
-    const permCityValue     = form.perm_city_id ?? null;
-    const permBarangayValue = form.perm_barangay_id ?? null;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
@@ -336,7 +400,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">I. Personal Information</h2>
             </div>
 
-            {/* Name */}
+            {/* ── Name ── */}
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
                 <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -370,7 +434,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* Basic Info */}
+            {/* ── Basic Info ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Basic Information</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -438,7 +502,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* Citizenship */}
+            {/* ── Citizenship ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Citizenship</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -484,16 +548,15 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* Residential Address */}
+            {/* ── Residential Address ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Residential Address</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* Province — searchable */}
                     <div id="field-res_province">
                         <label className={labelClass}>Province *</label>
                         <SearchableSelect
                             options={res.provinces}
-                            value={resProvinceValue}
+                            value={form.res_province_id}
                             onChange={handleResProvince}
                             placeholder="Select Province"
                             loading={res.loadingProvinces}
@@ -501,12 +564,11 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {err('res_province')}
                     </div>
-                    {/* City/Municipality — searchable, depends on province */}
                     <div id="field-res_city">
                         <label className={labelClass}>City/Municipality *</label>
                         <SearchableSelect
                             options={res.cities}
-                            value={resCityValue}
+                            value={form.res_city_id}
                             onChange={handleResCity}
                             placeholder={form.res_province_id ? 'Select City/Municipality' : 'Select Province first'}
                             disabled={!form.res_province_id}
@@ -515,12 +577,11 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {err('res_city')}
                     </div>
-                    {/* Barangay — searchable, depends on city */}
                     <div id="field-res_barangay">
                         <label className={labelClass}>Barangay *</label>
                         <SearchableSelect
                             options={res.barangays}
-                            value={resBarangayValue}
+                            value={form.res_barangay_id}
                             onChange={handleResBarangay}
                             placeholder={form.res_city_id ? 'Select Barangay' : 'Select City first'}
                             disabled={!form.res_city_id}
@@ -529,7 +590,6 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {err('res_barangay')}
                     </div>
-                    {/* Zip Code — read-only, auto-filled */}
                     <div>
                         <label className={labelClass}>Zip Code</label>
                         <div className={readonlyClass}>{form.res_zipcode || '—'}</div>
@@ -557,7 +617,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* Permanent Address */}
+            {/* ── Permanent Address ── */}
             <div className={sectionClass}>
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-green-800 uppercase">Permanent Address</h3>
@@ -569,12 +629,11 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                     </label>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* Province */}
                     <div id="field-perm_province">
                         <label className={labelClass}>Province *</label>
                         <SearchableSelect
                             options={perm.provinces}
-                            value={permProvinceValue}
+                            value={form.perm_province_id}
                             onChange={handlePermProvince}
                             placeholder="Select Province"
                             loading={perm.loadingProvinces}
@@ -583,12 +642,11 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {!sameAsResidential && err('perm_province')}
                     </div>
-                    {/* City */}
                     <div id="field-perm_city">
                         <label className={labelClass}>City/Municipality *</label>
                         <SearchableSelect
                             options={perm.cities}
-                            value={permCityValue}
+                            value={form.perm_city_id}
                             onChange={handlePermCity}
                             placeholder={form.perm_province_id ? 'Select City/Municipality' : 'Select Province first'}
                             disabled={sameAsResidential || !form.perm_province_id}
@@ -597,12 +655,11 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {!sameAsResidential && err('perm_city')}
                     </div>
-                    {/* Barangay */}
                     <div id="field-perm_barangay">
                         <label className={labelClass}>Barangay *</label>
                         <SearchableSelect
                             options={perm.barangays}
-                            value={permBarangayValue}
+                            value={form.perm_barangay_id}
                             onChange={handlePermBarangay}
                             placeholder={form.perm_city_id ? 'Select Barangay' : 'Select City first'}
                             disabled={sameAsResidential || !form.perm_city_id}
@@ -611,7 +668,6 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         />
                         {!sameAsResidential && err('perm_barangay')}
                     </div>
-                    {/* Zip Code — read-only */}
                     <div>
                         <label className={labelClass}>Zip Code</label>
                         <div className={readonlyClass}>{form.perm_zipcode || '—'}</div>
@@ -642,7 +698,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* Contact & Government IDs */}
+            {/* ── Contact & Government IDs ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 pb-2 mb-3 border-b border-gray-100 uppercase">Contact & Government IDs</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

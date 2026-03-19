@@ -125,8 +125,6 @@ class PdsController extends Controller
             'telephone'            => 'nullable|string',
             // Government IDs — required (except UMID/GSIS/SSS)
             'umid_number'          => 'nullable|string',
-            'gsis_number'          => 'nullable|string',
-            'sss_number'           => 'nullable|string',
             'pagibig_number'       => 'required|string',
             'philhealth_number'    => 'required|string',
             'philsys_number'       => 'required|string',

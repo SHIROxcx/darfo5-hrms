@@ -34,8 +34,8 @@ const adminNavItems: NavItem[] = [
 ];
 
 const employeeNavItems: NavItem[] = [
+    { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
     { title: 'My Leave', href: '/my-leave', icon: Calendar },
-    { title: 'Personal Data Sheet', href: '/pds', icon: FileText }
 ];
 
 interface AuthUser {

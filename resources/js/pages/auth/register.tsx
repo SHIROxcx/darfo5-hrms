@@ -654,7 +654,7 @@ export default function Register() {
                             </button>
                             <button type="button" disabled={processing} onClick={submit}
                                 className="flex items-center gap-1 px-6 py-2 rounded-lg cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50">
-                                {processing ? <><Spinner />Submitting...</> : <><Check className="h-4 w-4" />Submit Registration</>}
+                                {processing ? <><Spinner />Submitting</> : <><Check className="h-4 w-4" />Submit Registration</>}
                             </button>
                         </div>
                     </div>

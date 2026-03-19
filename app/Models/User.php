@@ -77,18 +77,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(EmployeeProfile::class);
     }
 
-    public function degrees(): HasMany
+    public function pdsPersonalInfo(): HasOne
     {
-        return $this->hasMany(EmployeeDegree::class);
+        return $this->hasOne(PdsPersonalInfo::class);
     }
-
-    public function graduateStudies(): HasMany
+ 
+    public function pdsEducation(): HasMany
     {
-        return $this->hasMany(EmployeeGraduateStudy::class);
+        return $this->hasMany(PdsEducation::class);
     }
-
-    public function eligibilities(): HasMany
+ 
+    public function pdsEligibilities(): HasMany
     {
-        return $this->hasMany(EmployeeEligibility::class);
+        return $this->hasMany(PdsEligibility::class);
     }
 }
