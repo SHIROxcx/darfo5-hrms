@@ -12,9 +12,9 @@ const BOOLEAN_QUESTIONS: Array<{ key: keyof PdsQuestion; label: string }> = [
     { key: 'q35_a', label: 'Question 35a' },
     { key: 'q35_b', label: 'Question 35b' },
     { key: 'q36',   label: 'Question 36'  },
-    { key: 'q37_a', label: 'Question 37a' },
-    { key: 'q37_b', label: 'Question 37b' },
-    { key: 'q38',   label: 'Question 38'  },
+    { key: 'q37',   label: 'Question 37'  },
+    { key: 'q38_a', label: 'Question 38a' },
+    { key: 'q38_b', label: 'Question 38b' },
     { key: 'q39',   label: 'Question 39'  },
     { key: 'q40_a', label: 'Question 40a' },
     { key: 'q40_b', label: 'Question 40b' },
@@ -33,9 +33,9 @@ const CONDITIONAL_DETAILS: Array<{
     { parentKey: 'q35_b', detailKey: 'q35_b_date',     label: 'Q35b date filed' },
     { parentKey: 'q35_b', detailKey: 'q35_b_status',   label: 'Q35b case status' },
     { parentKey: 'q36',   detailKey: 'q36_details',    label: 'Q36 details' },
-    { parentKey: 'q37_a', detailKey: 'q37_a_details',  label: 'Q37a details' },
-    { parentKey: 'q37_b', detailKey: 'q37_b_details',  label: 'Q37b details' },
-    { parentKey: 'q38',   detailKey: 'q38_details',    label: 'Q38 details' },
+    { parentKey: 'q37',   detailKey: 'q37_details',    label: 'Q37 details' },
+    { parentKey: 'q38_a', detailKey: 'q38_a_details',  label: 'Q38a details' },
+    { parentKey: 'q38_b', detailKey: 'q38_b_details',  label: 'Q38b details' },
     { parentKey: 'q39',   detailKey: 'q39_details',    label: 'Q39 details' },
     { parentKey: 'q40_a', detailKey: 'q40_a_details',  label: 'Q40a details' },
     { parentKey: 'q40_b', detailKey: 'q40_b_details',  label: 'Q40b details' },
@@ -79,12 +79,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
         q35_b_status:  pdsData.questions?.q35_b_status  ?? '',
         q36:           pdsData.questions?.q36           ?? null,
         q36_details:   pdsData.questions?.q36_details   ?? '',
-        q37_a:         pdsData.questions?.q37_a         ?? null,
-        q37_a_details: pdsData.questions?.q37_a_details ?? '',
-        q37_b:         pdsData.questions?.q37_b         ?? null,
-        q37_b_details: pdsData.questions?.q37_b_details ?? '',
-        q38:           pdsData.questions?.q38           ?? null,
-        q38_details:   pdsData.questions?.q38_details   ?? '',
+        q37:           pdsData.questions?.q37           ?? null,
+        q37_details:   pdsData.questions?.q37_details   ?? '',
+        q38_a:         pdsData.questions?.q38_a         ?? null,
+        q38_a_details: pdsData.questions?.q38_a_details ?? '',
+        q38_b:         pdsData.questions?.q38_b         ?? null,
+        q38_b_details: pdsData.questions?.q38_b_details ?? '',
         q39:           pdsData.questions?.q39           ?? null,
         q39_details:   pdsData.questions?.q39_details   ?? '',
         q40_a:         pdsData.questions?.q40_a         ?? null,
@@ -176,15 +176,16 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-sm font-medium text-gray-800 mb-3">
                         34. Are you related by consanguinity or affinity to the appointing or recommending authority,
-                        or to the chief of bureau or person who has immediate supervision over you?
+                        or to the chief of bureau or office or person who has immediate supervision over you in the Office,
+                        Bureau of Department where you will be appointed,
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <p className="text-xs text-gray-500 mb-2">a. Within the third degree? *</p>
+                            <p className="text-xs text-gray-500 mb-2">a. within the third degree? *</p>
                             <RadioGroup qKey="q34_a" />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 mb-2">b. Within the fourth degree (LGU)? *</p>
+                            <p className="text-xs text-gray-500 mb-2">b. Within the fourth degree (for LGU - Career Employees)? *</p>
                             <RadioGroup qKey="q34_b" />
                         </div>
                     </div>
@@ -247,7 +248,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
 
                 {/* ── Q36 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
-                    <p className="text-sm text-gray-700 mb-3">
+                    <p className="text-sm font-medium text-gray-800 mb-3">
                         36. Have you ever been convicted of any crime or violation of any law, decree, ordinance
                         or regulation by any court or tribunal? *
                     </p>
@@ -265,64 +266,64 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
 
                 {/* ── Q37 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
-                    <p className="text-sm font-medium text-gray-800 mb-3">37. Election-related questions</p>
-                    <div className="space-y-4">
+                    <p className="text-sm font-medium text-gray-800 mb-3">
+                        37. Have you ever been separated from the service in any of the following modes: resignation, retirement,
+                        dropped from the rolls, dismissal, termination, end of the term, finished contract or phased out (abolition)
+                        in the public or private sector? *
+                    </p>
+                    <RadioGroup qKey="q37" />
+                    {form.q37 === true && (
+                        <div id="field-q37_a_details" className="mt-2">
+                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                            <input type="text" value={form.q37_details ?? ''}
+                                onChange={e => set('q37_details', e.target.value)}
+                                className={ic('q37_details')} />
+                            {err('q37_details')}
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Q38 ── */}
+                <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
+                    <p className="text-xs text-gray-800 mb-3">
+                        <span className='font-medium text-sm'>38.</span> a. have you ever been a candidate in a national or local election held within the last year 
+                        (except Barangay election)? *
+                    </p>
+                    <div className='space-y-4'>
                         <div>
-                            <p className="text-xs text-gray-600 mb-2">
-                                a. Have you ever been a candidate in a national or local election held within the
-                                last year (except Barangay election)? *
-                            </p>
-                            <RadioGroup qKey="q37_a" />
-                            {form.q37_a === true && (
-                                <div id="field-q37_a_details" className="mt-2">
+                            <RadioGroup qKey="q38_a" />
+                            {form.q38_a === true && (
+                                <div id="field-q38_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
-                                    <input type="text" value={form.q37_a_details ?? ''}
-                                        onChange={e => set('q37_a_details', e.target.value)}
-                                        className={ic('q37_a_details')} />
-                                    {err('q37_a_details')}
+                                    <input type="text" value={form.q38_a_details ?? ''}
+                                        onChange={e => set('q38_a_details', e.target.value)}
+                                        className={ic('q38_a_details')} />
+                                    {err('q38_a_details')}
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-gray-200 pt-3">
-                            <p className="text-xs text-gray-600 mb-2">
+                         <div className="border-t border-gray-200 pt-3">
+                            <p className="text-xs text-gray-800 mb-2">
                                 b. Have you resigned from government service during the three (3)-month period
-                                before the last election to promote/actively campaign for a national or local candidate? *
+                                before the last election to promote/actively campaign for a national or local candidate?*
                             </p>
-                            <RadioGroup qKey="q37_b" />
-                            {form.q37_b === true && (
-                                <div id="field-q37_b_details" className="mt-2">
+                            <RadioGroup qKey="q38_b" />
+                            {form.q38_b === true && (
+                                <div id="field-q38_b_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
-                                    <input type="text" value={form.q37_b_details ?? ''}
-                                        onChange={e => set('q37_b_details', e.target.value)}
-                                        className={ic('q37_b_details')} />
-                                    {err('q37_b_details')}
+                                    <input type="text" value={form.q38_b_details ?? ''}
+                                        onChange={e => set('q38_b_details', e.target.value)}
+                                        className={ic('q38_b_details')} />
+                                    {err('q38_b_details')}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* ── Q38 ── */}
-                <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
-                    <p className="text-sm text-gray-700 mb-3">
-                        38. Have you ever been separated from the service (resignation, retirement, dropped from rolls,
-                        dismissal, termination, end of term, finished contract, or phased out)? *
-                    </p>
-                    <RadioGroup qKey="q38" />
-                    {form.q38 === true && (
-                        <div id="field-q38_details" className="mt-2">
-                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
-                            <input type="text" value={form.q38_details ?? ''}
-                                onChange={e => set('q38_details', e.target.value)}
-                                className={ic('q38_details')} />
-                            {err('q38_details')}
-                        </div>
-                    )}
-                </div>
-
                 {/* ── Q39 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
-                    <p className="text-sm text-gray-700 mb-3">
+                    <p className="text-sm font-medium text-gray-800 mb-3">
                         39. Have you acquired the status of an immigrant or permanent resident of another country? *
                     </p>
                     <RadioGroup qKey="q39" />
@@ -340,8 +341,8 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 {/* ── Q40 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-sm font-medium text-gray-800 mb-3">
-                        40. Pursuant to RA 8381 (Indigenous People's Act), RA 7277 (Magna Carta for Disabled Persons),
-                        and RA 8972 (Solo Parents Welfare Act):
+                        40. Pursuant to: (a) Indigenous People's Act (RA 8371); (B) Magna Carta for Disabled Persons (ra 7277, as ammended); 
+                        and (c) Expanded Solo Parents Welfare Act (RA 11861), please answer the following items:
                     </p>
                     <div className="space-y-4">
                         {([
@@ -354,7 +355,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                                 <RadioGroup qKey={qKey} />
                                 {form[qKey] === true && (
                                     <div id={`field-${detailKey}`} className="mt-2">
-                                        <label className="block text-xs text-gray-500 mb-1">If YES, please specify: *</label>
+                                        <label className="block text-xs text-gray-500 mb-1">If YES, please specify ID No: *</label>
                                         <input type="text" value={form[detailKey] ?? ''}
                                             onChange={e => set(detailKey, e.target.value)}
                                             className={ic(detailKey)} />

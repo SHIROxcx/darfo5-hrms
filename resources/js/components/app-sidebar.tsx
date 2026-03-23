@@ -29,6 +29,7 @@ const superAdminNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+    { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
     { title: 'Employees', href: '/admin/employees', icon: Users },
     { title: 'Leave Management', href: '/leave', icon: Calendar },
 ];

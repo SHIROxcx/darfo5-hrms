@@ -11,6 +11,8 @@ interface Props {
     pdsData: PdsData;
     onSave: PdsSaveCallback;
     saving: boolean;
+    /** Admins/HR can edit their own agency employee no. in the PDS */
+    canEditEmployeeNo?: boolean;
 }
 
 interface PersonalForm extends PdsPersonalInfo {
@@ -66,7 +68,7 @@ function validate(form: PersonalForm): FormErrors {
     return errors;
 }
 
-export default function PersonalInfoSection({ user, pdsData, onSave, saving }: Props) {
+export default function PersonalInfoSection({ user, pdsData, onSave, saving, canEditEmployeeNo = false }: Props) {
     const profile = user.employee_profile;
 
     const res  = usePhLocations();
@@ -503,8 +505,15 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         </select>
                     </div>
                     <div>
-                        <label className={labelClass}>Agency Employee No.</label>
-                        <div className={readonlyClass}>{form.agency_employee_no || '—'}</div>
+                        <label className={labelClass}>
+                            Agency Employee No.
+                        </label>
+                            <input
+                                type="text"
+                                value={form.agency_employee_no ?? ''}
+                                onChange={e => set('agency_employee_no', e.target.value)}
+                                className={inputClass}
+                                placeholder="e.g. EMP-001" />
                     </div>
                 </div>
             </div>

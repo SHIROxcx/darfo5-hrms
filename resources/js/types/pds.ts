@@ -138,12 +138,12 @@ export interface PdsQuestion {
     q35_b_status?: string;
     q36?: boolean | null;
     q36_details?: string;
-    q37_a?: boolean | null;
-    q37_a_details?: string;
-    q37_b?: boolean | null;
-    q37_b_details?: string;
-    q38?: boolean | null;
-    q38_details?: string;
+    q37?: boolean | null;
+    q37_details?: string;
+    q38_a?: boolean | null;
+    q38_a_details?: string;
+    q38_b?: boolean | null;
+    q38_b_details?: string;
     q39?: boolean | null;
     q39_details?: string;
     q40_a?: boolean | null;

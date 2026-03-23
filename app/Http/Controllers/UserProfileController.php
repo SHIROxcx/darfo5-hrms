@@ -3,175 +3,173 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\EmployeeProfile;
+use App\Models\PdsPersonalInfo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class UserProfileController extends Controller
 {
-    // ─────────────────────────────────────────────────────────────────────────
-    // SHOW
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function show(Request $request, ?int $id = null)
+    /**
+     * Show the authenticated user's own profile.
+     */
+    public function show()
     {
-        $authUser = $request->user();
-
-        $target = $id
-            ? User::with([
-                'employeeProfile',
-                'pdsPersonalInfo',
-                'pdsEducation',         // all education records
-                'pdsEligibilities',     // all eligibility records
-            ])->findOrFail($id)
-            : $authUser->load([
-                'employeeProfile',
-                'pdsPersonalInfo',
-                'pdsEducation',
-                'pdsEligibilities',
-            ]);
-
-        if ($id && $authUser->id !== $id && ! $authUser->hasRole('admin')) {
-            abort(403);
-        }
+        $user = Auth::user()->load([
+            'employeeProfile',
+            'pdsPersonalInfo',
+            'pdsEducation',
+            'pdsEligibilities',
+        ]);
 
         return Inertia::render('Profile/Show', [
-            'profileUser'    => $this->format($target),
-            'canEditCompany' => $authUser->hasRole('admin'),
+            'profileUser'    => $this->formatUser($user),
+            'canEditCompany' => false,
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
-            // searchable dropdowns in the modals
-            'bachelorsDegrees' => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
-            'graduatePrograms' => \App\Models\GraduateProgram::orderBy('program')->get(['id', 'program', 'abbreviation']),
-            'eligibilityTitles' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PERSONAL INFO  (owner or admin)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function updatePersonal(Request $request)
+    /**
+     * Update personal info (users table + pds_personal_info).
+     * Accessible by the user themselves OR an admin viewing their profile.
+     */
+    public function updatePersonal(Request $request, ?int $userId = null)
     {
-        $user = $request->user();
-        $this->savePersonal($request, $user);
-        return back();
-    }
+        $targetId = $userId ?? Auth::id();
+        $this->authorizeProfileEdit($targetId);
 
-    public function updatePersonalFor(Request $request, int $id)
-    {
-        abort_unless($request->user()->hasAnyRole(['admin', 'superadmin']), 403);
-        $user = User::findOrFail($id);
-        $this->savePersonal($request, $user);
-        return back();
-    }
-
-    private function savePersonal(Request $request, User $user): void
-    {
         $data = $request->validate([
-            'first_name'    => 'required|string|max:255',
-            'middle_name'   => 'nullable|string|max:255',
-            'last_name'     => 'required|string|max:255',
+            'first_name'    => 'nullable|string|max:100',
+            'middle_name'   => 'nullable|string|max:100',
+            'last_name'     => 'nullable|string|max:100',
             'name_ext'      => 'nullable|string|max:20',
-            'email'         => 'required|email|unique:users,email,' . $user->id,
+            'email'         => 'nullable|email|max:255|unique:users,email,' . $targetId,
             'sex'           => 'nullable|in:Male,Female',
-            'birth_place'   => 'nullable|string|max:255',
+            'birth_place'   => 'nullable|string',
             'civil_status'  => 'nullable|in:Single,Married,Widowed,Separated,Other',
             'mobile_number' => 'nullable|string|max:20',
         ]);
 
-        $user->update([
-            'first_name'  => $data['first_name'],
-            'middle_name' => $data['middle_name'],
-            'last_name'   => $data['last_name'],
-            'name_ext'    => $data['name_ext'],
-            'name'        => trim($data['first_name'] . ' ' . $data['last_name']),
-            'email'       => $data['email'],
+        // Update users table
+        User::where('id', $targetId)->update([
+            'first_name'  => $data['first_name']  ?? null,
+            'middle_name' => $data['middle_name'] ?? null,
+            'last_name'   => $data['last_name']   ?? null,
+            'name_ext'    => $data['name_ext']    ?? null,
+            'email'       => $data['email']       ?? null,
         ]);
 
-        // Personal profile details live in pds_personal_info now.
-        $user->pdsPersonalInfo()->updateOrCreate(
-            ['user_id' => $user->id],
+        // Update pds_personal_info for personal fields
+        PdsPersonalInfo::updateOrCreate(
+            ['user_id' => $targetId],
             [
-                'sex'           => $data['sex'],
-                'birth_place'   => $data['birth_place'],
-                'civil_status'  => $data['civil_status'],
-                'mobile_number' => $data['mobile_number'],
-                'email'         => $data['email'],
+                'sex'           => $data['sex']           ?? null,
+                'birth_place'   => $data['birth_place']   ?? null,
+                'civil_status'  => $data['civil_status']  ?? null,
+                'mobile_number' => $data['mobile_number'] ?? null,
             ]
         );
+
+        return back()->with('success', 'Personal information updated.');
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // COMPANY INFO  (admin only)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function updateCompany(Request $request, int $id)
+    /**
+     * Update company info (employee_profiles table).
+     * Also syncs employee_number → pds_personal_info.agency_employee_no.
+     */
+    public function updateCompany(Request $request, int $userId)
     {
-        abort_unless($request->user()->hasRole('admin'), 403);
+        // Only admins/superadmins can update company info
+        $this->authorizeAdminEdit();
 
-        $user = User::findOrFail($id);
         $data = $request->validate([
             'employee_number' => 'nullable|string|max:50',
-            'employment_type' => 'nullable|string|max:100',
-            'position'        => 'nullable|string|max:255',
-            'salary_grade'    => 'nullable|string|max:50',
-            'place_assign'    => 'nullable|string|max:255',
-            'division'        => 'nullable|string|max:255',
-            'section'         => 'nullable|string|max:255',
+            'employment_type' => 'nullable|string',
+            'position'        => 'nullable|string',
+            'salary_grade'    => 'nullable|string',
+            'division'        => 'nullable|string',
+            'section'         => 'nullable|string',
             'date_hired'      => 'nullable|date',
         ]);
 
-        $user->employeeProfile()->updateOrCreate(['user_id' => $user->id], $data);
+        EmployeeProfile::where('user_id', $userId)->update($data);
 
-        return back();
+        // Sync employee_number → pds_personal_info.agency_employee_no
+        // so both tables always hold the same value.
+        if (array_key_exists('employee_number', $data) && $data['employee_number'] !== null) {
+            PdsPersonalInfo::updateOrCreate(
+                ['user_id' => $userId],
+                ['agency_employee_no' => $data['employee_number']]
+            );
+        }
+
+        return back()->with('success', 'Company information updated.');
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // GOVERNMENT IDs  (admin or owner)
-    // Stored in pds_personal_info — single source of truth per PDS schema.
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function updateGovernment(Request $request, int $id)
+    /**
+     * Update government IDs (pds_personal_info table).
+     * Accessible by the user themselves OR an admin.
+     */
+    public function updateGovernment(Request $request, int $userId)
     {
-        $authUser = $request->user();
-        abort_unless($authUser->hasRole('admin') || $authUser->id === $id, 403);
+        $this->authorizeProfileEdit($userId);
 
-        $user = User::findOrFail($id);
         $data = $request->validate([
-            'umid_number'       => 'nullable|string|max:50',
-            'pagibig_number'    => 'nullable|string|max:50',
-            'philsys_number'    => 'nullable|string|max:50',
-            'philhealth_number' => 'nullable|string|max:50',
-            'tin_number'        => 'nullable|string|max:50',
+            'umid_number'       => 'nullable|string',
+            'pagibig_number'    => 'nullable|string',
+            'philsys_number'    => 'nullable|string',
+            'philhealth_number' => 'nullable|string',
+            'tin_number'        => 'nullable|string',
         ]);
 
-        // Write to pds_personal_info (not employee_profiles).
-        $user->pdsPersonalInfo()->updateOrCreate(['user_id' => $user->id], $data);
+        PdsPersonalInfo::updateOrCreate(
+            ['user_id' => $userId],
+            $data
+        );
 
-        return back();
+        return back()->with('success', 'Government IDs updated.');
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PHOTO
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function updatePhoto(Request $request)
+    /**
+     * Upload profile photo.
+     */
+    public function uploadPhoto(Request $request)
     {
         $request->validate(['photo' => 'required|image|max:2048']);
+
         $path = $request->file('photo')->store('photos', 'public');
-        $request->user()->update(['photo' => $path]);
-        return back();
+
+        User::where('id', Auth::id())->update(['photo' => $path]);
+
+        return back()->with('success', 'Photo updated.');
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // FORMAT HELPER
-    // Maps PDS table records into the shape Show.tsx expects.
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private function format(User $u): array
+    private function authorizeProfileEdit(int $targetId): void
+    {
+        $user = Auth::user();
+        $isOwn  = $user->id === $targetId;
+        $isAdmin = $user->hasAnyRole(['admin', 'superadmin', 'hr']);
+
+        if (!$isOwn && !$isAdmin) {
+            abort(403, 'Unauthorized');
+        }
+    }
+
+    private function authorizeAdminEdit(): void
+    {
+        if (!Auth::user()->hasAnyRole(['admin', 'superadmin', 'hr'])) {
+            abort(403, 'Only administrators can update company information.');
+        }
+    }
+
+    public function formatUser(User $u): array
     {
         $ep  = $u->employeeProfile;
-        $pds = $u->pdsPersonalInfo;   // may be null until user fills PDS
+        $pds = $u->pdsPersonalInfo;
 
         return [
             'id'          => $u->id,
@@ -185,47 +183,46 @@ class UserProfileController extends Controller
             'is_approved' => $u->is_approved,
             'roles'       => $u->getRoleNames()->values()->toArray(),
 
-            // Company / HR data still lives in employee_profiles.
+            // Company data — from employee_profiles only
             'employee_profile' => $ep ? [
-                'employee_number'  => $ep->employee_number,
-                'employment_type'  => $ep->employment_type,
-                'position'         => $ep->position,
-                'salary_grade'     => $ep->salary_grade,
-                'place_assign'     => $ep->place_assign,
-                'division'         => $ep->division,
-                'section'          => $ep->section,
-                'date_hired'       => $ep->date_hired,
-                'is_active'        => $ep->is_active,
+                'employee_number' => $ep->employee_number,
+                'employment_type' => $ep->employment_type,
+                'position'        => $ep->position,
+                'salary_grade'    => $ep->salary_grade,
+                'place_assign'    => $ep->place_assign,
+                'division'        => $ep->division,
+                'section'         => $ep->section,
+                'date_hired'      => $ep->date_hired,
+                'is_active'       => $ep->is_active,
             ] : null,
 
-            // Personal / government data from pds_personal_info.
+            // Personal & gov't ID data — from pds_personal_info
             'personal_info' => $pds ? [
-                'sex'              => $pds->sex,
-                'birth_place'      => $pds->birth_place,
-                'civil_status'     => $pds->civil_status,
-                'mobile_number'    => $pds->mobile_number,
-                'umid_number'      => $pds->umid_number,
-                'pagibig_number'   => $pds->pagibig_number,
-                'philhealth_number'=> $pds->philhealth_number,
-                'philsys_number'   => $pds->philsys_number,
-                'tin_number'       => $pds->tin_number,
+                'sex'               => $pds->sex,
+                'birth_place'       => $pds->birth_place,
+                'civil_status'      => $pds->civil_status,
+                'mobile_number'     => $pds->mobile_number,
+                'umid_number'       => $pds->umid_number,
+                'pagibig_number'    => $pds->pagibig_number,
+                'philhealth_number' => $pds->philhealth_number,
+                'philsys_number'    => $pds->philsys_number,
+                'tin_number'        => $pds->tin_number,
             ] : null,
 
-            // College records from pds_education (level = College).
+            // Education sourced from pds_education
             'degrees' => $u->pdsEducation
                 ->where('level', 'College')
                 ->values()
                 ->map(fn($e) => [
-                    'id'          => $e->id,
-                    'degree'      => $e->course,          // "course" = degree title in PDS
-                    'school_name' => $e->school_name,
-                    'period_from' => $e->period_from,
-                    'period_to'   => $e->period_to,
-                    'year_graduated' => $e->year_graduated,
+                    'id'              => $e->id,
+                    'degree'          => $e->course,
+                    'school_name'     => $e->school_name,
+                    'period_from'     => $e->period_from,
+                    'period_to'       => $e->period_to,
+                    'year_graduated'  => $e->year_graduated,
                     'honors_received' => $e->honors_received,
                 ])->toArray(),
 
-            // Graduate Studies records from pds_education (level = Graduate Studies).
             'graduate_studies' => $u->pdsEducation
                 ->where('level', 'Graduate Studies')
                 ->values()
@@ -237,7 +234,7 @@ class UserProfileController extends Controller
                     'period_to'   => $e->period_to,
                 ])->toArray(),
 
-            // Eligibilities from pds_eligibilities.
+            // Eligibilities sourced from pds_eligibilities
             'eligibilities' => $u->pdsEligibilities
                 ->map(fn($e) => [
                     'id'                   => $e->id,

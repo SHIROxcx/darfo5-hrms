@@ -104,7 +104,8 @@ class PdsController extends Controller
             'height'               => 'nullable|numeric',
             'weight'               => 'nullable|numeric',
             'blood_type'           => 'nullable|string|max:5',
-            // agency_employee_no intentionally excluded — admin-only
+            // agency_employee_no — editable by everyone in the PDS
+            'agency_employee_no' => 'nullable|string|max:50',
             // Residential Address — required
             'res_house_no'         => 'required|string',
             'res_street'           => 'required|string',
@@ -125,6 +126,8 @@ class PdsController extends Controller
             'telephone'            => 'nullable|string',
             // Government IDs — required (except UMID/GSIS/SSS)
             'umid_number'          => 'nullable|string',
+            'gsis_number'          => 'nullable|string',
+            'sss_number'           => 'nullable|string',
             'pagibig_number'       => 'required|string',
             'philhealth_number'    => 'required|string',
             'philsys_number'       => 'required|string',
@@ -162,10 +165,17 @@ class PdsController extends Controller
             'name_ext'    => $data['name_ext'] ?? null,
         ]);
 
-        // 2. Save all PDS personal fields (name fields stripped out, agency_employee_no never touched)
+        // 2. Save all PDS personal fields (name fields stripped out)
         $pdsFields = collect($data)
             ->except(['last_name', 'first_name', 'middle_name', 'name_ext'])
             ->toArray();
+
+        // Sync agency_employee_no ↔ employee_profiles.employee_number so both stay identical.
+        // Everyone can edit their own employee number in the PDS.
+        if (array_key_exists('agency_employee_no', $pdsFields) && $pdsFields['agency_employee_no'] !== null) {
+            \App\Models\EmployeeProfile::where('user_id', $userId)
+                ->update(['employee_number' => $pdsFields['agency_employee_no']]);
+        }
 
         PdsPersonalInfo::updateOrCreate(
             ['user_id' => $userId],

@@ -30,6 +30,7 @@ interface PersonalInfo {
     birth_place: string | null;
     civil_status: string | null;
     mobile_number: string | null;
+    agency_employee_no: string | null;
     umid_number: string | null;
     pagibig_number: string | null;
     philhealth_number: string | null;
@@ -283,7 +284,6 @@ function EditPersonalModal({ user, isOwn, onClose }: { user: ProfileUser; isOwn:
 function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
     const ep = user.employee_profile;
     const [form, setForm] = useState({
-        employee_number: ep?.employee_number ?? '',
         employment_type: ep?.employment_type ?? '',
         position:        ep?.position        ?? '',
         salary_grade:    ep?.salary_grade    ?? '',
@@ -358,8 +358,10 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
     return (
         <ModalShell title="Edit Company Info" onClose={onClose} onSave={save} saving={saving}>
             <div className="grid grid-cols-2 gap-3">
-                <Field label="Employee No.">
-                    <input value={form.employee_number} onChange={e => setForm(f => ({ ...f, employee_number: e.target.value }))} className={inputCls} placeholder="e.g. 2024-001" />
+                <Field label="Agency Employee No.">
+                    <div className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-400 select-none cursor-not-allowed">
+                        {user.personal_info?.agency_employee_no || ep?.employee_number || '—'}
+                    </div>
                 </Field>
                 <Field label="Employment Type">
                     <select value={form.employment_type} onChange={e => setForm(f => ({ ...f, employment_type: e.target.value }))} className={inputCls}>

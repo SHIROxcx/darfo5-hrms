@@ -35,33 +35,33 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const SECTIONS = [
-    { id: 'personal', label: 'I. Personal Information', icon: UserIcon, page: 1 },
-    { id: 'family', label: 'II. Family Background', icon: Users, page: 1 },
-    { id: 'education', label: 'III. Educational Background', icon: BookOpen, page: 1 },
-    { id: 'eligibility', label: 'IV. Civil Service Eligibility', icon: Award, page: 2 },
-    { id: 'work_experience', label: 'V. Work Experience', icon: Briefcase, page: 2 },
-    { id: 'voluntary_work', label: 'VI. Voluntary Work', icon: Heart, page: 3 },
-    { id: 'trainings', label: 'VII. Learning & Development', icon: BookMarked, page: 3 },
-    { id: 'other_info', label: 'VIII. Other Information', icon: Info, page: 3 },
-    { id: 'questions', label: 'IX. Questions', icon: HelpCircle, page: 4 },
-    { id: 'references', label: 'X. References & Gov\'t ID', icon: UserCheck, page: 4 },
+    { id: 'personal',      label: 'I. Personal Information',      icon: UserIcon,   page: 1 },
+    { id: 'family',        label: 'II. Family Background',         icon: Users,      page: 1 },
+    { id: 'education',     label: 'III. Educational Background',   icon: BookOpen,   page: 1 },
+    { id: 'eligibility',   label: 'IV. Civil Service Eligibility', icon: Award,      page: 2 },
+    { id: 'work_experience', label: 'V. Work Experience',          icon: Briefcase,  page: 2 },
+    { id: 'voluntary_work',  label: 'VI. Voluntary Work',          icon: Heart,      page: 3 },
+    { id: 'trainings',     label: 'VII. Learning & Development',   icon: BookMarked, page: 3 },
+    { id: 'other_info',    label: 'VIII. Other Information',       icon: Info,       page: 3 },
+    { id: 'questions',     label: 'IX. Questions',                 icon: HelpCircle, page: 4 },
+    { id: 'references',    label: "X. References & Gov't ID",      icon: UserCheck,  page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
 
 function getSectionCompletion(sectionId: SectionId, pdsData: PdsData): boolean {
     switch (sectionId) {
-        case 'personal': return !!pdsData.personal?.date_of_birth;
-        case 'family': return !!pdsData.family?.father_surname;
-        case 'education': return (pdsData.education?.length ?? 0) > 0;
-        case 'eligibility': return (pdsData.eligibilities?.length ?? 0) > 0;
+        case 'personal':      return !!pdsData.personal?.date_of_birth;
+        case 'family':        return !!pdsData.family?.father_surname;
+        case 'education':     return (pdsData.education?.length ?? 0) > 0;
+        case 'eligibility':   return (pdsData.eligibilities?.length ?? 0) > 0;
         case 'work_experience': return (pdsData.work_experience?.length ?? 0) > 0;
-        case 'voluntary_work': return (pdsData.voluntary_work?.length ?? 0) > 0;
-        case 'trainings': return (pdsData.trainings?.length ?? 0) > 0;
-        case 'other_info': return (pdsData.other_info?.special_skills?.length ?? 0) > 0;
-        case 'questions': return pdsData.questions?.q34_a !== undefined && pdsData.questions?.q34_a !== null;
-        case 'references': return (pdsData.references?.length ?? 0) > 0;
-        default: return false;
+        case 'voluntary_work':  return (pdsData.voluntary_work?.length ?? 0) > 0;
+        case 'trainings':     return (pdsData.trainings?.length ?? 0) > 0;
+        case 'other_info':    return (pdsData.other_info?.special_skills?.length ?? 0) > 0;
+        case 'questions':     return pdsData.questions?.q34_a !== undefined && pdsData.questions?.q34_a !== null;
+        case 'references':    return (pdsData.references?.length ?? 0) > 0;
+        default:              return false;
     }
 }
 
@@ -74,7 +74,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
     const handleSave: PdsSaveCallback = (section, data) => {
         setSaving(true);
-
         router.post(`/pds/save/${section}`, data as any, {
             preserveScroll: true,
             onSuccess: () => {
@@ -94,17 +93,17 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const renderSection = () => {
         const props = { user, pdsData, onSave: handleSave, saving };
         switch (activeSection) {
-            case 'personal': return <PersonalInfoSection {...props} />;
-            case 'family': return <FamilyBackgroundSection {...props} />;
-            case 'education': return <EducationSection {...props} />;
-            case 'eligibility': return <EligibilitySection {...props} />;
+            case 'personal':      return <PersonalInfoSection {...props} />;
+            case 'family':        return <FamilyBackgroundSection {...props} />;
+            case 'education':     return <EducationSection {...props} />;
+            case 'eligibility':   return <EligibilitySection {...props} />;
             case 'work_experience': return <WorkExperienceSection {...props} />;
-            case 'voluntary_work': return <VoluntaryWorkSection {...props} />;
-            case 'trainings': return <TrainingSection {...props} />;
-            case 'other_info': return <OtherInfoSection {...props} />;
-            case 'questions': return <QuestionsSection {...props} />;
-            case 'references': return <ReferencesSection {...props} />;
-            default: return null;
+            case 'voluntary_work':  return <VoluntaryWorkSection {...props} />;
+            case 'trainings':     return <TrainingSection {...props} />;
+            case 'other_info':    return <OtherInfoSection {...props} />;
+            case 'questions':     return <QuestionsSection {...props} />;
+            case 'references':    return <ReferencesSection {...props} />;
+            default:              return null;
         }
     };
 
@@ -115,7 +114,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
             <Head title="Personal Data Sheet" />
             <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
 
-                {/*  PDS Header */}
+                {/* PDS Header */}
                 <div className="shrink-0 bg-white border-b border-gray-200 p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -125,7 +124,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             <div>
                                 <h1 className="text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
                                 <p className="text-sm text-gray-500">
-                                    {user.last_name}, {user.first_name} {user.middle_name} <Dot className='inline text-gray-700' /> {user.employee_profile?.employee_number ?? 'No employee number'}
+                                    {user.last_name}, {user.first_name} {user.middle_name}
+                                    <Dot className="inline text-gray-700" />
+                                    {pdsData.personal?.agency_employee_no ?? 'No employee number'}
                                 </p>
                             </div>
                         </div>
@@ -187,7 +188,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     {/* Right column */}
                     <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
-                        {/* Only this scrolls */}
+                        {/* Scrollable content */}
                         <main className="flex-1 overflow-y-auto">
                             <div className="max-w-5xl mx-auto px-6 py-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -196,14 +197,14 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </main>
 
-                        {/* Sticky footer */}
+                        {/* Sticky footer nav */}
                         <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-white">
                             <button
                                 onClick={() => currentSectionIdx > 0 && setActiveSection(SECTIONS[currentSectionIdx - 1].id)}
                                 disabled={currentSectionIdx === 0}
                                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
-                                <ChevronLeft className='w-4 h-4' /> Previous
+                                <ChevronLeft className="w-4 h-4" /> Previous
                             </button>
                             <span className="text-xs text-gray-400">
                                 Section {currentSectionIdx + 1} of {SECTIONS.length}
@@ -213,10 +214,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 disabled={currentSectionIdx === SECTIONS.length - 1}
                                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
-                                Next <ChevronRight className='w-4 h-4'/>
+                                Next <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
-
                     </div>
                 </div>
             </div>

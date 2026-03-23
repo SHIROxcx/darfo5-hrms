@@ -46,7 +46,6 @@ class EmployeeController extends Controller
 
     public function show(User $user)
     {
-        // Load PDS relationships — same as UserProfileController
         $user->load([
             'employeeProfile',
             'pdsPersonalInfo',
@@ -83,9 +82,12 @@ class EmployeeController extends Controller
             'is_approved' => $u->is_approved,
             'roles'       => $u->getRoleNames()->values()->toArray(),
 
-            // HR / company data — from employee_profiles
+            // Company data from employee_profiles.
+            // employee_number display is sourced from pds_personal_info.agency_employee_no
+            // (falls back to employee_profiles.employee_number for legacy records).
+            // It is NOT editable from the profile page — only via the PDS form.
             'employee_profile' => $ep ? [
-                'employee_number'  => $ep->employee_number,
+                'employee_number'  => $pds?->agency_employee_no ?? $ep->employee_number,
                 'employment_type'  => $ep->employment_type,
                 'position'         => $ep->position,
                 'salary_grade'     => $ep->salary_grade,
@@ -96,12 +98,13 @@ class EmployeeController extends Controller
                 'is_active'        => $ep->is_active,
             ] : null,
 
-            // Personal / government data — from pds_personal_info
+            // Personal / government data — all from pds_personal_info
             'personal_info' => $pds ? [
                 'sex'               => $pds->sex,
                 'birth_place'       => $pds->birth_place,
                 'civil_status'      => $pds->civil_status,
                 'mobile_number'     => $pds->mobile_number,
+                'agency_employee_no'=> $pds->agency_employee_no,
                 'umid_number'       => $pds->umid_number,
                 'pagibig_number'    => $pds->pagibig_number,
                 'philhealth_number' => $pds->philhealth_number,
@@ -109,7 +112,6 @@ class EmployeeController extends Controller
                 'tin_number'        => $pds->tin_number,
             ] : null,
 
-            // College records — from pds_education where level = College
             'degrees' => $u->pdsEducation
                 ->where('level', 'College')
                 ->values()
@@ -123,7 +125,6 @@ class EmployeeController extends Controller
                     'honors_received' => $e->honors_received,
                 ])->toArray(),
 
-            // Graduate studies — from pds_education where level = Graduate Studies
             'graduate_studies' => $u->pdsEducation
                 ->where('level', 'Graduate Studies')
                 ->values()
@@ -135,7 +136,6 @@ class EmployeeController extends Controller
                     'period_to'   => $e->period_to,
                 ])->toArray(),
 
-            // Eligibilities — from pds_eligibilities
             'eligibilities' => $u->pdsEligibilities
                 ->map(fn($e) => [
                     'id'                   => $e->id,

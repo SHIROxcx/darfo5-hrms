@@ -186,12 +186,12 @@ return new class extends Migration {
             $table->string('q35_b_status')->nullable();
             $table->boolean('q36')->nullable(); // convicted
             $table->string('q36_details')->nullable();
-            $table->boolean('q37_a')->nullable(); // election candidate
-            $table->string('q37_a_details')->nullable();
-            $table->boolean('q37_b')->nullable(); // resigned to campaign
-            $table->string('q37_b_details')->nullable();
-            $table->boolean('q38')->nullable(); // separated from service
-            $table->string('q38_details')->nullable();
+            $table->boolean('q37')->nullable(); // election candidate
+            $table->string('q37_details')->nullable();
+            $table->boolean('q38_a')->nullable(); // resigned to campaign
+            $table->string('q38_a_details')->nullable();
+            $table->boolean('q38_b')->nullable(); // separated from service
+            $table->string('q38_b_details')->nullable();
             $table->boolean('q39')->nullable(); // immigrant/permanent resident
             $table->string('q39_details')->nullable();
             $table->boolean('q40_a')->nullable(); // indigenous
