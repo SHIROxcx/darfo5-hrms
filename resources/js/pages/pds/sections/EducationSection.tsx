@@ -146,7 +146,7 @@ export default function EducationSection({ pdsData, onSave, saving }: Props) {
                 </table>
             </div>
 
-            <div className="flex justify-end">
+             <div className="sticky bottom-0 bg-white pt-3 pb-1 -mx-1 px-1 flex justify-end">
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving

@@ -366,17 +366,8 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                         ))}
                     </div>
                 </div>
-
             </div>
-
-            {/* Summary error banner — shown after submit if there are unanswered questions */}
-            {submitted && Object.keys(errors).length > 0 && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    Please answer {' '} 
-                    {Object.keys(errors).length} required question{Object.keys(errors).length > 1 ? 's' : ''} before saving.
-                </div>
-            )}
-
+            
             <div className="flex justify-end">
                 <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving

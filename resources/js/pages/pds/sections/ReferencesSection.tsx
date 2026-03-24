@@ -194,7 +194,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                                     {refErr(i, 'address')}
                                 </div>
                                 <div id={`ref-${i}-telephone`}>
-                                    <label className={labelClass}>Contact No. / Email Address <span className="text-red-500">*</span></label>
+                                    <label className={labelClass}>Contact No. / Email <span className="text-red-500">*</span></label>
                                     <input type="text" value={ref.telephone ?? ''}
                                         onChange={e => setRef(i, 'telephone', e.target.value)}
                                         className={refIc(i, 'telephone')} />
@@ -209,7 +209,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             {/* ── Government ID ── */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
-                    Government Issued ID <span className="text-red-500">*</span>
+                    Government Issued ID
                 </h3>
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-xs text-gray-500 mb-3">
@@ -264,15 +264,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 </p>
             </div>
 
-            {/* ── Error summary banner ── */}
-            {submitted && totalErrors > 0 && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    Please fill in all required fields before saving.{' '}
-                    {totalErrors} field{totalErrors > 1 ? 's' : ''} still need{totalErrors === 1 ? 's' : ''} attention.
-                </div>
-            )}
-
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 pt-3 pb-1 -mx-1 px-1 flex justify-end">
+            <div className="sticky bottom-0 bg-white pt-3 pb-1 -mx-1 px-1 flex justify-end">
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving

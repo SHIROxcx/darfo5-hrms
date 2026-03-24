@@ -51,7 +51,7 @@ export default function OtherInfoSection({ pdsData, onSave, saving }: Props) {
         <form onSubmit={handleSubmit} className="space-y-6">
             <div>
                 <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">VIII. Other Information</h2>
-                <p className="text-xs text-gray-500">Type each item and press Enter or click + to add.</p>
+                <p className="text-xs text-gray-500">Type each item and press Enter or click + to add. <span className="font-medium text-green-700">Write N/A if not applicable.</span></p>
             </div>
             <div className="grid grid-cols-1 gap-6">
                 <TagInput label="Special Skills & Hobbies" items={form.special_skills ?? []}
@@ -64,8 +64,8 @@ export default function OtherInfoSection({ pdsData, onSave, saving }: Props) {
             <div className="flex justify-end">
                 <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving
-                        ? <><Spinner />Saving Other Information</>
-                        : <><Save className="w-4 h-4" />Save Other Information</>
+                        ? <><Spinner />Saving Information</>
+                        : <><Save className="w-4 h-4" />Save Information</>
                     }
                 </button>
             </div>
