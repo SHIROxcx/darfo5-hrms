@@ -2,6 +2,8 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     Camera, Pencil, Plus,
     GraduationCap, Award, MessagesSquare, BadgeCheck, X,
+    AwardIcon,
+    Dot,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -804,7 +806,7 @@ export default function ProfileShow() {
 
                                 <SectionBlock title="Bachelor's Degree">
                                     {user.degrees.length === 0
-                                        ? <p className="text-sm text-gray-400 italic">No college education records in PDS yet.</p>
+                                        ? <p className="text-sm text-gray-400 italic">No college education records found in PDS</p>
                                         : (
                                             <div className="space-y-3">
                                                 {user.degrees.map(d => (
@@ -820,7 +822,12 @@ export default function ProfileShow() {
                                                             )}
                                                             <p className="text-xs text-gray-400 mt-0.5">
                                                                 {educationPeriod(d.period_from, d.period_to) ?? '—'}
-                                                                {d.year_graduated && ` · Graduated ${d.year_graduated}`}
+                                                                {d.year_graduated && 
+                                                                    <>  
+                                                                        <Dot className='w-5 h-5 inline'/>
+                                                                        Graduated {d.year_graduated}
+                                                                    </>  
+                                                                }
                                                             </p>
                                                             {d.honors_received && (
                                                                 <p className="text-xs text-green-700 mt-0.5">{d.honors_received}</p>
@@ -882,19 +889,16 @@ export default function ProfileShow() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-semibold text-gray-900">{e.eligibility ?? '—'}</p>
-                                                        <div className="flex flex-wrap gap-x-3 mt-0.5">
-                                                            {e.rating && (
-                                                                <p className="text-xs text-gray-500">Rating: {e.rating}</p>
-                                                            )}
-                                                            {e.date_of_examination && (
-                                                                <p className="text-xs text-gray-400">
-                                                                    {new Date(e.date_of_examination).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                                                </p>
-                                                            )}
+                                                        {e.date_of_examination && (
+                                                            <p className="text-xs text-gray-400">
+                                                            {new Date(e.date_of_examination).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                                                        )}
                                                             {e.place_of_examination && (
-                                                                <p className="text-xs text-gray-400">{e.place_of_examination}</p>
-                                                            )}
-                                                        </div>
+                                                            <p className="text-xs text-gray-400">{e.place_of_examination}</p>
+                                                        )}
+                                                        {e.rating && (
+                                                            <p className="text-xs text-gray-500">Rating: {e.rating}</p>
+                                                        )}
                                                         {e.license_number && (
                                                             <p className="text-xs text-gray-500 mt-0.5">
                                                                 License No. {e.license_number}

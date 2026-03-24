@@ -11,8 +11,6 @@ interface Props {
     pdsData: PdsData;
     onSave: PdsSaveCallback;
     saving: boolean;
-    /** Admins/HR can edit their own agency employee no. in the PDS */
-    canEditEmployeeNo?: boolean;
 }
 
 interface PersonalForm extends PdsPersonalInfo {
@@ -39,6 +37,7 @@ const REQUIRED_FIELDS: Array<{ key: keyof PersonalForm; label: string }> = [
     { key: 'birth_place',       label: 'Place of Birth' },
     { key: 'sex',               label: 'Sex' },
     { key: 'civil_status',      label: 'Civil Status' },
+    { key: 'agency_employee_no',label: 'Agency Employee No.' },
     { key: 'citizenship',       label: 'Citizenship' },
     { key: 'res_house_no',      label: 'Residential House/Block/Lot No.' },
     { key: 'res_street',        label: 'Residential Street' },
@@ -68,7 +67,7 @@ function validate(form: PersonalForm): FormErrors {
     return errors;
 }
 
-export default function PersonalInfoSection({ user, pdsData, onSave, saving, canEditEmployeeNo = false }: Props) {
+export default function PersonalInfoSection({ user, pdsData, onSave, saving }: Props) {
     const profile = user.employee_profile;
 
     const res  = usePhLocations();
@@ -210,8 +209,6 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
             setForm(prev => ({ ...prev, perm_barangay_id: Number(match.value) }));
         }
     }, [perm.barangays]);
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     const RES_TO_PERM: Partial<Record<keyof PersonalForm, keyof PersonalForm>> = {
         res_house_no:    'perm_house_no',
@@ -407,14 +404,14 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div id="field-last_name">
-                        <label className={labelClass}>Surname *</label>
+                        <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
                         <input type="text" value={form.last_name}
                             onChange={e => set('last_name', e.target.value)}
                             className={ic('last_name')} />
                         {err('last_name')}
                     </div>
                     <div id="field-first_name">
-                        <label className={labelClass}>First Name *</label>
+                        <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
                         <input type="text" value={form.first_name}
                             onChange={e => set('first_name', e.target.value)}
                             className={ic('first_name')} />
@@ -448,21 +445,21 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Basic Information</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div id="field-date_of_birth">
-                        <label className={labelClass}>Date of Birth *</label>
+                        <label className={labelClass}>Date of Birth <span className="text-red-500">*</span></label>
                         <input type="date" value={form.date_of_birth as string}
                             onChange={e => set('date_of_birth', e.target.value)}
                             className={ic('date_of_birth')} />
                         {err('date_of_birth')}
                     </div>
                     <div id="field-birth_place">
-                        <label className={labelClass}>Place of Birth *</label>
+                        <label className={labelClass}>Place of Birth <span className="text-red-500">*</span></label>
                         <input type="text" value={form.birth_place ?? ''}
                             onChange={e => set('birth_place', e.target.value)}
                             className={ic('birth_place')} />
                         {err('birth_place')}
                     </div>
                     <div id="field-sex">
-                        <label className={labelClass}>Sex *</label>
+                        <label className={labelClass}>Sex <span className="text-red-500">*</span></label>
                         <select value={form.sex ?? ''} onChange={e => set('sex', e.target.value)}
                             className={ic('sex')}>
                             <option value="">Select</option>
@@ -472,7 +469,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         {err('sex')}
                     </div>
                     <div id="field-civil_status">
-                        <label className={labelClass}>Civil Status *</label>
+                        <label className={labelClass}>Civil Status <span className="text-red-500">*</span></label>
                         <select value={form.civil_status ?? ''} onChange={e => set('civil_status', e.target.value)}
                             className={ic('civil_status')}>
                             <option value="">Select</option>
@@ -506,7 +503,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                     </div>
                     <div>
                         <label className={labelClass}>
-                            Agency Employee No.
+                            Agency Employee No. <span className="text-red-500">*</span>
                         </label>
                             <input
                                 type="text"
@@ -514,6 +511,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                                 onChange={e => set('agency_employee_no', e.target.value)}
                                 className={inputClass}
                                 placeholder="e.g. EMP-001" />
+                        {err('agency_employee_no')}
                     </div>
                 </div>
             </div>
@@ -523,7 +521,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Citizenship</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div id="field-citizenship">
-                        <label className={labelClass}>Citizenship *</label>
+                        <label className={labelClass}>Citizenship <span className="text-red-500">*</span></label>
                         <div className="flex gap-4 mt-2">
                             {['Filipino', 'Dual Citizenship'].map(c => (
                                 <label key={c} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -569,7 +567,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Residential Address</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div id="field-res_province">
-                        <label className={labelClass}>Province *</label>
+                        <label className={labelClass}>Province <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={res.provinces}
                             value={form.res_province_id}
@@ -581,7 +579,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         {err('res_province')}
                     </div>
                     <div id="field-res_city">
-                        <label className={labelClass}>City/Municipality *</label>
+                        <label className={labelClass}>City/Municipality <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={res.cities}
                             value={form.res_city_id}
@@ -594,7 +592,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         {err('res_city')}
                     </div>
                     <div id="field-res_barangay">
-                        <label className={labelClass}>Barangay *</label>
+                        <label className={labelClass}>Barangay <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={res.barangays}
                             value={form.res_barangay_id}
@@ -611,14 +609,14 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         <div className={readonlyClass}>{form.res_zipcode || '—'}</div>
                     </div>
                     <div id="field-res_house_no">
-                        <label className={labelClass}>House/Block/Lot No. *</label>
+                        <label className={labelClass}>House/Block/Lot No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.res_house_no ?? ''}
                             onChange={e => set('res_house_no', e.target.value)}
                             className={ic('res_house_no')} />
                         {err('res_house_no')}
                     </div>
                     <div id="field-res_street">
-                        <label className={labelClass}>Street *</label>
+                        <label className={labelClass}>Street <span className="text-red-500">*</span></label>
                         <input type="text" value={form.res_street ?? ''}
                             onChange={e => set('res_street', e.target.value)}
                             className={ic('res_street')} />
@@ -646,7 +644,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div id="field-perm_province">
-                        <label className={labelClass}>Province *</label>
+                        <label className={labelClass}>Province <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={perm.provinces}
                             value={form.perm_province_id}
@@ -659,7 +657,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         {!sameAsResidential && err('perm_province')}
                     </div>
                     <div id="field-perm_city">
-                        <label className={labelClass}>City/Municipality *</label>
+                        <label className={labelClass}>City/Municipality <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={perm.cities}
                             value={form.perm_city_id}
@@ -672,7 +670,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         {!sameAsResidential && err('perm_city')}
                     </div>
                     <div id="field-perm_barangay">
-                        <label className={labelClass}>Barangay *</label>
+                        <label className={labelClass}>Barangay <span className="text-red-500">*</span></label>
                         <SearchableSelect
                             options={perm.barangays}
                             value={form.perm_barangay_id}
@@ -689,7 +687,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                         <div className={readonlyClass}>{form.perm_zipcode || '—'}</div>
                     </div>
                     <div id="field-perm_house_no">
-                        <label className={labelClass}>House/Block/Lot No. *</label>
+                        <label className={labelClass}>House/Block/Lot No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.perm_house_no ?? ''}
                             onChange={e => !sameAsResidential && set('perm_house_no', e.target.value)}
                             readOnly={sameAsResidential}
@@ -719,53 +717,53 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, can
                 <h3 className="text-sm font-medium text-green-800 pb-2 mb-3 border-b border-gray-100 uppercase">Contact & Government IDs</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                        <label className={labelClass}>Telephone No.</label>
+                        <label className={labelClass}>Telephone No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.telephone}
                             onChange={e => set('telephone', e.target.value)}
                             className={inputClass} />
                     </div>
                     <div id="field-mobile_number">
-                        <label className={labelClass}>Mobile No. *</label>
+                        <label className={labelClass}>Mobile No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.mobile_number ?? ''}
                             onChange={e => set('mobile_number', e.target.value)}
                             className={ic('mobile_number')} />
                         {err('mobile_number')}
                     </div>
                     <div>
-                        <label className={labelClass}>Email Address</label>
+                        <label className={labelClass}>Email Address <span className="text-red-500">*</span></label>
                         <div className={readonlyClass}>{form.email || '—'}</div>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                     <div>
-                        <label className={labelClass}>UMID ID No.</label>
+                        <label className={labelClass}>UMID ID No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.umid_number ?? ''}
                             onChange={e => set('umid_number', e.target.value)}
                             className={inputClass} />
                     </div>
                     <div id="field-pagibig_number">
-                        <label className={labelClass}>PAG-IBIG ID No. *</label>
+                        <label className={labelClass}>PAG-IBIG ID No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.pagibig_number ?? ''}
                             onChange={e => set('pagibig_number', e.target.value)}
                             className={ic('pagibig_number')} />
                         {err('pagibig_number')}
                     </div>
                     <div id="field-philhealth_number">
-                        <label className={labelClass}>PhilHealth No. *</label>
+                        <label className={labelClass}>PhilHealth No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.philhealth_number ?? ''}
                             onChange={e => set('philhealth_number', e.target.value)}
                             className={ic('philhealth_number')} />
                         {err('philhealth_number')}
                     </div>
                     <div id="field-philsys_number">
-                        <label className={labelClass}>PhilSys No. *</label>
+                        <label className={labelClass}>PhilSys No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.philsys_number ?? ''}
                             onChange={e => set('philsys_number', e.target.value)}
                             className={ic('philsys_number')} />
                         {err('philsys_number')}
                     </div>
                     <div id="field-tin_number">
-                        <label className={labelClass}>TIN No. *</label>
+                        <label className={labelClass}>TIN No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.tin_number ?? ''}
                             onChange={e => set('tin_number', e.target.value)}
                             className={ic('tin_number')} />

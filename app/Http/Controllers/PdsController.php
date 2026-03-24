@@ -29,6 +29,7 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $user,
             'pdsData' => $pdsData,
+            'eligibilities' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation'])
         ]);
     }
 

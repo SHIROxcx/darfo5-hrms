@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
+import type { EligibilityOption } from '@/pages/pds/sections/EligibilitySection';
 import {
     User as UserIcon, Users, BookOpen, Award, Briefcase,
     Heart, BookMarked, Info, HelpCircle, UserCheck,
@@ -27,6 +28,7 @@ import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
 interface Props {
     user: User;
     pdsData: PdsData;
+    eligibilities: EligibilityOption[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -65,7 +67,7 @@ function getSectionCompletion(sectionId: SectionId, pdsData: PdsData): boolean {
     }
 }
 
-export default function PdsIndex({ user, pdsData }: Props) {
+export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
     const [activeSection, setActiveSection] = useState<SectionId>('personal');
     const [saving, setSaving] = useState(false);
 
@@ -96,7 +98,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
             case 'personal':      return <PersonalInfoSection {...props} />;
             case 'family':        return <FamilyBackgroundSection {...props} />;
             case 'education':     return <EducationSection {...props} />;
-            case 'eligibility':   return <EligibilitySection {...props} />;
+            case 'eligibility':   return <EligibilitySection {...props} eligibilities={eligibilities} />;
             case 'work_experience': return <WorkExperienceSection {...props} />;
             case 'voluntary_work':  return <VoluntaryWorkSection {...props} />;
             case 'trainings':     return <TrainingSection {...props} />;
@@ -190,7 +192,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                         {/* Scrollable content */}
                         <main className="flex-1 overflow-y-auto">
-                            <div className="max-w-5xl mx-auto px-6 py-6">
+                            <div className="w-full lg:max-w-7xl mx-auto px-6 py-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
                                     {renderSection()}
                                 </div>
