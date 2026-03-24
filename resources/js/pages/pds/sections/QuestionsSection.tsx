@@ -181,17 +181,17 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <p className="text-xs text-gray-500 mb-2">a. within the third degree? *</p>
+                            <p className="text-xs text-gray-500 mb-2">a. within the third degree? <span className="text-red-500">*</span></p>
                             <RadioGroup qKey="q34_a" />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 mb-2">b. Within the fourth degree (for LGU - Career Employees)? *</p>
+                            <p className="text-xs text-gray-500 mb-2">b. Within the fourth degree (for LGU - Career Employees)? <span className="text-red-500">*</span></p>
                             <RadioGroup qKey="q34_b" />
                         </div>
                     </div>
                     {(form.q34_a === true || form.q34_b === true) && (
                         <div id="field-q34_details" className="mt-3">
-                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                             <input type="text" value={form.q34_details ?? ''}
                                 onChange={e => set('q34_details', e.target.value)}
                                 className={ic('q34_details')} />
@@ -206,12 +206,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     <div className="space-y-4">
                         <div>
                             <p className="text-xs text-gray-600 mb-2">
-                                a. Have you ever been found guilty of any administrative offense? *
+                                a. Have you ever been found guilty of any administrative offense? <span className="text-red-500">*</span>
                             </p>
                             <RadioGroup qKey="q35_a" />
                             {form.q35_a === true && (
                                 <div id="field-q35_a_details" className="mt-2">
-                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                                     <input type="text" value={form.q35_a_details ?? ''}
                                         onChange={e => set('q35_a_details', e.target.value)}
                                         className={ic('q35_a_details')} />
@@ -221,20 +221,20 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                         </div>
                         <div className="border-t border-gray-200 pt-3">
                             <p className="text-xs text-gray-600 mb-2">
-                                b. Have you been criminally charged before any court? *
+                                b. Have you been criminally charged before any court? <span className="text-red-500">*</span>
                             </p>
                             <RadioGroup qKey="q35_b" />
                             {form.q35_b === true && (
                                 <div className="grid grid-cols-2 gap-3 mt-2">
                                     <div id="field-q35_b_date">
-                                        <label className="block text-xs text-gray-500 mb-1">Date Filed: *</label>
+                                        <label className="block text-xs text-gray-500 mb-1">Date Filed: <span className="text-red-500">*</span></label>
                                         <input type="text" value={form.q35_b_date ?? ''}
                                             onChange={e => set('q35_b_date', e.target.value)}
                                             className={ic('q35_b_date')} />
                                         {err('q35_b_date')}
                                     </div>
                                     <div id="field-q35_b_status">
-                                        <label className="block text-xs text-gray-500 mb-1">Status of Case/s: *</label>
+                                        <label className="block text-xs text-gray-500 mb-1">Status of Case/s: <span className="text-red-500">*</span></label>
                                         <input type="text" value={form.q35_b_status ?? ''}
                                             onChange={e => set('q35_b_status', e.target.value)}
                                             className={ic('q35_b_status')} />
@@ -250,12 +250,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-sm font-medium text-gray-800 mb-3">
                         36. Have you ever been convicted of any crime or violation of any law, decree, ordinance
-                        or regulation by any court or tribunal? *
+                        or regulation by any court or tribunal? <span className="text-red-500">*</span>
                     </p>
                     <RadioGroup qKey="q36" />
                     {form.q36 === true && (
                         <div id="field-q36_details" className="mt-2">
-                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                             <input type="text" value={form.q36_details ?? ''}
                                 onChange={e => set('q36_details', e.target.value)}
                                 className={ic('q36_details')} />
@@ -269,12 +269,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     <p className="text-sm font-medium text-gray-800 mb-3">
                         37. Have you ever been separated from the service in any of the following modes: resignation, retirement,
                         dropped from the rolls, dismissal, termination, end of the term, finished contract or phased out (abolition)
-                        in the public or private sector? *
+                        in the public or private sector? <span className="text-red-500">*</span>
                     </p>
                     <RadioGroup qKey="q37" />
                     {form.q37 === true && (
                         <div id="field-q37_a_details" className="mt-2">
-                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                             <input type="text" value={form.q37_details ?? ''}
                                 onChange={e => set('q37_details', e.target.value)}
                                 className={ic('q37_details')} />
@@ -287,14 +287,14 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-xs text-gray-800 mb-3">
                         <span className='font-medium text-sm'>38.</span> a. have you ever been a candidate in a national or local election held within the last year 
-                        (except Barangay election)? *
+                        (except Barangay election)? <span className="text-red-500">*</span>
                     </p>
                     <div className='space-y-4'>
                         <div>
                             <RadioGroup qKey="q38_a" />
                             {form.q38_a === true && (
                                 <div id="field-q38_details" className="mt-2">
-                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                                     <input type="text" value={form.q38_a_details ?? ''}
                                         onChange={e => set('q38_a_details', e.target.value)}
                                         className={ic('q38_a_details')} />
@@ -305,12 +305,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                          <div className="border-t border-gray-200 pt-3">
                             <p className="text-xs text-gray-800 mb-2">
                                 b. Have you resigned from government service during the three (3)-month period
-                                before the last election to promote/actively campaign for a national or local candidate?*
+                                before the last election to promote/actively campaign for a national or local candidate? <span className="text-red-500">*</span>
                             </p>
                             <RadioGroup qKey="q38_b" />
                             {form.q38_b === true && (
                                 <div id="field-q38_b_details" className="mt-2">
-                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                                    <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                                     <input type="text" value={form.q38_b_details ?? ''}
                                         onChange={e => set('q38_b_details', e.target.value)}
                                         className={ic('q38_b_details')} />
@@ -324,12 +324,12 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 {/* ── Q39 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-sm font-medium text-gray-800 mb-3">
-                        39. Have you acquired the status of an immigrant or permanent resident of another country? *
+                        39. Have you acquired the status of an immigrant or permanent resident of another country? <span className="text-red-500">*</span>
                     </p>
                     <RadioGroup qKey="q39" />
                     {form.q39 === true && (
                         <div id="field-q39_details" className="mt-2">
-                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: *</label>
+                            <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                             <input type="text" value={form.q39_details ?? ''}
                                 onChange={e => set('q39_details', e.target.value)}
                                 className={ic('q39_details')} />
@@ -351,11 +351,11 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             { qKey: 'q40_c' as const, detailKey: 'q40_c_details' as const, label: 'c. Are you a solo parent?' },
                         ]).map(({ qKey, detailKey, label }, idx) => (
                             <div key={qKey} className={idx > 0 ? 'border-t border-gray-200 pt-3' : ''}>
-                                <p className="text-xs text-gray-600 mb-2">{label} *</p>
+                                <p className="text-xs text-gray-600 mb-2">{label} <span className="text-red-500">*</span></p>
                                 <RadioGroup qKey={qKey} />
                                 {form[qKey] === true && (
                                     <div id={`field-${detailKey}`} className="mt-2">
-                                        <label className="block text-xs text-gray-500 mb-1">If YES, please specify ID No: *</label>
+                                        <label className="block text-xs text-gray-500 mb-1">If YES, please specify ID No: <span className="text-red-500">*</span></label>
                                         <input type="text" value={form[detailKey] ?? ''}
                                             onChange={e => set(detailKey, e.target.value)}
                                             className={ic(detailKey)} />

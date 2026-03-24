@@ -96,13 +96,13 @@ export default function EducationSection({ pdsData, onSave, saving }: Props) {
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-200 uppercase">
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Level</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Name of School *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Degree/Course *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">From *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">To *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Highest Level/<br />Units Earned *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">Year Graduated *</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Scholarship/<br />Honors Received *</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Name of School <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Degree/Course <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">From <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">To <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Highest Level/<br />Units Earned <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">Year Graduated <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Scholarship/<br />Honors Received <span className="text-red-500">*</span></th>
                         </tr>
                     </thead>
                     <tbody>

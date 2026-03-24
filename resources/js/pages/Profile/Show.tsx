@@ -890,20 +890,29 @@ export default function ProfileShow() {
                                                     <div>
                                                         <p className="text-sm font-semibold text-gray-900">{e.eligibility ?? '—'}</p>
                                                         {e.date_of_examination && (
-                                                            <p className="text-xs text-gray-400">
+                                                            <p className="text-xs text-gray-500">
                                                             {new Date(e.date_of_examination).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                                                         )}
                                                             {e.place_of_examination && (
-                                                            <p className="text-xs text-gray-400">{e.place_of_examination}</p>
+                                                            <p className="text-xs text-gray-500">{e.place_of_examination}</p>
                                                         )}
                                                         {e.rating && (
                                                             <p className="text-xs text-gray-500">Rating: {e.rating}</p>
                                                         )}
                                                         {e.license_number && (
-                                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                                License No. {e.license_number}
-                                                                {e.license_validity && ` · Valid until ${e.license_validity}`}
-                                                            </p>
+                                                            <>
+                                                                <div className="text-xs text-gray-500 mt-0.5">
+                                                                    License No. {e.license_number}
+                                                                    {e.license_validity && 
+                                                                        <>
+                                                                            <p>Valid until {new Date(e.license_validity).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                                                                        </>
+                                                                    }
+                                                                </div>
+                                                                <p>
+
+                                                                </p>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>

@@ -4,7 +4,6 @@ import { Save, Plus, Trash2, ChevronDown, X } from 'lucide-react';
 import type { User, PdsData, PdsEligibility, PdsSaveCallback } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
 
-// Shape returned by Eligibility::get(['id', 'title', 'abbreviation'])
 export interface EligibilityOption {
     id: number;
     title: string;
@@ -163,7 +162,7 @@ function EligibilityCombobox({ value, onChange, error, options = [] }: ComboboxP
                     focus:outline-none focus:ring-1`}
             >
                 <span className={value ? 'text-gray-800 truncate' : 'text-gray-400'}>
-                    {value ? displayLabel : 'Select eligibility…'}
+                    {value ? displayLabel : 'Select eligibility'}
                 </span>
                 <span className="flex items-center gap-0.5 ml-1 shrink-0">
                     {value && (
@@ -183,6 +182,7 @@ function EligibilityCombobox({ value, onChange, error, options = [] }: ComboboxP
 }
 
 // Main Component
+
 export default function EligibilitySection({ pdsData, onSave, saving, eligibilities = [] }: Props) {
     const [rows, setRows] = useState<PdsEligibility[]>(
         pdsData.eligibilities?.length ? pdsData.eligibilities : [{ ...EMPTY }]
@@ -209,8 +209,6 @@ export default function EligibilitySection({ pdsData, onSave, saving, eligibilit
             if (!row.rating?.trim())               e.rating               = 'Rating is required.';
             if (!row.date_of_examination?.trim())  e.date_of_examination  = 'Date is required.';
             if (!row.place_of_examination?.trim()) e.place_of_examination = 'Place is required.';
-            if (!row.license_number?.trim())       e.license_number       = 'License No. is required.';
-            if (!row.license_validity?.trim())     e.license_validity     = 'Validity is required.';
             return e;
         });
         setErrors(newErrors);
@@ -266,7 +264,7 @@ export default function EligibilitySection({ pdsData, onSave, saving, eligibilit
                                 License No. <span className="text-red-500">*</span>
                             </th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">
-                                Validity <span className="text-red-500">*</span>
+                                Validity
                             </th>
                             <th className="w-8"></th>
                         </tr>
@@ -333,7 +331,7 @@ export default function EligibilitySection({ pdsData, onSave, saving, eligibilit
                                         {rowErr.license_validity && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.license_validity}</p>}
                                     </td>
                                     <td className="px-2 py-3">
-                                        {rows.length > 0 && (
+                                        {rows.length > 1 && (
                                             <button type="button" onClick={() => removeRow(i)}
                                                 className="text-red-400 hover:text-red-600 cursor-pointer">
                                                 <Trash2 className="w-3.5 h-3.5" />

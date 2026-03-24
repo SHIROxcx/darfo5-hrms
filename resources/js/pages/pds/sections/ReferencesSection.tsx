@@ -146,14 +146,14 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">References &amp; Government ID</h2>
                 <p className="text-xs text-gray-500">
                     References must not be related by consanguinity or affinity to the applicant/appointee.
-                    All fields marked * are required.
+                    All fields marked <span className="text-red-500">*</span> are required.
                 </p>
             </div>
 
             {/* ── References ── */}
             <div>
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-                    <h3 className="text-sm font-medium text-green-700 uppercase">References *</h3>
+                    <h3 className="text-sm font-medium text-green-700 uppercase">References</h3>
                     <button type="button" onClick={addRef}
                         className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium cursor-pointer">
                         <Plus className="w-3.5 h-3.5" /> Add Reference
@@ -180,21 +180,21 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div id={`ref-${i}-name`}>
-                                    <label className={labelClass}>Name *</label>
+                                    <label className={labelClass}>Name <span className="text-red-500">*</span></label>
                                     <input type="text" value={ref.name ?? ''}
                                         onChange={e => setRef(i, 'name', e.target.value)}
                                         className={refIc(i, 'name')} />
                                     {refErr(i, 'name')}
                                 </div>
                                 <div id={`ref-${i}-address`}>
-                                    <label className={labelClass}>Office/Residential Address *</label>
+                                    <label className={labelClass}>Office/Residential Address <span className="text-red-500">*</span></label>
                                     <input type="text" value={ref.address ?? ''}
                                         onChange={e => setRef(i, 'address', e.target.value)}
                                         className={refIc(i, 'address')} />
                                     {refErr(i, 'address')}
                                 </div>
                                 <div id={`ref-${i}-telephone`}>
-                                    <label className={labelClass}>Contact No. / Email Address *</label>
+                                    <label className={labelClass}>Contact No. / Email Address <span className="text-red-500">*</span></label>
                                     <input type="text" value={ref.telephone ?? ''}
                                         onChange={e => setRef(i, 'telephone', e.target.value)}
                                         className={refIc(i, 'telephone')} />
@@ -209,7 +209,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             {/* ── Government ID ── */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
-                    Government Issued ID *
+                    Government Issued ID <span className="text-red-500">*</span>
                 </h3>
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-xs text-gray-500 mb-3">
@@ -217,7 +217,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div id="field-id_type">
-                            <label className={labelClass}>Government Issued ID *</label>
+                            <label className={labelClass}>Government Issued ID <span className="text-red-500">*</span></label>
                             <select value={govId.id_type ?? ''}
                                 onChange={e => setGov('id_type', e.target.value)}
                                 className={govIc('id_type')}>
@@ -227,14 +227,14 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                             {govErr('id_type')}
                         </div>
                         <div id="field-id_number">
-                            <label className={labelClass}>ID / License / Passport No. *</label>
+                            <label className={labelClass}>ID / License / Passport No. <span className="text-red-500">*</span></label>
                             <input type="text" value={govId.id_number ?? ''}
                                 onChange={e => setGov('id_number', e.target.value)}
                                 className={govIc('id_number')} />
                             {govErr('id_number')}
                         </div>
                         <div id="field-date_of_issuance">
-                            <label className={labelClass}>Date of Issuance *</label>
+                            <label className={labelClass}>Date of Issuance <span className="text-red-500">*</span></label>
                             <input type="text" value={govId.date_of_issuance ?? ''}
                                 onChange={e => setGov('date_of_issuance', e.target.value)}
                                 placeholder="mm/dd/yyyy or Month DD, YYYY"
@@ -242,7 +242,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                             {govErr('date_of_issuance')}
                         </div>
                         <div id="field-place_of_issuance">
-                            <label className={labelClass}>Place of Issuance *</label>
+                            <label className={labelClass}>Place of Issuance <span className="text-red-500">*</span></label>
                             <input type="text" value={govId.place_of_issuance ?? ''}
                                 onChange={e => setGov('place_of_issuance', e.target.value)}
                                 className={govIc('place_of_issuance')} />
