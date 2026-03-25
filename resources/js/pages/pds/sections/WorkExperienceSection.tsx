@@ -185,6 +185,14 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {/* Department */}
+                            <div className="md:col-span-2">
+                                <label className={labelClass}>Department/Agency/Company</label>
+                                <input type="text" value={row.department ?? ''}
+                                    onChange={e => setRow(i, 'department', e.target.value)}
+                                    className={inputClass} />
+                            </div>
+                            
                             {/* Date From */}
                             <div>
                                 <label className={labelClass}>Date From</label>
@@ -218,14 +226,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                                     onChange={(title, sg) => setPosition(i, title, sg)}
                                     inputClass={inputClass}
                                 />
-                            </div>
-
-                            {/* Department */}
-                            <div className="md:col-span-2">
-                                <label className={labelClass}>Department/Agency/Company</label>
-                                <input type="text" value={row.department ?? ''}
-                                    onChange={e => setRow(i, 'department', e.target.value)}
-                                    className={inputClass} />
                             </div>
 
                             {/* Status of Appointment */}

@@ -53,7 +53,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
     const [govErrors,  setGovErrors]  = useState<GovIdErrors>({});
     const [refErrors,  setRefErrors]  = useState<RefErrors>([]);
 
-    // ── Styles ───────────────────────────────────────────────────────────────
+    // Styles
 
     const inputClass      = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white";
     const errorInputClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white";
@@ -70,7 +70,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             ? <p className="mt-1 text-xs text-red-500">{refErrors[i][key]}</p>
             : null;
 
-    // ── Setters ───────────────────────────────────────────────────────────────
+    // Setters
 
     const setGov = (key: keyof PdsGovernmentId, val: string) => {
         setGovId(prev => ({ ...prev, [key]: val }));
@@ -98,7 +98,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         setRefErrors(prev => prev.filter((_, idx) => idx !== i));
     };
 
-    // ── Submit ────────────────────────────────────────────────────────────────
+    // Submit
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -138,8 +138,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         onSave('government_id', govId as unknown as Record<string, unknown>);
     };
 
-    const totalErrors = Object.keys(govErrors).length + refErrors.reduce((a, r) => a + Object.keys(r).length, 0);
-
     return (
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div>
@@ -168,7 +166,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                                 : 'border-gray-200'
                         }`}>
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">
                                     Reference {i + 1}
                                 </span>
                                 {refs.length > 1 && (
@@ -268,7 +266,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving
-                        ? <><Spinner />Saving References &amp; ID...</>
+                        ? <><Spinner />Saving References &amp; ID</>
                         : <><Save className="w-4 h-4" />Save References &amp; ID</>
                     }
                 </button>
