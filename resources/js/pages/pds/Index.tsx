@@ -30,11 +30,6 @@ interface Props {
     eligibilities: EligibilityOption[];
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Personal Data Sheet', href: '/pds' },
-];
-
 const SECTIONS = [
     { id: 'personal',        label: 'I. Personal Information',       icon: UserIcon,        page: 1 },
     { id: 'family',          label: 'II. Family Background',         icon: Users,           page: 1 },
@@ -45,7 +40,7 @@ const SECTIONS = [
     { id: 'trainings',       label: 'VII. Trainings',                icon: BookMarked,      page: 3 },
     { id: 'other_info',      label: 'VIII. Other Information',       icon: Info,            page: 3 },
     { id: 'questions',       label: 'IX. Questions',                 icon: HelpCircle,      page: 4 },
-    { id: 'references',      label: "X. Government ID",              icon: IdCard,       page: 4 },
+    { id: 'references',      label: "X. References & ID",              icon: IdCard,       page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];

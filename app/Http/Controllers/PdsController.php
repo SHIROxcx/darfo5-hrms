@@ -29,7 +29,6 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $user,
             'pdsData' => $pdsData,
-            'eligibilities' => \App\Models\Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation'])
         ]);
     }
 
@@ -79,6 +78,8 @@ class PdsController extends Controller
                 return $this->saveReferences($request, $userId);
             case 'government_id':
                 return $this->saveGovernmentId($request, $userId);
+            case 'declaration':
+                return $this->saveDeclaration($request, $userId);
             default:
                 return response()->json(['message' => 'Invalid section'], 400);
         }
@@ -401,6 +402,38 @@ class PdsController extends Controller
         PdsGovernmentId::updateOrCreate(['user_id' => $userId], $data);
 
         return back()->with('success', 'Government ID saved.');
+    }
+
+    private function saveDeclaration(Request $request, int $userId)
+    {
+        $data = $request->validate([
+            'date_accomplished' => 'required|string',
+        ]);
+
+        $updates = ['date_accomplished' => $data['date_accomplished']];
+
+        // Passport photo
+        if ($request->hasFile('passport_photo')) {
+            $request->validate(['passport_photo' => 'image|max:4096']);
+            $path = $request->file('passport_photo')
+                ->store("pds/{$userId}", 'public');
+            $updates['passport_photo'] = $path;
+        }
+
+        // Signature
+        if ($request->hasFile('signature')) {
+            $request->validate(['signature' => 'image|max:2048']);
+            $path = $request->file('signature')
+                ->store("pds/{$userId}", 'public');
+            $updates['signature'] = $path;
+        }
+
+        \App\Models\PdsPersonalInfo::updateOrCreate(
+            ['user_id' => $userId],
+            $updates
+        );
+
+        return back()->with('success', 'Declaration saved.');
     }
 
     private function getPdsData(int $userId): array

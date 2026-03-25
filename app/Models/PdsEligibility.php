@@ -15,7 +15,7 @@ class PdsEligibility extends Model
         'license_number', 'license_validity', 'sort_order',
     ];
  
-     protected $casts = ['date_of_examination' => 'date:Y-m-d', 'license_validity' => 'date:Y-m-d'];
+    protected $casts = ['date_of_examination' => 'date:Y-m-d', 'license_validity' => 'date:Y-m-d'];
  
     public function user(): BelongsTo
     {

@@ -222,6 +222,9 @@ return new class extends Migration {
             $table->string('id_number')->nullable();
             $table->string('date_of_issuance')->nullable();
             $table->string('place_of_issuance')->nullable();
+            $table->string('passport_photo')->nullable();
+            $table->string('signature')->nullable();
+            $table->string('date_accomplished')->nullable();
             $table->timestamps();
         });
     }
