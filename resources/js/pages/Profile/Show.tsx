@@ -515,7 +515,7 @@ const navItems: { id: Section; label: string }[] = [
     { id: 'government',  label: 'Government IDs' },
 ];
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// Main Page
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Profile', href: '/profile' }];
 
@@ -560,7 +560,7 @@ export default function ProfileShow() {
         n.id !== 'government' || canEditCompany || isOwn
     );
 
-    // ── Tab Bar ──────────────────────────────────────────────────────────────
+    //  Tab Bar
 
     const TabBar = ({ sticky = false }: { sticky?: boolean }) => {
         const [moreOpen, setMoreOpen] = useState(false);
@@ -646,8 +646,6 @@ export default function ProfileShow() {
             </div>
         );
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -754,7 +752,7 @@ export default function ProfileShow() {
                             <div className="space-y-5">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Overview</h2>
-                                    {canEdit && <EditBtn onClick={() => setModal('personal')} />}
+                                    {isOwn && <EditBtn onClick={() => setModal('personal')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[
@@ -773,7 +771,7 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Company Information</h2>
-                                    {canEditCompany && <EditBtn onClick={() => setModal('company')} />}
+                                    {isOwn && <EditBtn onClick={() => setModal('company')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[
@@ -799,14 +797,12 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Education</h2>
-                                    {/* Editing happens in the PDS page */}
-                                    <span className="text-xs text-gray-400 italic">Edit via PDS page</span>
                                 </div>
                                 <Separator />
 
                                 <SectionBlock title="Bachelor's Degree">
                                     {user.degrees.length === 0
-                                        ? <p className="text-sm text-gray-400 italic">No college education records found in PDS</p>
+                                        ? <p className="text-sm text-gray-400 italic">No college education records found in PDS.</p>
                                         : (
                                             <div className="space-y-3">
                                                 {user.degrees.map(d => (
@@ -842,7 +838,7 @@ export default function ProfileShow() {
 
                                 <SectionBlock title="Graduate Studies">
                                     {user.graduate_studies.length === 0
-                                        ? <p className="text-sm text-gray-400 italic">No graduate studies records in PDS yet.</p>
+                                        ? <p className="text-sm text-gray-400 italic">No graduate studies records found in PDS.</p>
                                         : (
                                             <div className="space-y-3">
                                                 {user.graduate_studies.map(g => (
@@ -874,11 +870,10 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Eligibilities & Licenses</h2>
-                                    <span className="text-xs text-gray-400 italic">Edit via PDS page</span>
                                 </div>
                                 <Separator />
                                 {user.eligibilities.length === 0
-                                    ? <p className="text-sm text-gray-400 italic">No eligibility records in PDS yet.</p>
+                                    ? <p className="text-sm text-gray-400 italic">No eligibility records found in PDS.</p>
                                     : (
                                         <div className="space-y-3">
                                             {user.eligibilities.map(e => (
@@ -924,11 +919,10 @@ export default function ProfileShow() {
                         )}
 
                         {/* GOVERNMENT IDs — sourced from pds_personal_info */}
-                        {activeSection === 'government' && (canEditCompany || isOwn) && (
+                        {activeSection === 'government' && (
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Government Issued IDs</h2>
-                                    {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('government')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[

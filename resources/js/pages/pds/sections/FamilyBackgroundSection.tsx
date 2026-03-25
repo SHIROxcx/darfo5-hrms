@@ -333,7 +333,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                                         type="text"
                                         value={child.full_name}
                                         onChange={e => setChild(i, 'full_name', e.target.value)}
-                                        placeholder="Full name (Write N/A if none)"
+                                        placeholder="Full name"
                                         className={childIc(i, 'full_name')}
                                     />
                                     {childErr(i, 'full_name')}

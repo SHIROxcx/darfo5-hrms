@@ -26,7 +26,10 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
             <div className="flex items-start justify-between">
                 <div>
                     <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">VI. VOLUNTARY WORK</h2>
-                    <p className="text-xs text-gray-500">Involvement in Civic / Non-government / People / Voluntary Organizations.</p>
+                    <p className="text-xs text-gray-500">Involvement in Civic / Non-government / People / Voluntary Organizations.
+                        <span className="font-medium text-green-700"> Write N/A if not applicable.</span>
+                    </p>
+                    
                 </div>
                 <button type="button" onClick={() => setRows(p => [...p, { ...EMPTY_VW }])}
                     className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1 cursor-pointer">

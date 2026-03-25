@@ -37,7 +37,7 @@ const normalizeRow = (row: PdsEligibility): PdsEligibility => ({
     license_validity:    toDateOnly(row.license_validity),
 });
 
-// ── Searchable Combobox ──────────────────────────────────────────────────────
+// Searchable Combobox
 
 interface ComboboxProps {
     value: string;
@@ -164,7 +164,7 @@ function EligibilityCombobox({ value, onChange, error, options = [] }: ComboboxP
     );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// Main Component
 
 export default function EligibilitySection({ pdsData, onSave, saving, eligibilities = [] }: Props) {
     const [rows, setRows]     = useState<PdsEligibility[]>(
@@ -231,11 +231,11 @@ export default function EligibilitySection({ pdsData, onSave, saving, eligibilit
             <div className="overflow-x-auto rounded-xl border border-gray-200">
                 <table className="w-full text-xs">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 min-w-[200px]">Career Service / Eligibility <span className="text-red-500">*</span></th>
+                        <tr className="bg-gray-50 border-b border-gray-200 uppercase">
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-50">Career Service / Eligibility <span className="text-red-500">*</span></th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Rating <span className="text-red-500">*</span></th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Date of Exam <span className="text-red-500">*</span></th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 min-w-[140px]">Place of Examination <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-35">Place of Examination <span className="text-red-500">*</span></th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">License No.</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Validity</th>
                             <th className="w-8"></th>
