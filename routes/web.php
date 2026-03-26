@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile page
     Route::get('/profile',                       [UserProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/{id}',                  [UserProfileController::class, 'show'])->name('profile.show.user');
-    Route::post('/profile/photo',                [UserProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/photo',                [UserProfileController::class, 'uploadPhoto'])->name('profile.photo');
     Route::post('/profile/personal',             [UserProfileController::class, 'updatePersonal'])->name('profile.personal');
     Route::post('/profile/{id}/personal',        [UserProfileController::class, 'updatePersonalFor'])->name('profile.personal.for');
     Route::post('/profile/{id}/company',         [UserProfileController::class, 'updateCompany'])->name('profile.company');

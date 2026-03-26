@@ -428,7 +428,8 @@ class PdsController extends Controller
             $updates['signature'] = $path;
         }
 
-        \App\Models\PdsPersonalInfo::updateOrCreate(
+        // Save to pds_government_id (not pds_personal_info)
+        PdsGovernmentId::updateOrCreate(
             ['user_id' => $userId],
             $updates
         );

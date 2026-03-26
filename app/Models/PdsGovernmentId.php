@@ -15,5 +15,4 @@ class PdsGovernmentId extends Model {
         'signature',
         'date_accomplished'
     ];
-    protected $casts = ['date_of_issuance' => 'date:Y-m-d', 'date_accomplished' => 'date:Y-m-d'];
 }

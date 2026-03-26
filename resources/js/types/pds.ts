@@ -166,6 +166,9 @@ export interface PdsGovernmentId {
     id_number?: string;
     date_of_issuance?: string;
     place_of_issuance?: string;
+    passport_photo?: string | null;
+    signature?: string | null;
+    date_accomplished?: string | null;
 }
 
 export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => void;

@@ -7,6 +7,7 @@ use App\Models\EmployeeProfile;
 use App\Models\PdsPersonalInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class UserProfileController extends Controller
@@ -76,8 +77,8 @@ class UserProfileController extends Controller
     }
 
     /**
-     * Update company info (employee_profiles table).
-     * Also syncs employee_number → pds_personal_info.agency_employee_no.
+     * Update company info (employee_profiles table)
+     * Also syncs employee_number → pds_personal_info.agency_employee_no
      */
     public function updateCompany(Request $request, int $userId)
     {
@@ -110,7 +111,6 @@ class UserProfileController extends Controller
 
     /**
      * Update government IDs (pds_personal_info table).
-     * Accessible by the user themselves OR an admin.
      */
     public function updateGovernment(Request $request, int $userId)
     {
@@ -139,14 +139,22 @@ class UserProfileController extends Controller
     {
         $request->validate(['photo' => 'required|image|max:2048']);
 
+        $user = Auth::user();
+
+        // Delete the previous photo from storage
+        if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+            Storage::disk('public')->delete($user->photo);
+        }
+
+        // Store the new one
         $path = $request->file('photo')->store('photos', 'public');
 
-        User::where('id', Auth::id())->update(['photo' => $path]);
+        User::where('id', $user->id)->update(['photo' => $path]);
 
         return back()->with('success', 'Photo updated.');
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Helpers
 
     private function authorizeProfileEdit(int $targetId): void
     {

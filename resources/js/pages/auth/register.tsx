@@ -619,11 +619,11 @@ export default function Register() {
                 {step === 3 && (
                     <div>
                         <div className="px-6 sm:px-12 py-8">
-                            <h2 className="text-base font-bold text-gray-800 uppercase mb-2 text-center tracking-wide">
+                            <h2 className="text-2xl font-bold text-green-700 uppercase mb-2 text-center tracking-wide">
                                 Review Your Information
                             </h2>
                             <p className="text-sm text-gray-500 text-center mb-8">
-                                Please review your details carefully before submitting. Click <strong>Previous</strong> to make changes.
+                                Please review your details carefully before submitting. Click <span className='text-green-600 font-medium'>Previous</span> to make changes.
                             </p>
                             <div className="max-w-2xl mx-auto bg-gray-50 border border-gray-200 rounded-xl p-6">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mb-4">Personal Information</h3>

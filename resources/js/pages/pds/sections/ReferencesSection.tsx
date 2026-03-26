@@ -16,12 +16,20 @@ type RefErrors    = Partial<Record<keyof PdsReference, string>>[];
 type PhotoErrors  = { passport_photo?: string; signature?: string; date_accomplished?: string };
 
 interface DeclarationData {
-    passport_photo:   File | null;
-    signature:        File | null;
+    passport_photo:    File | null;
+    signature:         File | null;
     date_accomplished: string;
     // Preview URLs (not sent to server — only used for display)
-    passport_preview: string | null;
+    passport_preview:  string | null;
     signature_preview: string | null;
+}
+
+/** Convert a stored path like "pds/1/photo.jpg" to a full /storage/ URL. */
+function storageUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    // Already a full URL — return as-is
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    return `/storage/${path}`;
 }
 
 function validate(
@@ -48,8 +56,8 @@ function validate(
     });
 
     const photoErrors: PhotoErrors = {};
-    if (!decl.passport_photo && !decl.passport_preview)  photoErrors.passport_photo  = 'Passport-size photo is required.';
-    if (!decl.signature       && !decl.signature_preview) photoErrors.signature       = 'Signature is required.';
+    if (!decl.passport_photo && !decl.passport_preview)  photoErrors.passport_photo    = 'Passport-size photo is required.';
+    if (!decl.signature       && !decl.signature_preview) photoErrors.signature         = 'Signature is required.';
     if (!decl.date_accomplished?.trim())                  photoErrors.date_accomplished = 'Date accomplished is required.';
 
     return { govErrors, refErrors, photoErrors };
@@ -81,7 +89,6 @@ function ImageUploadBox({
         if (!file) return;
         const url = URL.createObjectURL(file);
         onFile(file, url);
-        // Reset input so same file can be re-selected
         e.target.value = '';
     };
 
@@ -99,8 +106,7 @@ function ImageUploadBox({
             }`}>
                 {preview ? (
                     <>
-                        <img src={preview} alt={label}
-                            className="w-full h-full object-contain" />
+                        <img src={preview} alt={label} className="w-full h-full object-contain" />
                         <button type="button" onClick={onClear}
                             className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                             <X className="w-3 h-3" />
@@ -151,12 +157,14 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         place_of_issuance: pdsData.government_id?.place_of_issuance ?? '',
     });
 
+    // Populate declaration from saved government_id record
     const [decl, setDecl] = useState<DeclarationData>({
         passport_photo:    null,
         signature:         null,
-        date_accomplished: '',
-        passport_preview:  null,
-        signature_preview: null,
+        date_accomplished: pdsData.government_id?.date_accomplished ?? '',
+        // Convert stored paths to /storage/ URLs for preview
+        passport_preview:  storageUrl(pdsData.government_id?.passport_photo),
+        signature_preview: storageUrl(pdsData.government_id?.signature),
     });
 
     const [submitted,   setSubmitted]   = useState(false);
@@ -175,7 +183,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
     const refIc  = (i: number, k: keyof PdsReference) => refErrors[i]?.[k] ? errorInputClass : inputClass;
     const refErr = (i: number, k: keyof PdsReference) => refErrors[i]?.[k] ? <p className="mt-1 text-xs text-red-500">{refErrors[i][k]}</p> : null;
 
-    // Setters
+    // ── Setters ───────────────────────────────────────────────────────────
 
     const setGov = (k: keyof PdsGovernmentId, v: string) => {
         setGovId(p => ({ ...p, [k]: v }));
@@ -207,7 +215,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         if (submitted) setPhotoErrors(p => ({ ...p, date_accomplished: undefined }));
     };
 
-    // Submit
+    // ── Submit ────────────────────────────────────────────────────────────
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -223,7 +231,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             setRefErrors(re);
             setPhotoErrors(pe);
 
-            // Scroll to first error
             const firstRefIdx = re.findIndex(r => Object.keys(r).length > 0);
             if (firstRefIdx >= 0) {
                 const fk = Object.keys(re[firstRefIdx])[0];
@@ -238,14 +245,14 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
 
         setGovErrors({}); setRefErrors([]); setPhotoErrors({});
 
-        // Save references and government ID
         onSave('references',    { references: refs } as unknown as Record<string, unknown>);
         onSave('government_id', govId as unknown as Record<string, unknown>);
 
-        // Save declaration data as FormData (files + date)
         const fd = new FormData();
-        if (decl.passport_photo)  fd.append('passport_photo', decl.passport_photo);
-        if (decl.signature)       fd.append('signature',       decl.signature);
+        // Only append files if the user picked a new one — skip blob-URL previews
+        // that came from /storage/ (those are already saved on the server).
+        if (decl.passport_photo) fd.append('passport_photo', decl.passport_photo);
+        if (decl.signature)      fd.append('signature',      decl.signature);
         fd.append('date_accomplished', decl.date_accomplished);
         onSave('declaration', Object.fromEntries(fd.entries()) as unknown as Record<string, unknown>);
     };
@@ -262,7 +269,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 </p>
             </div>
 
-            {/*  References */}
+            {/* References */}
             <div>
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-green-700 uppercase">References</h3>
@@ -341,14 +348,13 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 </div>
             </div>
 
+            {/* Photo + Signature + Date */}
             <div>
-                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
                     Photo and Signature
                 </h3>
-                 {/* Photo + Signature + Date in one row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-start">
 
-                    {/* Passport Photo */}
                     <div id="field-passport_photo">
                         <div className="flex items-center gap-1.5 mb-1">
                             <Camera className="w-3.5 h-3.5 text-green-600" />
@@ -359,7 +365,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                         <ImageUploadBox
                             id="upload-passport-photo"
                             label=""
-                            hint={"Passport-sized unfiltered digital picture taken with the last 6 months 4.5 cm x 3.5 cm"}
+                            hint="Passport-sized unfiltered digital picture taken within the last 6 months (4.5 cm × 3.5 cm)"
                             preview={decl.passport_preview}
                             error={photoErrors.passport_photo}
                             accept="image/jpeg,image/png,image/webp"
@@ -369,7 +375,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                         />
                     </div>
 
-                    {/* Signature */}
                     <div id="field-signature">
                         <div className="flex items-center gap-1.5 mb-1">
                             <PenLine className="w-3.5 h-3.5 text-green-600" />
@@ -380,7 +385,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                         <ImageUploadBox
                             id="upload-signature"
                             label=""
-                            hint={"Upload your wet or\ne-signature image\n(PNG with transparent\nbackground preferred)"}
+                            hint="Upload your wet or e-signature image (PNG with transparent background preferred)"
                             preview={decl.signature_preview}
                             error={photoErrors.signature}
                             accept="image/jpeg,image/png,image/webp"
@@ -390,7 +395,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                         />
                     </div>
 
-                    {/* Date Accomplished */}
                     <div id="field-date_accomplished">
                         <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -415,13 +419,11 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 </div>
             </div>
 
-            {/* Declaration Row */}
+            {/* Declaration */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
                     Declaration
                 </h3>
-
-                {/* Oath text */}
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-4">
                     <p className="text-xs text-amber-800 leading-relaxed">
                         <strong>I declare under oath</strong> that I have personally accomplished this Personal Data Sheet
