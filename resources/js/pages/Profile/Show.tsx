@@ -819,14 +819,14 @@ export default function ProfileShow() {
                         <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50" />
                     </div>
                     <div className="relative px-5 sm:px-8 pb-0">
-                        <div className="absolute -top-20 sm:-top-16 left-5 sm:left-8">
+                        <div className="absolute -top-14 sm:-top-22 left-5 sm:left-8">
                             <div className="relative">
                                 {/* Clickable avatar */}
                                 <button
                                     ref={avatarRef}
                                     onClick={() => isOwn ? setPhotoMenuOpen(o => !o) : avatar ? setViewingPhoto(true) : undefined}
                                     className={cn(
-                                        'group relative h-28 w-28 sm:h-32 sm:w-32 lg:h-40 lg:w-40 overflow-hidden rounded-full border-4 border-white shadow-md bg-white block',
+                                        'group relative h-28 w-28 sm:h-40 sm:w-40 lg:h-50 lg:w-50 overflow-hidden rounded-full border-4 border-white bg-white block',
                                         (isOwn || avatar) ? 'cursor-pointer' : 'cursor-default'
                                     )}
                                 >
@@ -848,9 +848,9 @@ export default function ProfileShow() {
                                     <>
                                         <div className="fixed inset-0 z-100" onClick={() => setPhotoMenuOpen(false)} />
                                         <div
-                                            className="fixed z-101 min-w-52 rounded-xl border border-gray-100 bg-white shadow-2xl p-1"
+                                            className="fixed z-101 min-w-52 rounded-xl border border-gray-100 bg-white shadow-xl p-1"
                                             style={(() => {
-                                                if (!avatarRef.current) return { top: 200, left: 20 };
+                                                if (!avatarRef.current) return { top: 200, left: 30 };
                                                 const r = avatarRef.current.getBoundingClientRect();
                                                 return {
                                                     top: r.bottom + 8,
@@ -882,7 +882,7 @@ export default function ProfileShow() {
                                 <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={onFileSelected} />
                             </div>
                         </div>
-                        <div className="pt-10 sm:pt-4 pb-4 sm:pl-36 lg:pl-44">
+                        <div className="pt-16 sm:pt-20 lg:pt-4 lg:pl-54">
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
@@ -890,7 +890,7 @@ export default function ProfileShow() {
                                 </div>
                                 <p className="text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
                             </div>
-                            <div className="flex items-center justify-end gap-2 shrink-0 mt-5">
+                            <div className="flex items-center justify-end gap-2 shrink-0 mt-2 mb-3">
                                 {isOwn ? (
                                     <button onClick={() => setModal('personal')}
                                         className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">

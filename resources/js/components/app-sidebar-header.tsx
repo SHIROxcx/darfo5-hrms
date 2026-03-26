@@ -83,21 +83,16 @@ export function AppSidebarHeader({
         };
     }, [userId, isAdmin]);
 
-    // ── Announcements channel (public — all users receive it) ─────────────────
-    // Subscribed here so the channel stays alive across Inertia navigations.
-    // Dispatches two window events:
-    //   'announcement:new'  → dashboards prepend the item to their list
-    //   'notif:new-announcement' → notification drawer adds a notification entry
     useEffect(() => {
         echo
             .channel('announcements')
             .listen('.AnnouncementPosted', function(data: { announcement: {
                 id: number; title: string; body: string; date: string; tag: string; tagColor: string;
             }}) {
-                // 1. Update dashboard announcement lists
+                // Update dashboard announcement lists
                 window.dispatchEvent(new CustomEvent('announcement:new', { detail: data.announcement }));
 
-                // 2. Push a notification into the drawer + bump the badge
+                // Push a notification into the drawer + bump the badge
                 setUnreadCount(function(prev) { return prev + 1; });
                 window.dispatchEvent(new CustomEvent('notif:new-announcement', { detail: data.announcement }));
             })
@@ -108,7 +103,7 @@ export function AppSidebarHeader({
         return function() {
             echo.leaveChannel('announcements');
         };
-    }, []); // intentionally no deps — channel is static and never needs to re-subscribe
+    }, []); 
 
     useEffect(() => {
         function onDecrement() {
@@ -126,7 +121,7 @@ export function AppSidebarHeader({
                 onUnreadChange={setUnreadCount}
             />
 
-            <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5 sm:rounded-t-xl">
+            <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border/50 bg-green-800 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 md:px-5 md:rounded-t-xl">
 
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer" />
