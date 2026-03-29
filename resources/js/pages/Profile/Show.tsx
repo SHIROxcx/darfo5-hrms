@@ -172,6 +172,8 @@ function PhotoViewerModal({ src, name, onClose }: { src: string; name: string; o
     );
 }
 
+// Photo Crop Modal
+
 function PhotoCropModal({ src, onSave, onClose, saving }: {
     src: string;
     onSave: (blob: Blob) => void;
@@ -268,19 +270,18 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
                 <div className="flex items-center justify-between border-b px-5 py-4">
                     <div>
                         <h3 className="font-semibold text-green-800">Crop Profile Photo</h3>
-                        <p className="text-xs text-gray-400 mt-0.5">2×2 inch square · Drag the box to reposition</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Drag the box to reposition</p>
                     </div>
                     <button onClick={onClose} className="cursor-pointer text-gray-400 hover:text-gray-600">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                {/* Canvas (hidden — used for output) */}
+                {/* Canvas */}
                 <canvas ref={canvasRef} className="hidden" />
 
                 {/* Crop area */}
                 <div ref={containerRef} className="relative bg-gray-900 overflow-hidden select-none" style={{ maxHeight: '420px' }}>
-                    {/* Darken overlay — we'll punch out the crop box using box-shadow */}
                     <img
                         ref={imgRef}
                         src={src}
@@ -291,7 +292,6 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
                     />
                     {nat.w > 0 && (
                         <>
-                            {/* Dark overlay using box-shadow inset trick — no canvas needed */}
                             <div
                                 onMouseDown={onMouseDown}
                                 className="absolute inset-0 cursor-move"
@@ -335,28 +335,28 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
 
                 {/* Controls */}
                 <div className="flex items-center justify-between px-5 py-4 border-t bg-gray-50">
-                    <div className="flex items-center gap-2">
-                        <button type="button" onClick={zoomIn}
-                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
-                            <ZoomIn className="w-3.5 h-3.5" /> Zoom In
+                    <div className="flex items-center gap-1">
+                        <button type="button" onClick={zoomIn} title='Zoom In'
+                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-3 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
+                            <ZoomIn className="w-5 h-5" />
                         </button>
-                        <button type="button" onClick={zoomOut}
-                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
-                            <ZoomOut className="w-3.5 h-3.5" /> Zoom Out
+                        <button type="button" onClick={zoomOut} title='Zoom Out'
+                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-3 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
+                            <ZoomOut className="w-5 h-5" />
                         </button>
-                        <button type="button" onClick={reset}
-                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
-                            <RotateCw className="w-3.5 h-3.5" /> Reset
+                        <button type="button" onClick={reset} title='Reset'
+                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-3 text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition">
+                            <RotateCw className="w-5 h-5" />
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button type="button" onClick={onClose}
-                            className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                        <button type="button" onClick={onClose} 
+                            className="cursor-pointer rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                             Cancel
                         </button>
                         <button type="button" onClick={handleSave} disabled={saving || nat.w === 0}
-                            className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
-                            {saving ? <><Spinner /> Saving…</> : <><Check className="w-4 h-4" /> Use Photo</>}
+                            className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
+                            {saving ? <><Spinner /> Saving Photo</> : <><Check className="w-4 h-4" /> Save Photo</>}
                         </button>
                     </div>
                 </div>
@@ -673,6 +673,7 @@ export default function ProfileShow() {
     const tabBarRef     = useRef<HTMLDivElement>(null);
     const [activeSection, setActiveSection] = useState<Section>('personal');
     const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
     // Photo crop state
     const [cropSrc,      setCropSrc]      = useState<string | null>(null);
@@ -688,6 +689,26 @@ export default function ProfileShow() {
         obs.observe(el);
         return () => obs.disconnect();
     }, []);
+
+    const updateMenuPos = () => {
+        if (!avatarRef.current) return;
+        const r = avatarRef.current.getBoundingClientRect();
+        setMenuPos({
+            top:  r.bottom + 8,
+            left: Math.max(8, r.left + r.width / 2 - 104),
+        });
+    };
+
+    useEffect(() => {
+        if (!photoMenuOpen) return;
+        const update = () => updateMenuPos();
+        window.addEventListener('scroll', update, true);
+        window.addEventListener('resize', update);
+        return () => {
+            window.removeEventListener('scroll', update, true);
+            window.removeEventListener('resize', update);
+        };
+    }, [photoMenuOpen]);
 
     // file selected → open crop modal
     function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -824,7 +845,10 @@ export default function ProfileShow() {
                                 {/* Clickable avatar */}
                                 <button
                                     ref={avatarRef}
-                                    onClick={() => isOwn ? setPhotoMenuOpen(o => !o) : avatar ? setViewingPhoto(true) : undefined}
+                                    onClick={() => {
+                                        if (isOwn) { updateMenuPos(); setPhotoMenuOpen(o => !o); }
+                                        else if (avatar) setViewingPhoto(true);
+                                    }}
                                     className={cn(
                                         'group relative h-28 w-28 sm:h-40 sm:w-40 lg:h-50 lg:w-50 overflow-hidden rounded-full border-4 border-white bg-white block',
                                         (isOwn || avatar) ? 'cursor-pointer' : 'cursor-default'
@@ -847,16 +871,8 @@ export default function ProfileShow() {
                                 {isOwn && photoMenuOpen && (
                                     <>
                                         <div className="fixed inset-0 z-100" onClick={() => setPhotoMenuOpen(false)} />
-                                        <div
-                                            className="fixed z-101 min-w-52 rounded-xl border border-gray-100 bg-white shadow-xl p-1"
-                                            style={(() => {
-                                                if (!avatarRef.current) return { top: 200, left: 30 };
-                                                const r = avatarRef.current.getBoundingClientRect();
-                                                return {
-                                                    top: r.bottom + 8,
-                                                    left: Math.max(8, r.left + r.width / 2 - 104),
-                                                };
-                                            })()}
+                                        <div className="fixed z-101 min-w-60 rounded-xl border border-gray-100 bg-white shadow-xl p-1"
+                                            style={menuPos}
                                         >
                                             {avatar && (
                                                 <button

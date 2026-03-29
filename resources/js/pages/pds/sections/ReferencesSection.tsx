@@ -183,7 +183,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
     const refIc  = (i: number, k: keyof PdsReference) => refErrors[i]?.[k] ? errorInputClass : inputClass;
     const refErr = (i: number, k: keyof PdsReference) => refErrors[i]?.[k] ? <p className="mt-1 text-xs text-red-500">{refErrors[i][k]}</p> : null;
 
-    // ── Setters ───────────────────────────────────────────────────────────
+    // Setters
 
     const setGov = (k: keyof PdsGovernmentId, v: string) => {
         setGovId(p => ({ ...p, [k]: v }));
@@ -215,7 +215,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         if (submitted) setPhotoErrors(p => ({ ...p, date_accomplished: undefined }));
     };
 
-    // ── Submit ────────────────────────────────────────────────────────────
+    // Submit
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

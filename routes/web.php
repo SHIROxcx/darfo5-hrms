@@ -87,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
 
     // Location Routes
-    Route::prefix('api/locations')->middleware(['auth'])->group(function () {
+    Route::prefix('api/locations')->group(function () {
     Route::get('/provinces',           [LocationController::class, 'provinces']);
     Route::get('/cities/{provinceId}', [LocationController::class, 'cities']);
     Route::get('/barangays/{cityId}',  [LocationController::class, 'barangays']);

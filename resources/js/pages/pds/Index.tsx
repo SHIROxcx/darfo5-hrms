@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
-import type { EligibilityOption } from '@/pages/pds/sections/EligibilitySection';
 import {
-    User as UserIcon, Users, GraduationCap, Award, Briefcase,
+    User as UserIcon, Users, BookOpen, Award, Briefcase,
     Heart, BookMarked, Info, HelpCircle, UserCheck,
     CheckCircle2, Circle, ChevronRight, FileText,
-    ChevronLeft, Dot, IdCard
+    ChevronLeft,
+    Dot
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -27,20 +27,20 @@ import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
 interface Props {
     user: User;
     pdsData: PdsData;
-    eligibilities: EligibilityOption[];
+    eligibilities: { id: number; title: string; abbreviation: string }[];
 }
 
 const SECTIONS = [
-    { id: 'personal',        label: 'I. Personal Information',       icon: UserIcon,        page: 1 },
-    { id: 'family',          label: 'II. Family Background',         icon: Users,           page: 1 },
-    { id: 'education',       label: 'III. Education',                icon: GraduationCap,   page: 1 },
-    { id: 'eligibility',     label: 'IV. Eligibility',               icon: Award,           page: 2 },
-    { id: 'work_experience', label: 'V. Work Experience',            icon: Briefcase,       page: 2 },
-    { id: 'voluntary_work',  label: 'VI. Voluntary Work',            icon: Heart,           page: 3 },
-    { id: 'trainings',       label: 'VII. Trainings',                icon: BookMarked,      page: 3 },
-    { id: 'other_info',      label: 'VIII. Other Information',       icon: Info,            page: 3 },
-    { id: 'questions',       label: 'IX. Questions',                 icon: HelpCircle,      page: 4 },
-    { id: 'references',      label: "X. References & ID",              icon: IdCard,       page: 4 },
+    { id: 'personal',      label: 'I. Personal Information',      icon: UserIcon,   page: 1 },
+    { id: 'family',        label: 'II. Family Background',         icon: Users,      page: 1 },
+    { id: 'education',     label: 'III. Educational Background',   icon: BookOpen,   page: 1 },
+    { id: 'eligibility',   label: 'IV. Civil Service Eligibility', icon: Award,      page: 2 },
+    { id: 'work_experience', label: 'V. Work Experience',          icon: Briefcase,  page: 2 },
+    { id: 'voluntary_work',  label: 'VI. Voluntary Work',          icon: Heart,      page: 3 },
+    { id: 'trainings',     label: 'VII. Learning & Development',   icon: BookMarked, page: 3 },
+    { id: 'other_info',    label: 'VIII. Other Information',       icon: Info,       page: 3 },
+    { id: 'questions',     label: 'IX. Questions',                 icon: HelpCircle, page: 4 },
+    { id: 'references',    label: "X. References & Gov't ID",      icon: UserCheck,  page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -70,6 +70,49 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
 
     const handleSave: PdsSaveCallback = (section, data) => {
         setSaving(true);
+
+        const hasFiles = data && Object.values(data).some(v => v instanceof File);
+
+        if (hasFiles) {
+            const fd = new FormData();
+            // Inertia CSRF token
+            const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+            Object.entries(data).forEach(([k, v]) => {
+                if (v instanceof File) fd.append(k, v);
+                else if (v !== null && v !== undefined) fd.append(k, String(v));
+            });
+            // Inertia expects _method for method spoofing; POST is fine here
+            fetch(`/pds/save/${section}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Inertia': 'true',
+                    'X-Inertia-Version': (window as any).__inertia_version ?? '',
+                    'Accept': 'text/html, application/xhtml+xml',
+                },
+                body: fd,
+            })
+                .then(res => {
+                    if (res.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Saved!',
+                            text: 'Your information has been saved successfully.',
+                            confirmButtonColor: '#16a34a',
+                            timer: 1500,
+                            timerProgressBar: true,
+                        });
+                        // Reload the page data via Inertia to reflect saved state
+                        router.reload({ only: ['pdsData'] });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save. Please try again.', confirmButtonColor: '#dc2626' });
+                    }
+                })
+                .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Network error. Please try again.', confirmButtonColor: '#dc2626' }))
+                .finally(() => setSaving(false));
+            return;
+        }
+
         router.post(`/pds/save/${section}`, data as any, {
             preserveScroll: true,
             onSuccess: () => {
@@ -144,7 +187,7 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
                 <div className="flex flex-1 overflow-hidden">
 
                     {/* Sidebar */}
-                    <aside className="w-65 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
+                    <aside className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
                         <nav className="p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
                                 const Icon = section.icon;
@@ -186,7 +229,7 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
 
                         {/* Scrollable content */}
                         <main className="flex-1 overflow-y-auto">
-                            <div className="w-full lg:max-w-7xl mx-auto px-6 py-6">
+                            <div className="max-w-full lg:max-w-8xl mx-auto px-6 py-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
                                     {renderSection()}
                                 </div>

@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PdsPersonalInfo;
-use App\Models\PdsFamilyBackground;
+use App\Models\Eligibility;
 use App\Models\PdsChild;
 use App\Models\PdsEducation;
 use App\Models\PdsEligibility;
-use App\Models\PdsWorkExperience;
-use App\Models\PdsVoluntaryWork;
-use App\Models\PdsTraining;
+use App\Models\PdsFamilyBackground;
+use App\Models\PdsGovernmentId;
 use App\Models\PdsOtherInfo;
+use App\Models\PdsPersonalInfo;
 use App\Models\PdsQuestion;
 use App\Models\PdsReference;
-use App\Models\PdsGovernmentId;
+use App\Models\PdsTraining;
+use App\Models\PdsVoluntaryWork;
+use App\Models\PdsWorkExperience;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $user,
             'pdsData' => $pdsData,
+            'eligibilities' => Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
@@ -48,6 +50,7 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $targetUser,
             'pdsData' => $pdsData,
+            'eligibilities' => Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
