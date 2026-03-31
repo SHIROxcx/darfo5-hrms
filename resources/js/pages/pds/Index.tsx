@@ -149,11 +149,11 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
                 <div className="shrink-0 bg-white border-b border-gray-200 p-2 lg:p-4">
                     <div className="lg:flex items-center justify-between">
                         <div className="flex items-center gap-2 lg:gap-3">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-green-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center shrink-0">
                                 <FileText className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-md lg:text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
+                                <h1 className="text-md lg:text-lg font-semibold text-green-800"><span className='hidden md:inline-flex'>CS Form No. 212 —</span> Personal Data Sheet</h1>
                                 <p className="text-sm text-gray-500">
                                     {user.last_name}, {user.first_name} {user.middle_name}
                                     <Dot className="inline text-gray-700" />
