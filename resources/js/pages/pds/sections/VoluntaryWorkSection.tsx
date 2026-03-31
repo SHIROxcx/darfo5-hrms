@@ -39,7 +39,7 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
             <div className="overflow-x-auto rounded-xl border border-gray-200">
                 <table className="w-full text-xs">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
+                        <tr className="bg-gray-50 border-b border-gray-200 uppercase">
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600">Name and Address of Organization</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Date From</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Date To</th>

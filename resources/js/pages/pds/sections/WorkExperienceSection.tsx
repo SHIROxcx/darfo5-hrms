@@ -173,13 +173,13 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                     <div key={i} className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
                         {/* Row header */}
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">
                                 Entry {i + 1}
                             </span>
                             {rows.length > 1 && (
-                                <button type="button" onClick={() => removeRow(i)}
+                                <button type="button" title='Remove' onClick={() => removeRow(i)}
                                     className="text-red-400 hover:text-red-600 flex items-center gap-1 text-xs cursor-pointer">
-                                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                                    <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             )}
                         </div>

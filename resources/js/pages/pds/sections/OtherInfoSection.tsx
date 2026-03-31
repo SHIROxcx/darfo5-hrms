@@ -58,7 +58,7 @@ export default function OtherInfoSection({ pdsData, onSave, saving }: Props) {
                     onChange={v => setForm(p => ({ ...p, special_skills: v }))} />
                 <TagInput label="Non-Academic Distinctions / Recognition" items={form.non_academic_distinctions ?? []}
                     onChange={v => setForm(p => ({ ...p, non_academic_distinctions: v }))} />
-                <TagInput label="Membership in Association/Organization" items={form.organization_memberships ?? []}
+                <TagInput label="Membership in Association / Organization" items={form.organization_memberships ?? []}
                     onChange={v => setForm(p => ({ ...p, organization_memberships: v }))} />
             </div>
             <div className="flex justify-end">

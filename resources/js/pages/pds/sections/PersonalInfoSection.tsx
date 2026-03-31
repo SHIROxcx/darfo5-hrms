@@ -459,7 +459,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         {err('birth_place')}
                     </div>
                     <div id="field-sex">
-                        <label className={labelClass}>Sex <span className="text-red-500">*</span></label>
+                        <label className={labelClass}>Sex at Birth <span className="text-red-500">*</span></label>
                         <select value={form.sex ?? ''} onChange={e => set('sex', e.target.value)}
                             className={ic('sex')}>
                             <option value="">Select</option>
@@ -516,7 +516,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 </div>
             </div>
 
-            {/* ── Citizenship ── */}
+            {/* Citizenship */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Citizenship</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
