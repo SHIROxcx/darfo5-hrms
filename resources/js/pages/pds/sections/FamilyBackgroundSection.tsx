@@ -175,12 +175,12 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 
             </div>
 
-            {/* ── Spouse ── */}
+            {/* Spouse */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 mb-3 pb-2 border-b border-gray-100 uppercase">
                     Spouse's Information
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="field-spouse_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
                         <input type="text" value={form.spouse_surname}
@@ -239,12 +239,12 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 </div>
             </div>
 
-            {/* ── Father ── */}
+            {/* Father */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 mb-3 pb-2 border-b border-gray-100 uppercase">
                     Father's Name
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="field-father_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
                         <input type="text" value={form.father_surname}
@@ -280,7 +280,7 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
                 <h3 className="text-sm font-medium text-green-700 mb-3 pb-2 border-b border-gray-100 uppercase">
                     Mother's Maiden Name
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div id="field-mother_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
                         <input type="text" value={form.mother_surname}

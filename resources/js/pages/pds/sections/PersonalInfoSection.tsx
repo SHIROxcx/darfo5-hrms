@@ -402,7 +402,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             {/* ── Name ── */}
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
                 <p className="text-xs font-medium text-green-700 uppercase tracking-wide mb-3">Name</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div id="field-last_name">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
                         <input type="text" value={form.last_name}
@@ -443,7 +443,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             {/* ── Basic Info ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Basic Information</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="field-date_of_birth">
                         <label className={labelClass}>Date of Birth <span className="text-red-500">*</span></label>
                         <input type="date" value={form.date_of_birth as string}
@@ -519,7 +519,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             {/* Citizenship */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Citizenship</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div id="field-citizenship">
                         <label className={labelClass}>Citizenship <span className="text-red-500">*</span></label>
                         <div className="flex gap-4 mt-2">
@@ -565,7 +565,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             {/* ── Residential Address ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 mb-3 pb-2 border-b border-gray-100 uppercase">Residential Address</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div id="field-res_province">
                         <label className={labelClass}>Province <span className="text-red-500">*</span></label>
                         <SearchableSelect
@@ -633,16 +633,16 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
 
             {/* ── Permanent Address ── */}
             <div className={sectionClass}>
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                <div className="block lg:flex items-center lg:justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-green-800 uppercase">Permanent Address</h3>
-                    <label className="flex items-center gap-2 text-xs text-green-700 cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-xs text-green-700 cursor-pointer select-none mt-2 lg:mt-0">
                         <input type="checkbox" checked={sameAsResidential}
                             onChange={e => handleSameAsResidential(e.target.checked)}
                             className="w-3.5 h-3.5 accent-green-600 cursor-pointer" />
                         Same as Residential Address
                     </label>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div id="field-perm_province">
                         <label className={labelClass}>Province <span className="text-red-500">*</span></label>
                         <SearchableSelect
@@ -715,7 +715,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             {/* ── Contact & Government IDs ── */}
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 pb-2 mb-3 border-b border-gray-100 uppercase">Contact & Government IDs</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                         <label className={labelClass}>Telephone No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.telephone}
@@ -734,7 +734,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                         <div className={readonlyClass}>{form.email || '—'}</div>
                     </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                     <div>
                         <label className={labelClass}>UMID ID No. <span className="text-red-500">*</span></label>
                         <input type="text" value={form.umid_number ?? ''}

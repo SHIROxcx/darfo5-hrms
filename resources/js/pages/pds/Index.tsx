@@ -163,8 +163,8 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
                         </div>
                         <div className="flex items-center gap-3 p-2 lg:px-4 mt-3 lg:mt-0">
                             <p className="uppercase text-xs text-green-700 font-semibold">PDS Completion</p>
-                            <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                                <div className="h-full rounded-full bg-green-500 transition-all duration-700" style={{ width: `${progressPct}%` }} />
+                            <div className="flex-1 w-40 h-2 rounded-full bg-gray-100 overflow-hidden">
+                                <div className="h-full w-full rounded-full bg-green-500 transition-all duration-700" style={{ width: `${progressPct}%` }} />
                             </div>
                             <span className="text-xs font-semibold text-green-700 shrink-0">{progressPct}%</span>
                         </div>
@@ -237,7 +237,7 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
 
                         {/* Scrollable content */}
                         <main className="flex-1 overflow-y-auto">
-                            <div className="max-w-full lg:max-w-7xl mx-auto px-6 py-6">
+                            <div className="max-w-full lg:max-w-7xl mx-auto p-4 lg:p-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
                                     {renderSection()}
                                 </div>

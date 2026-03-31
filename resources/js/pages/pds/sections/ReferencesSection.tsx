@@ -496,14 +496,13 @@ function PassportPhotoUploadBox({
                         Change
                     </button>
                 )}
-                <p className="mt-1 text-[10px] text-gray-400 text-center">3.5 cm × 4.5 cm</p>
                 {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
             </div>
         </>
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// Main
 
 export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
     const [refs, setRefs] = useState<PdsReference[]>(
