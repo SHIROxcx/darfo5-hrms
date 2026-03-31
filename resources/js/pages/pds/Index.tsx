@@ -229,7 +229,7 @@ export default function PdsIndex({ user, pdsData, eligibilities }: Props) {
 
                         {/* Scrollable content */}
                         <main className="flex-1 overflow-y-auto">
-                            <div className="max-w-full lg:max-w-8xl mx-auto px-6 py-6">
+                            <div className="max-w-full lg:max-w-7xl mx-auto px-6 py-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
                                     {renderSection()}
                                 </div>

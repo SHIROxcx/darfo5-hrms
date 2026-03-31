@@ -356,7 +356,7 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
                         </button>
                         <button type="button" onClick={handleSave} disabled={saving || nat.w === 0}
                             className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
-                            {saving ? <><Spinner /> Saving Photo</> : <><Check className="w-4 h-4" /> Save Photo</>}
+                            {saving ? <><Spinner /> Saving Photo</> : <><Check className="w-4 h-4" /> Use Photo</>}
                         </button>
                     </div>
                 </div>
