@@ -18,6 +18,15 @@ import type { PendingUser } from '@/types/notification';
 import echo from '@/echo';
 import { useEffect } from 'react';
 
+type Announcement = {
+    id: number;
+    title: string;
+    body: string;
+    date: string;
+    tag: string;
+    tagColor: string;
+};
+
 interface AuthUser {
     id: number;
     name: string;
@@ -98,8 +107,11 @@ export function AppSidebarHeader({
             })
             .listen('.AnnouncementDeleted', function(data: { id: number }) {
                 window.dispatchEvent(new CustomEvent('announcement:deleted', { detail: { id: data.id } }));
+            })
+            .listen('.announcement.updated', (e: { payload: Announcement }) => {
+                window.dispatchEvent(new CustomEvent('announcement:updated', { detail: e.payload }));
             });
-
+            
         return function() {
             echo.leaveChannel('announcements');
         };

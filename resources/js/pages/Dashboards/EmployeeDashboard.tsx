@@ -163,7 +163,7 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-lg min-h-60 rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
 
                 <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 gap-4">
                     <div className="flex items-start gap-3">
@@ -207,13 +207,6 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div className="flex justify-end border-t px-6 py-4">
-                    <button onClick={onClose}
-                        className="cursor-pointer rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">
-                        Close
-                    </button>
                 </div>
             </div>
         </div>
@@ -283,12 +276,31 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
             const { id } = (e as CustomEvent<{ id: number }>).detail;
             setAnnouncements(prev => prev.filter(a => a.id !== id));
         }
+        function onUpdated(e: Event) {
+            const updated = (e as CustomEvent<Announcement>).detail;
+            setAnnouncements(prev =>
+                prev.map(a => a.id === updated.id ? updated : a)
+            );
+        }
+
         window.addEventListener('announcement:new', onNew);
         window.addEventListener('announcement:deleted', onDeleted);
+        window.addEventListener('announcement:updated', onUpdated);
+
         return () => {
             window.removeEventListener('announcement:new', onNew);
             window.removeEventListener('announcement:deleted', onDeleted);
+            window.removeEventListener('announcement:updated', onUpdated);
         };
+    }, []);
+
+    useEffect(() => {
+        if (window.location.hash === '#announcements-panel') {
+            setTimeout(() => {
+                const el = document.getElementById('announcements-panel');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300); 
+        }
     }, []);
 
     return (

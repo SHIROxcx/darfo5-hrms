@@ -236,18 +236,27 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
 
     const [title,        setTitle]        = useState(editing?.title  ?? '');
     const [body,         setBody]         = useState(editing?.body   ?? '');
-    const [date,         setDate]         = useState(
+    // Announcement date
+    const [date, setDate] = useState(
         editing?.date
-            ? (() => { const d = new Date(editing.date); return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10); })()
+            ? (() => {
+                const d = new Date(editing.date);
+                const offset = d.getTimezoneOffset() * 60000;
+                return new Date(d.getTime() - offset).toISOString().slice(0, 10);
+            })()
             : ''
     );
     const [tag,          setTag]          = useState(editing?.tag ?? 'General');
     const [files,        setFiles]        = useState<File[]>([]);
     const [removedPaths, setRemovedPaths] = useState<string[]>([]);
     const [autoDelete,   setAutoDelete]   = useState(editing?.auto_delete ?? false);
-    const [deleteAfter,  setDeleteAfter]  = useState(
+    const [deleteAfter, setDeleteAfter] = useState(
         editing?.delete_after
-            ? (() => { const d = new Date(editing.delete_after!); return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10); })()
+            ? (() => {
+                const d = new Date(editing.delete_after!);
+                const offset = d.getTimezoneOffset() * 60000;
+                return new Date(d.getTime() - offset).toISOString().slice(0, 10);
+            })()
             : ''
     );
     const [saving,  setSaving]  = useState(false);
@@ -276,8 +285,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
         if (Object.keys(e).length) { setErrors(e); return; }
         setSaving(true);
 
-        // Build FormData — pass directly to router.post (no "as any", no forceFormData)
-        // Inertia detects FormData natively and sends it as multipart/form-data
         const formData = new FormData();
         formData.append('title', title);
         formData.append('body',  body);
@@ -289,34 +296,17 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
         if (isEdit && removedPaths.length) formData.append('removed_attachments', JSON.stringify(removedPaths));
         if (isEdit) formData.append('_method', 'PUT');
 
-        // Debug: log what we're sending
-        console.log('[Announcement] Submitting', { isEdit, fileCount: files.length, url: isEdit ? `/announcements/${editing!.id}` : '/announcements' });
-        files.forEach((f, i) => console.log(`[Announcement] File ${i}:`, f.name, f.size, f.type));
-
         const url = isEdit ? `/announcements/${editing!.id}` : '/announcements';
 
         router.post(url, formData, {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
-                console.log('[Announcement] Success');
-                onSaved({
-                    id:          isEdit ? editing!.id : 0,
-                    title, body, tag,
-                    date:        new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                    tagColor:    TAG_COLOR_MAP[tag] ?? 'bg-gray-50 text-gray-600',
-                    attachments: existingAttachments,
-                    auto_delete: autoDelete,
-                    delete_after: autoDelete && deleteAfter
-                        ? new Date(deleteAfter).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-                        : null,
-                });
                 setSaving(false);
                 onClose();
-                // Reload to populate server-assigned URLs for newly uploaded files
                 router.reload({ only: ['announcements'] });
             },
             onError: (errs) => {
-                console.error('[Announcement] Validation errors:', errs);
                 setErrors(errs as Record<string, string>);
                 setSaving(false);
             },
@@ -406,12 +396,18 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                             className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-xs text-gray-500 hover:border-green-400 hover:text-green-600 transition w-full justify-center">
                             <Plus className="h-3.5 w-3.5" /> Add file
                         </button>
-                        <input ref={fileInputRef} type="file" multiple className="hidden"
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip"
                             onChange={e => {
-                                if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                const picked = e.target.files ? Array.from(e.target.files) : [];
                                 e.target.value = '';
-                            }} />
+                                if (picked.length) setFiles(prev => [...prev, ...picked]);
+                            }}
+                        />
                     </div>
 
                     {/* Auto-delete */}
@@ -515,12 +511,31 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
             const { id } = (e as CustomEvent<{ id: number }>).detail;
             setAnnouncements(prev => prev.filter(a => a.id !== id));
         }
+        function onUpdated(e: Event) {
+            const updated = (e as CustomEvent<Announcement>).detail;
+            setAnnouncements(prev =>
+                prev.map(a => a.id === updated.id ? updated : a)
+            );
+        }
+
         window.addEventListener('announcement:new', onNew);
         window.addEventListener('announcement:deleted', onDeleted);
+        window.addEventListener('announcement:updated', onUpdated);
+
         return () => {
             window.removeEventListener('announcement:new', onNew);
             window.removeEventListener('announcement:deleted', onDeleted);
+            window.removeEventListener('announcement:updated', onUpdated);
         };
+    }, []);
+
+    useEffect(() => {
+        if (window.location.hash === '#announcements-panel') {
+            setTimeout(() => {
+                const el = document.getElementById('announcements-panel');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
     }, []);
 
     return (

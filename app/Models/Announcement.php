@@ -19,7 +19,9 @@ class Announcement extends Model
         ];
 
     protected $casts = [
-        'date' => 'date',
+        'attachments'  => 'array', 
+        'auto_delete'  => 'boolean',
+        'delete_after' => 'date',
     ];
 
     public function creator(): BelongsTo

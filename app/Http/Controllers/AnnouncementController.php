@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\AnnouncementDeleted;
 use App\Events\AnnouncementPosted;
+use App\Events\AnnouncementUpdated;
 use App\Models\Announcement;
 use App\Models\User;
 use App\Notifications\AnnouncementNotification;
@@ -144,6 +145,9 @@ class AnnouncementController extends Controller
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
 
+        $payload = self::formatPayload($announcement); 
+        broadcast(new AnnouncementUpdated($payload));  
+
         return back()->with('success', 'Announcement updated.');
     }
 
@@ -159,6 +163,12 @@ class AnnouncementController extends Controller
         }
 
         $id = $announcement->id;
+
+         // Delete all notifications referencing this announcement
+        \DB::table('notifications')
+            ->whereJsonContains('data->announcement_id', $id)
+            ->delete();
+
         $announcement->delete();
 
         broadcast(new AnnouncementDeleted($id));

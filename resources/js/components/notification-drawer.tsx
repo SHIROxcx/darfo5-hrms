@@ -190,17 +190,19 @@ function NotifRow({ notif, onClick }: { notif: AppNotification; onClick: (n: App
 
 // Announcement notification row
 
-function AnnouncementNotifRow({ notif, onClick }: { notif: AppNotification; onClick: (n: AppNotification) => void }) {
+function AnnouncementNotifRow({ notif, onClick, onClose  }: { 
+        notif: AppNotification; 
+        onClick: (n: AppNotification) => void 
+        onClose: () => void; 
+    }) {
     const isUnread = notif.read_at === null;
     const d = notif.data as AnnouncementNotifData;
 
     function handleClick() {
-        // Mark read then scroll to announcements panel
         onClick(notif);
-        setTimeout(() => {
-            const el = document.getElementById('announcements-panel');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 150);
+        onClose();
+        const d = notif.data as AnnouncementNotifData;
+        router.visit('/dashboard#announcements-panel');
     }
 
     return (
@@ -323,13 +325,24 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
             Toast.fire({ icon: 'info', title: '📢 ' + data.title });
         }
 
+        function onAnnouncementDeleted(e: Event) {
+            const { id } = (e as CustomEvent<{ id: number }>).detail;
+            setNotifications(prev => prev.filter(n => {
+                const d = n.data as Partial<AnnouncementNotifData>;
+                return !(d.type === 'announcement' && d.announcement_id === id);
+            }));
+        }
+
         window.addEventListener('notif:new-pending',      onNewPending);
         window.addEventListener('notif:new-notification', onNewNotification);
         window.addEventListener('notif:new-announcement', onNewAnnouncement);
+        window.addEventListener('announcement:deleted', onAnnouncementDeleted);
+        
         return () => {
             window.removeEventListener('notif:new-pending',      onNewPending);
             window.removeEventListener('notif:new-notification', onNewNotification);
             window.removeEventListener('notif:new-announcement', onNewAnnouncement);
+            window.removeEventListener('announcement:deleted',   onAnnouncementDeleted);
         };
     }, []);
 
@@ -429,7 +442,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
 
     function renderNotif(notif: AppNotification) {
         if (isAnnouncementNotif(notif)) {
-            return <AnnouncementNotifRow key={notif.id} notif={notif} onClick={handleNotifClick} />;
+            return <AnnouncementNotifRow key={notif.id} notif={notif} onClick={handleNotifClick} onClose={onClose} />;
         }
         return <NotifRow key={notif.id} notif={notif} onClick={handleNotifClick} />;
     }
