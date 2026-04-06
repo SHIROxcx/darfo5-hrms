@@ -7,6 +7,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PdsController;
+use App\Http\Controllers\PdsPdfController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
 use App\Models\Division;
@@ -82,9 +83,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/announcements/{announcement}',  [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 
     // PDS Routes
+    Route::get('/pds/preview/{userId?}',  [PdsPdfController::class, 'preview'])->name('pds.preview');
+    Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');
     Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
     Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
+    
+
+    // PDF Download
+    Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');
 
     // Location Routes
     Route::prefix('api/locations')->group(function () {
