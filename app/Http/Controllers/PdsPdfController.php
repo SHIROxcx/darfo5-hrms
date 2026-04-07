@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PdsPersonalInfo;
-use App\Models\PdsFamilyBackground;
+use App\Models\EmployeeProfile;
 use App\Models\PdsChild;
 use App\Models\PdsEducation;
 use App\Models\PdsEligibility;
-use App\Models\PdsWorkExperience;
-use App\Models\PdsVoluntaryWork;
-use App\Models\PdsTraining;
+use App\Models\PdsFamilyBackground;
+use App\Models\PdsGovernmentId;
 use App\Models\PdsOtherInfo;
+use App\Models\PdsPersonalInfo;
 use App\Models\PdsQuestion;
 use App\Models\PdsReference;
-use App\Models\PdsGovernmentId;
+use App\Models\PdsTraining;
+use App\Models\PdsVoluntaryWork;
+use App\Models\PdsWorkExperience;
 use App\Models\User;
-use App\Models\EmployeeProfile;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Browsershot\Browsershot;
 
 class PdsPdfController extends Controller
 {
@@ -29,28 +29,35 @@ class PdsPdfController extends Controller
     {
         [$user, $ep, $pds] = $this->resolveData($userId);
 
+        $html     = $this->buildHtml($user, $ep, $pds);
+        $pdfBytes = $this->buildBrowsershot($html)->pdf();
+
         $filename = 'PDS_'
             . str_replace(' ', '_', strtoupper($user->last_name ?? 'EMPLOYEE'))
             . '_' . now()->format('Ymd') . '.pdf';
 
-        return $this->buildPdf($user, $ep, $pds)->download($filename);
+        return response($pdfBytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     /**
-     * Stream the PDS PDF inline (browser preview).
+     * Stream the PDS PDF inline for browser preview.
      */
     public function preview(Request $request, ?int $userId = null)
     {
         [$user, $ep, $pds] = $this->resolveData($userId);
 
-        return $this->buildPdf($user, $ep, $pds)->stream('pds-preview.pdf');
+        $html     = $this->buildHtml($user, $ep, $pds);
+        $pdfBytes = $this->buildBrowsershot($html)->pdf();
+
+        return response($pdfBytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="pds-preview.pdf"',
+        ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Authorize the request and return [user, employeeProfile, pdsData].
-     */
     private function resolveData(?int $userId): array
     {
         $authUser = Auth::user();
@@ -82,23 +89,31 @@ class PdsPdfController extends Controller
         return [$user, $ep, $pds];
     }
 
-    /**
-     * Compile the Blade view into a DomPDF instance sized for a legal (8.5 × 13 in) page.
-     *
-     * Points per inch = 72, so:
-     *   8.5 in × 72 = 612 pt
-     *   13 in  × 72 = 936 pt
-     */
-    private function buildPdf(User $user, ?EmployeeProfile $ep, array $pds): \Barryvdh\DomPDF\PDF
+    private function buildHtml(User $user, ?EmployeeProfile $ep, array $pds): string
     {
-        return Pdf::loadView('pds.pdf', compact('user', 'ep', 'pds'))
-            ->setPaper([0, 0, 612, 936], 'portrait')
-            ->setOptions([
-                'isRemoteEnabled'      => true,
-                'isHtml5ParserEnabled' => true,
-                'defaultFont'          => 'Arial',
-                'dpi'                  => 96,
-                'chroot'               => storage_path('app/public'),
-            ]);
+        return view('pds.pdf', compact('user', 'ep', 'pds'))->render();
+    }
+
+    /**
+     * 8.5 × 13 in Legal-size PDF via headless Chromium.
+     *
+     * Adjust setNodeBinary / setNpmBinary to match `which node` / `which npm`.
+     * On Linux servers add ->noSandbox() if Chromium won't launch.
+     * On Windows use full paths: C:\Program Files\nodejs\node.exe
+     */
+    private function buildBrowsershot(string $html): Browsershot
+    {
+        return Browsershot::html($html)
+            ->paperSize(8.5, 13, 'in')
+            ->margins(11, 11, 8, 11, 'mm')
+            ->showBackground()
+            ->waitUntilNetworkIdle()
+            ->deviceScaleFactor(2)
+            ->timeout(60);
+            // Uncomment and set paths if needed:
+            // ->setNodeBinary('/usr/bin/node')
+            // ->setNpmBinary('/usr/bin/npm')
+            // ->setChromePath('/usr/bin/chromium-browser')
+            // ->noSandbox()
     }
 }

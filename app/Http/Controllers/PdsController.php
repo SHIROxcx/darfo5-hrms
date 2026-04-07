@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Eligibility;
+use App\Models\PdsPersonalInfo;
+use App\Models\PdsFamilyBackground;
 use App\Models\PdsChild;
 use App\Models\PdsEducation;
 use App\Models\PdsEligibility;
-use App\Models\PdsFamilyBackground;
-use App\Models\PdsGovernmentId;
+use App\Models\PdsWorkExperience;
+use App\Models\PdsVoluntaryWork;
+use App\Models\PdsTraining;
 use App\Models\PdsOtherInfo;
-use App\Models\PdsPersonalInfo;
 use App\Models\PdsQuestion;
 use App\Models\PdsReference;
-use App\Models\PdsTraining;
-use App\Models\PdsVoluntaryWork;
-use App\Models\PdsWorkExperience;
+use App\Models\PdsGovernmentId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class PdsController extends Controller
@@ -30,7 +30,6 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $user,
             'pdsData' => $pdsData,
-            'eligibilities' => Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
@@ -50,7 +49,6 @@ class PdsController extends Controller
         return Inertia::render('pds/Index', [
             'user' => $targetUser,
             'pdsData' => $pdsData,
-            'eligibilities' => Eligibility::orderBy('title')->get(['id', 'title', 'abbreviation']),
         ]);
     }
 
@@ -342,29 +340,29 @@ class PdsController extends Controller
     private function saveQuestions(Request $request, int $userId)
     {
         $data = $request->validate([
-            'q34_a'         => 'nullable|boolean',
-            'q34_b'         => 'nullable|boolean',
-            'q34_details'   => 'nullable|string',
-            'q35_a'         => 'nullable|boolean',
+            'q34_a' => 'nullable|boolean',
+            'q34_b' => 'nullable|boolean',
+            'q34_details' => 'nullable|string',
+            'q35_a' => 'nullable|boolean',
             'q35_a_details' => 'nullable|string',
-            'q35_b'         => 'nullable|boolean',
-            'q35_b_date'    => 'nullable|string',
-            'q35_b_status'  => 'nullable|string',
-            'q36'           => 'nullable|boolean',
-            'q36_details'   => 'nullable|string',
-            'q37'           => 'nullable|boolean',
-            'q37_details'   => 'nullable|string',
-            'q38_a'         => 'nullable|boolean',
-            'q38_a_details' => 'nullable|string',
-            'q38_b'         => 'nullable|boolean',
-            'q38_b_details' => 'nullable|string',
-            'q39'           => 'nullable|boolean',
-            'q39_details'   => 'nullable|string',
-            'q40_a'         => 'nullable|boolean',
+            'q35_b' => 'nullable|boolean',
+            'q35_b_date' => 'nullable|string',
+            'q35_b_status' => 'nullable|string',
+            'q36' => 'nullable|boolean',
+            'q36_details' => 'nullable|string',
+            'q37_a' => 'nullable|boolean',
+            'q37_a_details' => 'nullable|string',
+            'q37_b' => 'nullable|boolean',
+            'q37_b_details' => 'nullable|string',
+            'q38' => 'nullable|boolean',
+            'q38_details' => 'nullable|string',
+            'q39' => 'nullable|boolean',
+            'q39_details' => 'nullable|string',
+            'q40_a' => 'nullable|boolean',
             'q40_a_details' => 'nullable|string',
-            'q40_b'         => 'nullable|boolean',
+            'q40_b' => 'nullable|boolean',
             'q40_b_details' => 'nullable|string',
-            'q40_c'         => 'nullable|boolean',
+            'q40_c' => 'nullable|boolean',
             'q40_c_details' => 'nullable|string',
         ]);
 
@@ -411,27 +409,34 @@ class PdsController extends Controller
     {
         $data = $request->validate([
             'date_accomplished' => 'required|string',
+            'passport_photo'    => 'nullable|image|max:4096',
+            'signature'         => 'nullable|image|max:2048',
         ]);
 
         $updates = ['date_accomplished' => $data['date_accomplished']];
 
-        // Passport photo
+        // Store passport photo
         if ($request->hasFile('passport_photo')) {
-            $request->validate(['passport_photo' => 'image|max:4096']);
-            $path = $request->file('passport_photo')
+            // Delete old file if exists
+            $existing = PdsGovernmentId::where('user_id', $userId)->value('passport_photo');
+            if ($existing) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing);
+            }
+            $updates['passport_photo'] = $request->file('passport_photo')
                 ->store("pds/{$userId}", 'public');
-            $updates['passport_photo'] = $path;
         }
 
-        // Signature
+        // Store signature
         if ($request->hasFile('signature')) {
-            $request->validate(['signature' => 'image|max:2048']);
-            $path = $request->file('signature')
+            $existing = PdsGovernmentId::where('user_id', $userId)->value('signature');
+            if ($existing) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing);
+            }
+            $updates['signature'] = $request->file('signature')
                 ->store("pds/{$userId}", 'public');
-            $updates['signature'] = $path;
         }
 
-        // Save to pds_government_id (not pds_personal_info)
+        // Save to pds_government_id (where the columns are per migration)
         PdsGovernmentId::updateOrCreate(
             ['user_id' => $userId],
             $updates

@@ -93,7 +93,7 @@ function PdfPreviewModal({ userId, onClose }: { userId: number; onClose: () => v
             >
                 <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-green-400" />
-                    <span className="text-white font-semibold text-sm">CS Form 212 — Personal Data Sheet Preview</span>
+                    <span className="text-white font-semibold text-sm">CS Form 212 — Personal Data Sheet</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <a
