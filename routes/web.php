@@ -82,6 +82,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/announcements/{announcement}',     [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{announcement}',  [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 
+    if (app()->environment('local')) {
+        Route::get('/pds/html-preview/{userId?}', function (?int $userId = null) {
+    
+            $authUser = Auth::user();
+            $targetId = $userId ?? $authUser->id;
+    
+            $user = \App\Models\User::findOrFail($targetId);
+            $ep   = \App\Models\EmployeeProfile::where('user_id', $targetId)->first();
+    
+            $pds = [
+                'personal'        => \App\Models\PdsPersonalInfo::where('user_id', $targetId)->first(),
+                'family'          => \App\Models\PdsFamilyBackground::where('user_id', $targetId)->first(),
+                'children'        => \App\Models\PdsChild::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'education'       => \App\Models\PdsEducation::where('user_id', $targetId)->get(),
+                'eligibilities'   => \App\Models\PdsEligibility::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'work_experience' => \App\Models\PdsWorkExperience::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'voluntary_work'  => \App\Models\PdsVoluntaryWork::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'trainings'       => \App\Models\PdsTraining::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'other_info'      => \App\Models\PdsOtherInfo::where('user_id', $targetId)->first(),
+                'questions'       => \App\Models\PdsQuestion::where('user_id', $targetId)->first(),
+                'references'      => \App\Models\PdsReference::where('user_id', $targetId)->orderBy('sort_order')->get(),
+                'government_id'   => \App\Models\PdsGovernmentId::where('user_id', $targetId)->first(),
+            ];
+    
+            // Render the exact same Blade view the PDF uses — but returned as HTML
+            // so the browser displays it directly. Reload the tab to see any change.
+            return view('pds.pdf', compact('user', 'ep', 'pds'));
+    
+        })->middleware(['auth'])->name('pds.html-preview');
+    }
+
     // PDS Routes
     Route::get('/pds/preview/{userId?}',  [PdsPdfController::class, 'preview'])->name('pds.preview');
     Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');

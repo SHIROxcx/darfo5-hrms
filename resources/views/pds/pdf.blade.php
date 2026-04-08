@@ -9,7 +9,9 @@
     tailwind.config = {
         theme: {
             extend: {
-                fontFamily: { sans: ['Arial', 'Helvetica', 'sans-serif'] },
+                fontFamily: {
+                    'narrow': ['"Arial Narrow"', 'Arial', 'sans-serif'],
+                },
             }
         }
     }
@@ -17,6 +19,13 @@
 <style>
     /* Base resets for pixel-perfect PDF layout */
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @font-face {
+        font-family: 'Arial Narrow';
+        src: local('Arial Narrow'), local('Arial-Narrow');
+        font-stretch: condensed;
+    }
+
     body { font-family: Arial, Helvetica, sans-serif; font-size: 7pt; color: #000; background: #fff; }
 
     /* Page dimensions: 8.5in × 13in with padding */
@@ -63,7 +72,7 @@
     $govId    = $pds['government_id'] ?? null;
 
     $dob = $pi?->date_of_birth
-        ? \Carbon\Carbon::parse($pi->date_of_birth)->format('m/d/Y') : '';
+        ? \Carbon\Carbon::parse($pi->date_of_birth)->format('d/m/Y') : '';
 
     $isFil   = !$pi || $pi->citizenship === 'Filipino' || !$pi->citizenship;
     $isDual  = $pi?->citizenship === 'Dual Citizenship';
@@ -88,9 +97,9 @@
     function yN($v) { return cb($v) . ' YES &nbsp; ' . cb(!$v) . ' NO'; }
 
     // Tailwind utilities
-    $lbl  = 'bg-gray-100 text-[6.5pt] uppercase align-middle';         // label cell
+    $lbl  = 'bg-gray-100 text-[7pt] uppercase align-middle';         // label cell
     $val  = 'align-middle text-[7.5pt]';                               // value cell
-    $sectionHeader  = 'bg-neutral-400 text-white font-bold italic text-[8.5pt] uppercase px-1.5 py-0.5 border-2 border-black';
+    $sectionHeader  = 'bg-neutral-400 text-white font-narrow font-black italic text-[10.5pt] uppercase tracking-wide border-2 border-black';
     $note = 'bg-gray-300 text-center italic text-[7pt] text-red-700 font-bold border-2 border-black'; // continue note
     $sig  = 'border-2 border-black align-middle text-center text-[6.5pt] italic';
 @endphp
@@ -101,14 +110,15 @@
 <div class="page">
 
     {{-- Header --}}
-    <table class="border-2 border-b-0 border-black">
+    <table class="border-2 border-b-0 border-black font-">
+        
         <tr>
-            <td class=" p-0 text-[6.5pt]">
-                <p class="italic font-semibold">CS Form No. 212<span class="block font-normal">Revised 2025 <span/></p>
-                <p class="text-center text-[17pt] font-black tracking-wide mb-1">PERSONAL DATA SHEET</p>
-                <p class="text-[6.5pt]">WARNING: Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
-                <p class="text-[6.5pt] font-bold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
-                <p class="text-[6.5pt] font-normal">Print legibly if accomplished through own handwriting. Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="font-medium">DO NOT ABBREVIATE.</span></p>
+            <td class="relative p-0.5 text-[6.5pt]">
+                <p class="absolute italic font-semibold text-[9pt]">CS Form No. 212<span class="block font-normal text-[8pt]">Revised 2025 <span/></p>
+                <p class="text-center text-[22pt] font-black tracking-wide my-3">PERSONAL DATA SHEET</p>
+                <p class="text-[7.5pt] italic font-semibold"><span class="uppercase">WARNING:</span> Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
+                <p class="text-[7.5pt] font-semibold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
+                <p class="text-[7.5pt] font-light tracking-tight">Print legibly if accomplished through own handwriting. Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="font-semibold text-[8pt]">DO NOT ABBREVIATE.</span></p>
             </td>
         </tr>
        
@@ -123,22 +133,24 @@
     </colgroup>
 
     {{-- Section I Header --}}
-    <tr><td colspan="14" class="{{ $sectionHeader }}">I. PERSONAL INFORMATION</td></tr>
+    <tr><td colspan="18" class="{{ $sectionHeader }}">I. PERSONAL INFORMATION</td></tr>
 
     {{-- Name rows --}}
     <tr style="height:22pt;">
-        <td colspan="2" class="{{ $lbl }} px-1"><strong>1.</strong> SURNAME</td>
-        <td colspan="12" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->last_name ?? '') }}</td>
+        <td colspan="3" class="{{ $lbl }} px-1"><strong>1.</strong> SURNAME</td>
+        <td colspan="15" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->last_name ?? '') }}</td>
     </tr>
     <tr style="height:22pt;">
-        <td colspan="2" class="{{ $lbl }} pl-3 px-1">FIRST NAME</td>
+        <td colspan="3" class="{{ $lbl }} pl-3 px-1">FIRST NAME</td>
         <td colspan="8" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->first_name ?? '') }}</td>
-        <td colspan="2" class="{{ $lbl }} text-center text-[5.5pt]">NAME<br>EXTENSION<br>(JR., SR)</td>
-        <td colspan="2" class="font-bold align-middle px-1">{{ strtoupper($user->name_ext ?? '') }}</td>
+        <td colspan="7" class="font-bold align-middle px-1">
+            <span>NAME EXTENSION (JR., SR)</span>
+            <span>{{ strtoupper($user->name_ext ?? '') }}</span>
+        </td>
     </tr>
     <tr style="height:21pt;border-bottom:2px solid #000;">
-        <td colspan="2" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
-        <td colspan="12" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->middle_name ?? '') }}</td>
+        <td colspan="3" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
+        <td colspan="15" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->middle_name ?? '') }}</td>
     </tr>
 
     {{-- DOB + Citizenship --}}
