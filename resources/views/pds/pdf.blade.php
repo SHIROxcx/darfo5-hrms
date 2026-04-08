@@ -110,7 +110,7 @@
 <div class="page">
 
     {{-- Header --}}
-    <table class="border-2 border-b-0 border-black font-">
+    <table class="border-2 border-b-0 border-black">
         
         <tr>
             <td class="relative p-0.5 text-[6.5pt]">
@@ -137,15 +137,15 @@
 
     {{-- Name rows --}}
     <tr style="height:22pt;">
-        <td colspan="3" class="{{ $lbl }} px-1"><strong>1.</strong> SURNAME</td>
+        <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">1. SURNAME</td>
         <td colspan="15" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->last_name ?? '') }}</td>
     </tr>
     <tr style="height:22pt;">
-        <td colspan="3" class="{{ $lbl }} pl-3 px-1">FIRST NAME</td>
+        <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">2. FIRST NAME</td>
         <td colspan="8" class="font-bold text-[9pt] align-middle px-1">{{ strtoupper($user->first_name ?? '') }}</td>
-        <td colspan="7" class="font-bold align-middle px-1">
+        <td colspan="7" class="align-start px-1">
             <span>NAME EXTENSION (JR., SR)</span>
-            <span>{{ strtoupper($user->name_ext ?? '') }}</span>
+            <span class="font-bold text-[9pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
         </td>
     </tr>
     <tr style="height:21pt;border-bottom:2px solid #000;">
@@ -154,9 +154,9 @@
     </tr>
 
     {{-- DOB + Citizenship --}}
-    <tr style="height:24pt;">
-        <td colspan="2" class="{{ $lbl }} px-1"><strong>3.</strong> DATE OF BIRTH<br><span class="italic">(dd/mm/yyyy)</span></td>
-        <td colspan="4" class="{{ $val }} px-1">{{ $dob }}</td>
+    <tr style="height:32pt;">
+        <td colspan="3" class="{{ $lbl }} px-1"><strong>3.</strong> DATE OF BIRTH<br><span class="italic lowercase pl-3">(dd/mm/yyyy)</span></td>
+        <td colspan="3.5" class="{{ $val }} px-1">{{ $dob }}</td>
         <td colspan="3" rowspan="3" class="{{ $lbl }} text-center align-middle text-[6pt]">
             16. CITIZENSHIP<br><br><span class="italic normal-case">If holder of dual citizenship,<br>please indicate the details.</span>
         </td>
@@ -167,20 +167,21 @@
         </td>
     </tr>
     <tr style="height:24pt;">
-        <td colspan="2" class="{{ $lbl }} px-1"><strong>4.</strong> PLACE OF BIRTH</td>
-        <td colspan="4" class="{{ $val }} px-1">{{ $pi?->birth_place ?? '' }}</td>
+        <td colspan="3" class="{{ $lbl }} px-1"><strong>4.</strong> PLACE OF BIRTH</td>
+        <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->birth_place ?? '' }}</td>
     </tr>
-    <tr style="height:15pt;">
-        <td colspan="2" class="{{ $lbl }} px-1"><strong>5.</strong> SEX AT BIRTH</td>
-        <td colspan="4" class="align-middle px-1 text-[7pt]">
-            {!! cb($pi?->sex === 'Male') !!} Male &nbsp; {!! cb($pi?->sex === 'Female') !!} Female
+    <tr style="height:22pt;">
+        <td colspan="3" class="{{ $lbl }} px-1"><strong>5.</strong> SEX AT BIRTH</td>
+        <td colspan="3.5" class="relative align-middle px-1 text-[7pt]">
+            <span>{!! cb($pi?->sex === 'Male') !!} Male  </span>
+            <span class="absolute right-5">{!! cb($pi?->sex === 'Female') !!} Female</span>
         </td>
     </tr>
 
     {{-- Civil Status + Residential Address --}}
     <tr style="height:15pt;">
-        <td colspan="2" class="{{ $lbl }} align-top px-1"><strong>6.</strong> CIVIL STATUS</td>
-        <td colspan="4" rowspan="4" class="align-top p-1 text-[7pt]">
+        <td colspan="3" rowspan="3"class="{{ $lbl }} align-top px-1">6. CIVIL STATUS</td>
+        <td colspan="3.5" rowspan="3" class="align-top p-1 text-[7pt]">
             @foreach($csList as $s)
             <div class="mb-0.5">{!! cb($cs === $s) !!} {{ $s }}</div>
             @endforeach
@@ -194,15 +195,14 @@
             <div class="text-right text-[6pt]">ZIP CODE: {{ $pi?->res_zipcode ?? '' }}</div>
         </td>
     </tr>
-    <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }} px-1"><strong>7.</strong> HEIGHT (m)</td></tr>
-    <tr style="height:8pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $val }} px-1">{{ $pi?->height ?? '' }}</td></tr>
-    <tr style="height:22pt;"><td colspan="2" class="{{ $lbl }} px-1"><strong>8.</strong> WEIGHT (kg)</td></tr>
+    <tr style="height:15pt;"><td colspan="3" class="{{ $lbl }} px-1">7. HEIGHT (m)</td></tr>
+    <tr style="height:8pt;"><td colspan="4" class="{{ $val }} px-1">{{ $pi?->height ?? '' }}</td></tr>
+    <tr style="height:22pt;"><td colspan="3" class="{{ $lbl }} px-1">8. WEIGHT (kg)</td></tr>
     <tr style="height:15pt;">
-        <td colspan="2" class="{{ $lbl }} px-1"><strong>9.</strong> BLOOD TYPE</td>
-        <td colspan="4" class="{{ $val }} px-1">{{ $pi?->weight ?? '' }}</td>
+        <td colspan="3" class="{{ $val }} px-1">{{ $pi?->weight ?? '' }}</td>
     </tr>
     <tr style="height:15pt;">
-        <td colspan="2" class="{{ $lbl }}"></td>
+        <td colspan="3" class="{{ $lbl }} px-1">9. BLOOD TYPE</td>
         <td colspan="4" class="{{ $val }} px-1">{{ $pi?->blood_type ?? '' }}</td>
     </tr>
 
@@ -218,7 +218,7 @@
     @endphp
     @foreach($ids as $idx => [$idlbl, $idval])
     <tr style="height:{{ $idx >= 3 ? '24' : '15' }}pt;">
-        <td colspan="2" class="{{ $lbl }} text-[6pt] px-1"><strong>{{ $idlbl }}</strong></td>
+        <td colspan="3" class="{{ $lbl }} text-[6pt] px-1"><strong>{{ $idlbl }}</strong></td>
         <td colspan="4" class="{{ $val }} px-1">{{ $idval ?? '' }}</td>
         @if($loop->first)
         <td colspan="3" rowspan="5" class="{{ $lbl }} text-center align-middle">18. PERMANENT<br>ADDRESS<br><br><br>ZIPCODE</td>
@@ -233,7 +233,7 @@
     @endforeach
 
     <tr style="height:24pt;">
-        <td colspan="6" class="{{ $lbl }} text-[6pt] px-1"><strong>15. AGENCY EMPLOYEE NO.</strong> &nbsp; {{ $pi?->agency_employee_no ?? $ep?->employee_number ?? '' }}</td>
+        <td colspan="3" class="{{ $lbl }} text-[6pt] px-1"><strong>15. AGENCY EMPLOYEE NO.</strong> &nbsp; {{ $pi?->agency_employee_no ?? $ep?->employee_number ?? '' }}</td>
         <td colspan="3" class="{{ $lbl }} text-[6pt] px-1">19. TELEPHONE NO.</td>
         <td colspan="5" class="{{ $val }} px-1">{{ $pi?->telephone ?? '' }}</td>
     </tr>
