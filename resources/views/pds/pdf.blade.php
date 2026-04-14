@@ -32,7 +32,7 @@
     .page {
         width: 8.5in;
         min-height: 13in;
-        padding: 0.3in 0.3in 0.2in 0.3in;
+        padding: 0.3in 0.2in 0.3in 0.2in;
         page-break-after: always;
         background: #fff;
         position: relative;
@@ -97,10 +97,10 @@
         function yN($v) { return cb($v) . ' YES &nbsp; ' . cb(!$v) . ' NO'; }
 
         // Tailwind utilities
-        $lbl  = 'bg-gray-100 text-[7pt] uppercase align-middle';         // label cell
-        $val  = 'align-middle text-[8pt]';                               // value cell
+        $lbl  = 'bg-gray-100 text-[7pt] uppercase';                                     // label cell
+        $val  = 'align-middle text-[8pt] font-semibold';                               // value cell
         $sectionHeader  = 'bg-neutral-400 text-white font-narrow font-black italic text-[10.5pt] uppercase tracking-wide border-2 border-black';
-        $note = 'bg-gray-300 text-center italic text-[7pt] text-red-700 font-bold border-2 border-black'; // continue note
+        $note = 'bg-gray-100 text-center italic text-[7pt] text-red-500 font-bold border-2 border-black'; // continue note
         $sig  = 'border-2 border-black align-middle text-center text-[6.5pt] italic';
     @endphp
 
@@ -138,32 +138,32 @@
         {{-- Name rows --}}
         <tr style="height:22pt;">
             <td colspan="3" class="{{ $lbl }} px-2 border-b-gray-100">1. SURNAME</td>
-            <td colspan="15" class="font-bold text-[9pt] align-middle px-2">{{ strtoupper($user->last_name ?? '') }}</td>
+            <td colspan="15" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->last_name ?? '') }}</td>
         </tr>
         <tr style="height:22pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">2. FIRST NAME</td>
-            <td colspan="8" class="font-bold text-[9pt] align-middle px-2">{{ strtoupper($user->first_name ?? '') }}</td>
-            <td colspan="7" class="align-start px-1">
+            <td colspan="8.5" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->first_name ?? '') }}</td>
+            <td colspan="7" class="align-start px-1 bg-gray-100 text-[7pt]">
                 <span>NAME EXTENSION (JR., SR)</span>
-                <span class="font-bold text-[9pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
+                <span class="font-bold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
             </td>
         </tr>
         <tr style="height:21pt;border-bottom:2px solid #000;">
             <td colspan="3" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
-            <td colspan="15" class="font-bold text-[9pt] align-middle px-2">{{ strtoupper($user->middle_name ?? '') }}</td>
+            <td colspan="15" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->middle_name ?? '') }}</td>
         </tr>
 
         {{-- 3, 4, 5: Birth Info + 16. Citizenship (Spans 3 Rows) --}}
         <tr style="height:32pt;">
             <td colspan="3" class="{{ $lbl }} px-1"><strong>3.</strong> DATE OF BIRTH<br><span class="italic lowercase pl-3">(dd/mm/yyyy)</span></td>
-            <td colspan="4" class="{{ $val }} px-2 font-semibold">{{ $dob }}</td>
+            <td colspan="3.5" class="{{ $val }} px-2 font-semibold">{{ $dob }}</td>
             {{-- Citizenship Starts Here --}}
-            <td colspan="3" rowspan="3" class="{{ $lbl }} text-start align-top text-[8pt] uppercase">
+            <td colspan="3.5" rowspan="3" class="{{ $lbl }} text-start align-top text-[8pt] uppercase pt-0">
                 16. CITIZENSHIP<br><br>
-                <div class="normal-case text-center mt-4">If holder of dual citizenship,<br><br>please indicate the details.</div>
+                <div class="normal-case text-center mt-3 text-[7pt]">If holder of dual citizenship,<br><br>please indicate the details.</div>
             </td>
-            <td colspan="8" rowspan="3" class="align-top text-[8pt]">
-                <div class="flex gap-4 mb-2 p-2">
+            <td colspan="9" rowspan="3" class="align-top text-[7pt]">
+                <div class="flex gap-4 mb-2 pt-2 px-2">
                     <span>{!! cb($pi?->citizenship == 'Filipino') !!} Filipino</span>
                     <span>{!! cb($pi?->citizenship == 'Dual Citizenship') !!} Dual Citizenship</span>
                 </div>
@@ -171,134 +171,134 @@
                     {!! cb($pi?->dual_type == 'birth') !!} by birth &nbsp; 
                     {!! cb($pi?->dual_type == 'naturalization') !!} by naturalization
                 </div>
-                <div class="text-[7pt] pl-20">Pls. indicate country:</div>
+                <div class="text-[8pt] pl-20">Pls. indicate country:</div>
                 <div class="w-full min-h-5">
-                    <select name="dual_contry" id="dual_contry" class="w-full h-6 mt-2 bg-white border border-black">
+                    <select name="dual_contry" id="dual_contry" class="w-full h-7 mt-2 bg-white border border-black">
                         <option value="" selected>{{ $pi?->dual_country ?? '' }}</option>
                     </select>
                 </div>
             </td>
         </tr>
         <tr style="height:24pt;">
-            <td colspan="3" class="{{ $lbl }} px-1"><strong>4.</strong> PLACE OF BIRTH</td>
-            <td colspan="4" class="{{ $val }} px-2 font-semibold">{{ $pi?->birth_place ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">4. PLACE OF BIRTH</td>
+            <td colspan="3.5" class="{{ $val }} px-2 font-semibold">{{ $pi?->birth_place ?? '' }}</td>
         </tr>
         <tr style="height:22pt;">
-            <td colspan="3" class="{{ $lbl }} px-1"><strong>5.</strong> SEX AT BIRTH</td>
-            <td colspan="4" class="align-middle px-2 text-[8pt]">
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">5. SEX AT BIRTH</td>
+            <td colspan="3.5" class="align-middle px-2 text-[8pt]">
                 <span>{!! cb($pi?->sex === 'Male') !!} Male </span>
-                <span class="ml-20">{!! cb($pi?->sex === 'Female') !!} Female</span>
+                <span class="ml-8">{!! cb($pi?->sex === 'Female') !!} Female</span>
             </td>
         </tr>
 
         {{-- 6, 7, 8: Physical Info + 17. Residential Address (Spans 3 Rows) --}}
         <tr style="height:45pt;">
             <td colspan="3" class="{{ $lbl }} align-top px-1">6. CIVIL STATUS</td>
-            <td colspan="4" class="align-top p-2 text-[8pt]">
+            <td colspan="3.5" class="align-top p-2 py-1 text-[8pt]">
                 <div class="grid grid-cols-2 gap-y-1">
                     @foreach(['Single', 'Married', 'Widowed', 'Separated'] as $s)
                         <div>{!! cb($cs === $s) !!} {{ $s }}</div>
                     @endforeach
                 </div>
-                <div class="mt-1">{!! cb(!in_array($cs, ['Single', 'Married', 'Widowed', 'Separated'])) !!} Other/s: <span class="px-2">{{ !in_array($cs, ['Single', 'Married', 'Widowed', 'Separated']) ? $cs : '' }}</span></div>
+                <div class="mt-1">{!! cb(!in_array($cs, ['Single', 'Married', 'Widowed', 'Separated'])) !!} Other/s: <span class="pl-1">{{ !in_array($cs, ['Single', 'Married', 'Widowed', 'Separated']) ? $cs : '' }}</span></div>
             </td>
             {{-- Residential Address Starts Here --}}
-            <td colspan="2" rowspan="3" class="{{ $lbl }} text-center align-middle">17. RESIDENTIAL ADDRESS<br><br><br><br>ZIP CODE</td>
-            <td colspan="9" rowspan="3" class="align-top p-1 text-[6.5pt]">
+            <td colspan="2.5" rowspan="3" class="{{ $lbl }} align-top pt-0">17. RESIDENTIAL ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
+            <td colspan="10" rowspan="3" class="align-top py-1 px-0 text-[6.5pt]">
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->res_house_no, $pi?->res_street], ['Subdivision/Village', 'Barangay', $pi?->res_subdivision, $pi?->res_barangay], ['City/Municipality', 'Province', $pi?->res_city, $pi?->res_province]] as [$l1, $l2, $v1, $v2])
-                    <div class="flex border-b border-black">
-                        <div class="w-1/2 border-r border-black p-px">
-                            <div class="text-center">{{ $v1 }}</div>
-                            <div class="italic text-[5pt] text-gray-500 text-center">{{ $l1 }}</div>
+                    <div class="flex border-b border-black italic">
+                        <div class="w-1/2">
+                            <div class="text-center h-4 uppercase align-middle font-semibold">{{ $v1 }}</div>
+                            <div class="italic text-[6.5pt] text-center border-t border-black/50">{{ $l1 }}</div>
                         </div>
-                        <div class="w-1/2 p-px">
-                            <div class="text-center">{{ $v2 }}</div>
-                            <div class="italic text-[5pt] text-gray-500 text-center">{{ $l2 }}</div>
+                        <div class="w-1/2">
+                            <div class="text-center h-4 uppercase align-middle font-semibold">{{ $v2 }}</div>
+                            <div class="italic text-[6.5pt] text-center border-t border-black/40">{{ $l2 }}</div>
                         </div>
                     </div>
                 @endforeach
-                <div class="text-center text-[8pt] font-bold mt-2">{{ $pi?->res_zipcode ?? '' }}</div>
+                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->res_zipcode ?? '' }}</div>
             </td>
         </tr>
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">7. HEIGHT (m)</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->height ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">7. HEIGHT (m)</td>
+            <td colspan="3.5" class="{{ $val }}">{{ $pi?->height ?? '' }}</td>
         </tr>
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">8. WEIGHT (kg)</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->weight ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">8. WEIGHT (kg)</td>
+            <td colspan="3.5" class="{{ $val }}">{{ $pi?->weight ?? '' }}</td>
         </tr>
 
         {{-- 9, 10, 11, 12: IDs + 18. Permanent Address (Spans 4 Rows) --}}
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">9. BLOOD TYPE</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->blood_type ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">9. BLOOD TYPE</td>
+            <td colspan="3.5" class="{{ $val }}">{{ $pi?->blood_type ?? '' }}</td>
             {{-- Permanent Address Starts Here --}}
-            <td colspan="2" rowspan="4" class="{{ $lbl }} text-center align-middle">18. PERMANENT ADDRESS<br><br><br><br>ZIP CODE</td>
-            <td colspan="9" rowspan="4" class="align-top p-1 text-[6.5pt]">
+            <td colspan="2.5" rowspan="4" class="{{ $lbl }} align-top pt-0">18. PERMANENT ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
+            <td colspan="10" rowspan="4" class="align-top py-1 px-0 text-[6.5pt]">
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->perm_house_no, $pi?->perm_street], ['Subdivision/Village', 'Barangay', $pi?->perm_subdivision, $pi?->perm_barangay], ['City/Municipality', 'Province', $pi?->perm_city, $pi?->perm_province]] as [$l1, $l2, $v1, $v2])
-                    <div class="flex border-b border-black">
-                        <div class="w-1/2 border-r border-black p-px">
-                            <div class="italic text-[5pt] text-gray-500">{{ $l1 }}</div>
-                            <div class="text-center">{{ $v1 }}</div>
+                    <div class="flex border-b border-black italic">
+                        <div class="w-1/2">
+                            <div class="text-center h-4 uppercase align-middle font-semibold">{{ $v1 }}</div>
+                            <div class="italic text-[6.5pt] text-center border-t border-black/40">{{ $l1 }}</div>
                         </div>
-                        <div class="w-1/2 p-px">
-                            <div class="italic text-[5pt] text-gray-500">{{ $l2 }}</div>
-                            <div class="text-center">{{ $v2 }}</div>
+                        <div class="w-1/2">
+                            <div class="text-center h-4 uppercase align-middle font-semibold">{{ $v2 }}</div>
+                            <div class="italic text-[6.5pt] text-center border-t border-black/40">{{ $l2 }}</div>
                         </div>
                     </div>
                 @endforeach
-                <div class="text-center text-[8pt] font-bold mt-2">{{ $pi?->perm_zipcode ?? '' }}</div>
+                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->perm_zipcode ?? '' }}</div>
             </td>
         </tr>
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">10. UMID ID NO.</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->umid_number ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">10. UMID ID NO.</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->umid_number ?? 'N/A' }}</td>
         </tr>
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">11. PAG-IBIG ID NO.</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->pagibig_number ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">11. PAG-IBIG ID NO.</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->pagibig_number ?? 'N/A' }}</td>
         </tr>
         <tr style="height:20pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">12. PHILHEALTH NO.</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->philhealth_number ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">12. PHILHEALTH NO.</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->philhealth_number ?? 'N/A' }}</td>
         </tr>
 
         {{-- 13-15 & 19-21: Final IDs and Contact Info --}}
         <tr style="height:22pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">13. PhilSys Number (PSN):</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->philsys_number ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">13. PhilSys Number (PSN):</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->philsys_number ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $lbl }} px-1">19. TELEPHONE NO.</td>
-            <td colspan="9" class="{{ $val }} px-1">{{ $pi?->telephone ?? '' }}</td>
+            <td colspan="10" class="{{ $val }} px-1">{{ $pi?->telephone ?? 'N/A' }}</td>
         </tr>
         <tr style="height:22pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">14. TIN NO.</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->tin_number ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">14. TIN NO.</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->tin_number ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $lbl }} px-1">20. MOBILE NO.</td>
-            <td colspan="9" class="{{ $val }} px-1">{{ $pi?->mobile_number ?? '' }}</td>
+            <td colspan="10" class="{{ $val }} px-1">{{ $pi?->mobile_number ?? 'N/A' }}</td>
         </tr>
         <tr style="height:22pt;">
-            <td colspan="3" class="{{ $lbl }} px-1">15. AGENCY EMPLOYEE NO.</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ $pi?->agency_employee_no ?? '' }}</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">15. AGENCY EMPLOYEE NO.</td>
+            <td colspan="3.5" class="{{ $val }} px-1">{{ $pi?->agency_employee_no ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $lbl }} px-1">21. E-MAIL ADDRESS <span class="lowercase">(if any)</span></td>
-            <td colspan="9" class="{{ $val }} px-1">{{ $pi?->email ?? '' }}</td>
+            <td colspan="10" class="{{ $val }} px-1">{{ $pi?->email ?? '' }}</td>
         </tr>
 
         {{-- Section II: Family Background --}}
-        <tr><td colspan="14" class="{{ $sectionHeader }}">II. FAMILY BACKGROUND</td></tr>
+        <tr><td colspan="18" class="{{ $sectionHeader }}">II. FAMILY BACKGROUND</td></tr>
 
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1"><strong>22.</strong> SPOUSE'S SURNAME</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? '') }}</td>
-            <td colspan="4" class="{{ $lbl }} text-center text-[6pt]"><strong>23. NAME of CHILDREN</strong><br><em class="normal-case">(Write full name and list all)</em></td>
-            <td colspan="3" class="{{ $lbl }} text-center text-[6pt]">DATE OF BIRTH<br><em class="normal-case">(mm/dd/yyyy)</em></td>
+            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-b-gray-100">22. SPOUSE'S SURNAME</td>
+            <td colspan="5" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? '') }}</td>
+            <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle">23. NAME of CHILDREN <span class="normal-case">(Write full name and list all)</span></td>
+            <td colspan="6" class="{{ $lbl }} text-center text-[6pt] align-middle">DATE OF BIRTH<span class="normal-case"> (dd/mm/yyyy)</span></td>
         </tr>
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]">FIRST NAME</td>
+            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
             <td colspan="3" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_first_name ?? '') }}</td>
-            <td colspan="2" class="{{ $lbl }} text-[6pt]">NAME EXTENSION</td>
+            <td colspan="2" class="{{ $lbl }} text-[6pt]">NAME EXTENSION (JR., SR)</td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 0) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 0) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 0) }}</td>
         </tr>
 
         @php
@@ -313,64 +313,64 @@
         @foreach($spouseRows as [$rowLbl, $field, $indent, $chI])
         <tr style="height:21pt;">
             <td colspan="3" class="{{ $lbl }} text-[6pt] {{ $indent ? 'pl-2' : 'px-1' }}">{{ $rowLbl }}</td>
-            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1">{{ strtoupper($fam?->$field ?? '') }}</td>
-            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $chI) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $chI) }}</td>
+            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ strtoupper($fam?->$field ?? '') }}</td>
+            <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $chI) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $chI) }}</td>
         </tr>
         @endforeach
 
         {{-- Father --}}
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1"><strong>24.</strong> FATHER'S SURNAME</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->father_surname ?? '') }}</td>
+            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1  border-b-gray-100">24. FATHER'S SURNAME</td>
+            <td colspan="5" class="{{ $val }} px-1">{{ strtoupper($fam?->father_surname ?? '') }}</td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 6) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 6) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 6) }}</td>
         </tr>
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]">FIRST NAME</td>
+            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
             <td colspan="3" class="{{ $val }} px-1">{{ strtoupper($fam?->father_first_name ?? '') }}</td>
-            <td colspan="2" class="{{ $lbl }} text-[6pt]">NAME EXTENSION</td>
+            <td colspan="2" class="{{ $lbl }} text-[6pt]">NAME EXTENSION (JR., SR)</td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 7) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 7) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 7) }}</td>
         </tr>
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]">MIDDLE NAME</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->father_middle_name ?? '') }}</td>
+            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt] ">MIDDLE NAME</td>
+            <td colspan="5" class="{{ $val }} px-1">{{ strtoupper($fam?->father_middle_name ?? '') }}</td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 8) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 8) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 8) }}</td>
         </tr>
 
         {{-- Mother --}}
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1"><strong>25.</strong> MOTHER'S MAIDEN NAME</td>
-            <td colspan="4"></td>
+            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-r-0 border-b-gray-100">25. MOTHER'S MAIDEN NAME</td>
+            <td colspan="5" class="bg-gray-100 border-l-0 "></td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 9) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 9) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 9) }}</td>
         </tr>
         @foreach([['SURNAME','mother_surname',false,10],['FIRST NAME','mother_first_name',false,11],['MIDDLE NAME','mother_middle_name',true,null]] as [$mLbl,$mField,$mLast,$mChI])
         <tr style="height:21pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]">{{ $mLbl }}</td>
+            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt] border-b-gray-100">{{ $mLbl }}</td>
             @if(!$mLast)
-            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? '') }}</td>
+            <td colspan="5" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? '') }}</td>
             <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $mChI) }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $mChI) }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $mChI) }}</td>
             @else
             {{-- Mother middle name: last child col replaced by continue note --}}
             <td colspan="5" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? '') }}</td>
-            <td colspan="7" class="{{ $note }}">(Continue on separate sheet if necessary)</td>
+            <td colspan="10" class="{{ $note }} border-none align-middle">(Continue on separate sheet if necessary)</td>
             @endif
         </tr>
         @endforeach
 
         {{-- Section III: Education --}}
-        <tr><td colspan="14" class="{{ $sectionHeader }}">III. EDUCATIONAL BACKGROUND</td></tr>
-        <tr style="height:14pt;" class="text-center">
-            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><strong>26. LEVEL</strong></td>
+        <tr><td colspan="18" class="{{ $sectionHeader }}">III. EDUCATIONAL BACKGROUND</td></tr>
+        <tr style="height:14pt;">
+            <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[6pt]"><span>26.</span> <p class="text-center">LEVEL</p></td>
             <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">NAME OF SCHOOL<br><em class="normal-case">(Write in full)</em></td>
-            <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">BASIC EDUCATION/<br>DEGREE/COURSE<br><em class="normal-case">(Write in full)</em></td>
-            <td colspan="2" class="{{ $lbl }} text-[5.5pt]">PERIOD OF ATTENDANCE<br><em class="normal-case">(mm/dd/yyyy)</em></td>
+            <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">BASIC EDUCATION/<br>DEGREE/COURSE<br><span class="normal-case">(Write in full)</span></td>
+            <td colspan="2" class="{{ $lbl }} text-[5.5pt]">PERIOD OF ATTENDANCE</td>
             <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">HIGHEST<br>LEVEL/<br>UNITS<br>EARNED</td>
-            <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">YEAR<br>GRADUATED</td>
+            <td colspan="1" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">YEAR<br>GRADUATED</td>
             <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">SCHOLARSHIP/<br>ACADEMIC<br>HONORS</td>
         </tr>
         <tr style="height:14pt;" class="text-center">
@@ -378,22 +378,22 @@
             <td class="{{ $lbl }} text-[6pt]">To</td>
         </tr>
         @foreach([['ELEMENTARY','Elementary'],['SECONDARY','Secondary'],['VOCATIONAL / TRADE COURSE','Vocational'],['COLLEGE','College'],['GRADUATE STUDIES','Graduate Studies']] as [$eLabel,$eKey])
-        <tr style="height:28pt;">
-            <td colspan="2" class="{{ $lbl }} text-[6pt] px-1">{{ $eLabel }}</td>
+        <tr style="height:20pt;">
+            <td colspan="3" class="{{ $lbl }} text-[6pt] px-1">{{ $eLabel }}</td>
             <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ eduF($eduList, $eKey, 'school_name') }}</td>
             <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ eduF($eduList, $eKey, 'course') }}</td>
             <td class="{{ $val }} text-center text-[6.5pt]">{{ eduF($eduList, $eKey, 'period_from') }}</td>
             <td class="{{ $val }} text-center text-[6.5pt]">{{ eduF($eduList, $eKey, 'period_to') }}</td>
             <td class="{{ $val }} text-center text-[6.5pt]">{{ eduF($eduList, $eKey, 'highest_level') }}</td>
-            <td class="{{ $val }} text-center text-[6.5pt]">{{ eduF($eduList, $eKey, 'year_graduated') }}</td>
-            <td class="{{ $val }} text-center text-[5.5pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
+            <td colspan="1" class="{{ $val }} text-center text-[6.5pt]">{{ eduF($eduList, $eKey, 'year_graduated') }}</td>
+            <td colspan="3" class="{{ $val }} text-center text-[5.5pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
         </tr>
         @endforeach
-        <tr><td colspan="14" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 1 Signature --}}
         <tr style="height:27pt;">
-            <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">SIGNATURE</td>
+            <td colspan="3" class="{{ $lbl }} text-center border-2 border-black align-middle">SIGNATURE</td>
             <td colspan="7" class="{{ $sig }}">
                 <em>(wet signature/e-signature/digital certificate)</em>
                 @if(!empty($govId?->signature))
