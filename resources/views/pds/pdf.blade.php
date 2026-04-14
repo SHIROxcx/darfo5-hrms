@@ -382,11 +382,11 @@
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 align-middle">{{ $eLabel }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'school_name') }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'course') }}</td>
-            <td class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'period_from') }}</td>
-            <td class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'period_to') }}</td>
-            <td colspan="2" class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'highest_level') }}</td>
+            <td class="{{ $val }} text-[6pt]">{{ eduF($eduList, $eKey, 'period_from') }}</td>
+            <td class="{{ $val }} text-[6pt]">{{ eduF($eduList, $eKey, 'period_to') }}</td>
+            <td colspan="2" class="{{ $val }} text-[6pt]">{{ eduF($eduList, $eKey, 'highest_level') }}</td>
             <td class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'year_graduated') }}</td>
-            <td colspan=2"" class="{{ $val }} text-center text-[5.5pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
+            <td colspan=2"" class="{{ $val }} text-[5.5pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
         </tr>
         @endforeach
         <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
@@ -421,82 +421,95 @@
 
 <div class="page">
     <table class="border-2 border-black">
-        <colgroup>
+        <!-- <colgroup>
             <col style="width:3%"><col style="width:5.5%"><col style="width:8.5%"><col style="width:9%">
             <col style="width:7%"><col style="width:11.5%"><col style="width:6%"><col style="width:16%">
             <col style="width:8%"><col style="width:9.5%"><col style="width:10%">
-        </colgroup>
+        </colgroup> -->
 
-        <tr><td colspan="11" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
-        <tr style="height:15pt;" class="text-center">
-            <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">
-                <strong>27.</strong> CES/CSEE/CAREER SERVICE/RA 1080 (BOARD/BAR)/<br>UNDER SPECIAL LAWS/BARANGAY ELIGIBILITY/DRIVER'S LICENSE
+        <tr><td colspan="18" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
+        <tr style="height:18pt;">
+            <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle uppercase">
+                <span>27.</span> <p class="text-center">CES/CSEE/CAREER SERVICE/RA 1080 (BOARD/<br>BAR)/UNDER SPECIAL LAWS/CATEGORY II/IV<br>ELIGIBILITY <span class="normal-case">and</span>
+                ELIGIBILITIES FOR UNIFORMED<br> PERSONNEL</p>
             </td>
-            <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">RATING<br><em class="normal-case">(if applicable)</em></td>
-            <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">DATE OF EXAM/<br>CONFERMENT</td>
-            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">PLACE OF EXAM/<br>CONFERMENT</td>
-            <td colspan="3" class="{{ $lbl }} text-[5.5pt]">LICENSE (if applicable)</td>
+            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] uppercase text-center">RATING<br><span class="normal-case">(if applicable)</span></td>
+            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">DATE OF EXAMINATION/<br>CONFERMENT</td>
+            <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">PLACE OF EXAMINATION /<br>CONFERMENT</td>
+            <td colspan="4" class="{{ $lbl }} text-[6pt] text-center">LICENSE <span class="normal-case">(if applicable)</span></td>
         </tr>
-        <tr style="height:25pt;" class="text-center">
-            <td class="{{ $lbl }} text-[5.5pt]">NUMBER</td>
-            <td colspan="2" class="{{ $lbl }} text-[5.5pt]">Valid Until</td>
+        <tr style="height:17pt;" class="text-center">
+            <td colspan="2" class="{{ $lbl }} text-[6pt] align-middle">NUMBER</td>
+            <td colspan="2" class="{{ $lbl }} text-[6pt] align-middle normal-case">Valid Until</td>
         </tr>
         @php $eligibilities = $pds['eligibilities'] ?? []; @endphp
         @for($i = 0; $i < 8; $i++)
         @php $el = $eligibilities[$i] ?? null; @endphp
-        <tr style="height:27pt;">
-            <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $el?->career_service ?? '' }}</td>
-            <td class="{{ $val }} text-center text-[6.5pt]">{{ $el?->rating ?? '' }}</td>
-            <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($el?->date_of_examination) }}</td>
-            <td colspan="2" class="{{ $val }} text-[6.5pt] px-1">{{ $el?->place_of_examination ?? '' }}</td>
-            <td class="{{ $val }} text-center text-[6.5pt]">{{ $el?->license_number ?? '' }}</td>
-            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($el?->license_validity) }}</td>
+        <tr style="height:20pt;">
+            <td colspan="7" class="{{ $val }} text-[7pt] px-1">{{ $el?->career_service ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->rating ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($el?->date_of_examination) }}</td>
+            <td colspan="3" class="{{ $val }} text-[7pt] px-1">{{ $el?->place_of_examination ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->license_number ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($el?->license_validity) }}</td>
         </tr>
         @endfor
-        <tr><td colspan="11" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Work Experience --}}
         <tr>
-            <td colspan="11" class="{{ $sectionHeader }}">
+            <td colspan="18" class="{{ $sectionHeader }}">
                 V. WORK EXPERIENCE<br>
-                <span class="text-[6pt] font-normal">(Include private employment. Start from your recent work.)</span>
+                <span class="text-[9pt] normal-case font-medium">(Include private employment. Start from your recent work.) Description of duties should be indicated in the attached Work Experience Sheet</span>
             </td>
         </tr>
-        <tr style="height:18pt;" class="text-center">
-            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt]"><strong>28.</strong> INCLUSIVE DATES<br><em class="normal-case">(mm/dd/yyyy)</em></td>
-            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt]">POSITION TITLE<br><em class="normal-case">(Write in full)</em></td>
-            <td colspan="3" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt]">DEPARTMENT/AGENCY/OFFICE/COMPANY</td>
-            <td rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt]">STATUS OF APPOINTMENT</td>
-            <td colspan="3" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt]">GOV'T SERVICE (Y/N)</td>
+        <tr style="height:18pt;">
+            <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><span>28. </span><p class="text-center">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></p></td>
+            <td colspan="5" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">POSITION TITLE<br><span class="normal-case">(Write in full/Do not abbreviate)</span></td>
+            <td colspan="5" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">DEPARTMENT / AGENCY / OFFICE / COMPANY <br><span class="normal-case">(Write in full/Do not abbreviate)</span> </td>
+            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">STATUS OF APPOINTMENT</td>
+            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">GOV'T SERVICE <br>(Y/N)</td>
         </tr>
-        <tr style="height:18pt;"></tr>
-        <tr style="height:18pt;" class="text-center"></tr>
-        <tr style="height:15pt;" class="text-center">
-            <td class="{{ $lbl }} text-[6pt]">From</td>
-            <td class="{{ $lbl }} text-[6pt]">To</td>
-            <td colspan="9" class="{{ $lbl }}"></td>
+        <tr style="height:17pt;"></tr>
+        <tr style="height:15pt;" class="text-center ">
+            <td colspan="2" class="{{ $lbl }} text-[7pt] normal-case">From</td>
+            <td colspan="2" class="{{ $lbl }} text-[7pt] normal-case">To</td>
         </tr>
         @php $workExp = $pds['work_experience'] ?? []; @endphp
         @for($i = 0; $i < 28; $i++)
         @php $we = $workExp[$i] ?? null; @endphp
-        <tr style="height:24pt;">
-            <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($we?->date_from) }}</td>
-            <td class="{{ $val }} text-center text-[6.5pt]">@if($we?->is_present)<em>Present</em>@else{{ pDate($we?->date_to) }}@endif</td>
-            <td colspan="2" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->position_title ?? '' }}</td>
-            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->department ?? '' }}</td>
-            <td class="{{ $val }} text-[6.5pt] px-1">{{ $we?->status_of_appointment ?? '' }}</td>
-            <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : '' }}</td>
+        <tr style="height:18pt;">
+            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($we?->date_from) }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">@if($we?->is_present)<em>Present</em>@else{{ pDate($we?->date_to) }}@endif</td>
+            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->position_title ?? '' }}</td>
+            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->department ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->status_of_appointment ?? '' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : '' }}</td>
         </tr>
         @endfor
-        <tr><td colspan="11" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-        <tr style="height:27pt;">
-            <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">SIGNATURE</td>
-            <td colspan="5" class="{{ $sig }}"><em>(wet signature/e-signature/digital certificate)</em>
-                @if(!empty($govId?->signature))<br><img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-9 max-w-full mx-auto">@endif
+        {{-- Page 2 Signature --}}
+        <tr style="height:17pt;">
+            {{-- Signature Label (3 cols) --}}
+            <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+            
+            {{-- Signature Value (8 cols to reach 11) --}}
+            <td colspan="7" class="{{ $sig }} text-center align-middle">
+                @if(empty($govId?->signature))
+                    <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
+                @else
+                    <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
+                @endif
             </td>
-            <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
-            <td colspan="2" class="border-2 border-black align-middle px-1">{{ $govId?->date_accomplished ?? '' }}</td>
+
+            {{-- Date Label (3 cols to reach 14) --}}
+            <td colspan="3" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+            
+            {{-- Date Value (4 cols to reach 18) --}}
+            <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold">
+                {{ $govId?->date_accomplished ?? '' }}
+            </td>
         </tr>
     </table>
     <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 2 of 4</p>
