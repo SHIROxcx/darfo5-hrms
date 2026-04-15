@@ -428,7 +428,7 @@
         </colgroup> -->
 
         <tr><td colspan="18" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
-        <tr style="height:18pt;">
+        <tr style="height:20pt;">
             <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle uppercase">
                 <span>27.</span> <p class="text-center">CES/CSEE/CAREER SERVICE/RA 1080 (BOARD/<br>BAR)/UNDER SPECIAL LAWS/CATEGORY II/IV<br>ELIGIBILITY <span class="normal-case">and</span>
                 ELIGIBILITIES FOR UNIFORMED<br> PERSONNEL</p>
@@ -478,7 +478,7 @@
         @php $workExp = $pds['work_experience'] ?? []; @endphp
         @for($i = 0; $i < 28; $i++)
         @php $we = $workExp[$i] ?? null; @endphp
-        <tr style="height:18pt;">
+        <tr style="height:19pt;">
             <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($we?->date_from) }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">@if($we?->is_present)<em>Present</em>@else{{ pDate($we?->date_to) }}@endif</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->position_title ?? '' }}</td>
@@ -520,83 +520,103 @@
 {{-- PAGE 3 – Voluntary Work / Trainings / Other Info  --}}
 {{-- ══════════════════════════════════════════════════ --}}
 <div class="page">
-<table class="border-2 border-black">
-<colgroup>
-    <col style="width:3.5%"><col style="width:26%"><col style="width:3%"><col style="width:17.5%">
-    <col style="width:9%"><col style="width:9%"><col style="width:9.5%">
-    <col style="width:3%"><col style="width:4%"><col style="width:22%"><col style="width:3.5%">
-</colgroup>
+    <table class="border-2 border-black">
+    <!-- <colgroup>
+        <col style="width:3.5%"><col style="width:26%"><col style="width:3%"><col style="width:17.5%">
+        <col style="width:9%"><col style="width:9%"><col style="width:9.5%">
+        <col style="width:3%"><col style="width:4%"><col style="width:22%"><col style="width:3.5%">
+    </colgroup> -->
 
-<tr><td colspan="11" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
-<tr style="height:15pt;" class="text-center">
-    <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[6pt]"><strong>29.</strong> NAME &amp; ADDRESS OF ORGANIZATION<br><em class="normal-case">(Write in full)</em></td>
-    <td colspan="2" class="{{ $lbl }} text-[6pt]">INCLUSIVE DATES<br><em class="normal-case">(mm/dd/yyyy)</em></td>
-    <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">NUMBER<br>OF HOURS</td>
-    <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[6pt]">POSITION / NATURE OF WORK</td>
-</tr>
-<tr style="height:13pt;" class="text-center"><td class="{{ $lbl }} text-[6pt]">From</td><td class="{{ $lbl }} text-[6pt]">To</td></tr>
-@php $volWork = $pds['voluntary_work'] ?? []; @endphp
-@for($i=0;$i<7;$i++)
-@php $vw=$volWork[$i]??null; @endphp
-<tr style="height:27pt;">
-    <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">@if($vw){{ ($vw->organization_name??'').(($vw->organization_address)?(', '.$vw->organization_address):'') }}@endif</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($vw?->date_from) }}</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($vw?->date_to) }}</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ $vw?->number_of_hours??'' }}</td>
-    <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $vw?->position??'' }}</td>
-</tr>
-@endfor
-<tr><td colspan="11" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="18" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
+    <tr style="height:16;">
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[7pt]"><span>29.</span> <p class="inline pl-32">NAME &amp; ADDRESS OF ORGANIZATION<br><span class="normal-case pl-48">(Write in full)</span></p></td>
+        <td colspan="4" class="{{ $lbl }} text-[7pt] text-center py-1">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></td>
+        <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER OF<br> HOURS</td>
+        <td colspan="5" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">POSITION / NATURE OF WORK</td>
+    </tr>
+    <tr style="height:13pt;" class="text-center">
+        <td colspan="2" class="{{ $lbl }} text-[6pt]  normal-case">From</td>
+        <td colspan="2" class="{{ $lbl }} text-[6pt]  normal-case">To</td>
+    </tr>
+    @php $volWork = $pds['voluntary_work'] ?? []; @endphp
+    @for($i=0;$i<7;$i++)
+    @php $vw=$volWork[$i]??null; @endphp
+    <tr style="height:18pt;">
+        <td colspan="7" class="{{ $val }} text-[7pt] px-1">@if($vw){{ ($vw->organization_name??'').(($vw->organization_address)?(', '.$vw->organization_address):'') }}@endif</td>
+        <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_from) }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_to) }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $vw?->number_of_hours??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position??'' }}</td>
+    </tr>
+    @endfor
+    <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-<tr><td colspan="11" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
-<tr style="height:18pt;" class="text-center">
-    <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><strong>30.</strong> TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/TRAINING PROGRAMS<br><em class="normal-case">(Write in full)</em></td>
-    <td colspan="2" class="{{ $lbl }} text-[5.5pt]">INCLUSIVE DATES<br><em class="normal-case">(mm/dd/yyyy)</em></td>
-    <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">NUMBER<br>OF HOURS</td>
-    <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">Type of L&amp;D<br>(Managerial/<br>Supervisory/<br>Technical/etc)</td>
-    <td rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">CONDUCTED/<br>SPONSORED BY</td>
-</tr>
-<tr style="height:13pt;" class="text-center"><td class="{{ $lbl }} text-[5.5pt]">From</td><td class="{{ $lbl }} text-[5.5pt]">To</td></tr>
-@php $trainings=$pds['trainings']??[]; @endphp
-@for($i=0;$i<21;$i++)
-@php $tr=$trainings[$i]??null; @endphp
-<tr style="height:24pt;">
-    <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->title??'' }}</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_from) }}</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
-    <td class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours??'' }}</td>
-    <td colspan="3" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld??'' }}</td>
-    <td class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by??'' }}</td>
-</tr>
-@endfor
-<tr><td colspan="11" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="18" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
+    <tr style="height:18pt;">
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><span>30.</span> <p class="text-center inline pl-2">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br><span class="pl-24">TRAINING PROGRAMS<br></span></p><p class="normal-case text-center">(Write in full)</p></td>
+        <td colspan="4" class="{{ $lbl }} text-[5.5pt] text-center">INCLUSIVE DATES<br><span class="normal-case">(mm/dd/yyyy)</span></td>
+        <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER<br>OF HOURS</td>
+        <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">Type of L&amp;D<br><span class="normal-case text-[6.5pt]">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
+        <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">CONDUCTED/<br>SPONSORED BY</td>
+    </tr>
+    <tr style="height:13pt;" class="text-center">
+        <td colspan="2" class="{{ $lbl }} text-[5.5pt] normal-case">From</td>
+        <td colspan="2" class="{{ $lbl }} text-[5.5pt] normal-case">To</td>
+    </tr>
+    @php $trainings=$pds['trainings']??[]; @endphp
+    @for($i=0;$i<21;$i++)
+    @php $tr=$trainings[$i]??null; @endphp
+    <tr style="height:18pt;">
+        <td colspan="7" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->title??'' }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_from) }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours??'' }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld??'' }}</td>
+        <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by??'' }}</td>
+    </tr>
+    @endfor
+    <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-<tr><td colspan="11" class="{{ $sectionHeader }}">VIII. OTHER INFORMATION</td></tr>
-<tr style="height:33pt;" class="text-center">
-    <td colspan="2" class="{{ $lbl }} align-middle text-[6pt]"><strong>31.</strong> SPECIAL SKILLS and HOBBIES</td>
-    <td colspan="5" class="{{ $lbl }} align-middle text-[6pt]"><strong>32.</strong> NON-ACADEMIC DISTINCTIONS / RECOGNITION<br><em class="normal-case">(Write in full)</em></td>
-    <td colspan="4" class="{{ $lbl }} align-middle text-[6pt]"><strong>33.</strong> MEMBERSHIP IN ASSOCIATION/ORGANIZATION<br><em class="normal-case">(Write in full)</em></td>
-</tr>
-@php $oi=$pds['other_info']??null; $skills=$oi?->special_skills??[]; $distinctions=$oi?->non_academic_distinctions??[]; $memberships=$oi?->organization_memberships??[]; @endphp
-@for($i=0;$i<7;$i++)
-<tr style="height:24pt;">
-    <td colspan="2" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]??'' }}</td>
-    <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]??'' }}</td>
-    <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]??'' }}</td>
-</tr>
-@endfor
-<tr><td colspan="11" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="18" class="{{ $sectionHeader }}">VIII. OTHER INFORMATION</td></tr>
+    <tr style="height:33pt;" class="text-center">
+        <td colspan="4" class="{{ $lbl }} align-middle text-[6pt]">31. SPECIAL SKILLS and HOBBIES</td>
+        <td colspan="10" class="{{ $lbl }} align-middle text-[6pt]">32. NON-ACADEMIC DISTINCTIONS / RECOGNITION<br><em class="normal-case">(Write in full)</em></td>
+        <td colspan="4" class="{{ $lbl }} align-middle text-[6pt]">33. MEMBERSHIP IN ASSOCIATION/ORGANIZATION<br><em class="normal-case">(Write in full)</em></td>
+    </tr>
+    @php $oi=$pds['other_info']??null; $skills=$oi?->special_skills??[]; $distinctions=$oi?->non_academic_distinctions??[]; $memberships=$oi?->organization_memberships??[]; @endphp
+    @for($i=0;$i<7;$i++)
+    <tr style="height:18pt;">
+        <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]??'' }}</td>
+        <td colspan="10" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]??'' }}</td>
+        <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]??'' }}</td>
+    </tr>
+    @endfor
+    <tr><td colspan="18" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-<tr style="height:28pt;">
-    <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">SIGNATURE</td>
-    <td colspan="5" class="{{ $sig }}"><em>(wet signature/e-signature/digital certificate)</em>
-        @if(!empty($govId?->signature))<br><img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-9 max-w-full mx-auto">@endif
-    </td>
-    <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
-    <td colspan="2" class="border-2 border-black align-middle px-1">{{ $govId?->date_accomplished??'' }}</td>
-</tr>
-</table>
-<p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 3 of 4</p>
+    {{-- Page 3 Signature --}}
+            <tr style="height:17pt;">
+                {{-- Signature Label (3 cols) --}}
+                <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+                
+                {{-- Signature Value (8 cols to reach 11) --}}
+                <td colspan="7" class="{{ $sig }} text-center align-middle">
+                    @if(empty($govId?->signature))
+                        <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
+                    @else
+                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
+                    @endif
+                </td>
+
+                {{-- Date Label (3 cols to reach 14) --}}
+                <td colspan="3" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+                
+                {{-- Date Value (4 cols to reach 18) --}}
+                <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold">
+                    {{ $govId?->date_accomplished ?? '' }}
+                </td>
+            </tr>
+    </table>
+    <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 3 of 4</p>
 </div>
 
 
