@@ -11,7 +11,6 @@ interface Props {
     pdsData: PdsData;
     onSave: PdsSaveCallback;
     saving: boolean;
-    // No eligibilities prop needed — the combobox fetches its own list
 }
 
 interface EligibilityOption {
@@ -48,7 +47,7 @@ let _inflight: Promise<EligibilityOption[]> | null = null;
 function fetchOptions(): Promise<EligibilityOption[]> {
     if (_cache)    return Promise.resolve(_cache);
     if (_inflight) return _inflight;
-    _inflight = fetch('/api/locations/eligibilities')
+    _inflight = fetch('/api/eligibilities')
         .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
@@ -93,8 +92,7 @@ function EligibilityCombobox({ value, onChange, error }: ComboboxProps) {
 
     // Filter
     const filtered = query.trim()
-        ? options.filter(o => o.title.toLowerCase().includes(query.toLowerCase()) ||
-                              o.category.toLowerCase().includes(query.toLowerCase()))
+        ? options.filter(o => o.title.toLowerCase().includes(query.toLowerCase()))
         : options;
 
     // Group by category
@@ -160,27 +158,20 @@ function EligibilityCombobox({ value, onChange, error }: ComboboxProps) {
             <div className="max-h-52 overflow-y-auto py-1">
                 {loading ? (
                     <p className="px-3 py-2 text-xs text-gray-400 text-center">Loading…</p>
-                ) : Object.keys(grouped).length === 0 ? (
+                ) : filtered.length === 0 ? (
                     <p className="px-3 py-2 text-xs text-gray-400 italic text-center">No results</p>
                 ) : (
-                    Object.entries(grouped).map(([cat, opts]) => (
-                        <div key={cat}>
-                            <div className="sticky top-0 bg-gray-50 px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                                {cat}
-                            </div>
-                            {opts.map(opt => (
-                                <button key={opt.id} type="button"
-                                    onMouseDown={() => select(opt.title)}
-                                    className={[
-                                        'w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer',
-                                        value === opt.title
-                                            ? 'bg-green-50 text-green-800 font-medium'
-                                            : 'text-gray-700 hover:bg-green-50 hover:text-green-800',
-                                    ].join(' ')}>
-                                    {opt.title}
-                                </button>
-                            ))}
-                        </div>
+                    filtered.map(opt => (
+                        <button key={opt.id} type="button"
+                            onMouseDown={() => select(opt.title)}
+                            className={[
+                                'w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer',
+                                value === opt.title
+                                    ? 'bg-green-50 text-green-800 font-medium'
+                                    : 'text-gray-700 hover:bg-green-50 hover:text-green-800',
+                            ].join(' ')}>
+                            {opt.title}
+                        </button>
                     ))
                 )}
             </div>
@@ -293,7 +284,6 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                             return (
                                 <tr key={i} className="border-b border-gray-100 last:border-0 align-top">
                                     <td className="px-2 py-1.5">
-                                        {/* Self-fetching — no prop needed */}
                                         <EligibilityCombobox
                                             value={row.career_service ?? ''}
                                             onChange={val => setRow(i, 'career_service', val)}
@@ -303,7 +293,7 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                                     <td className="px-2 py-1.5">
                                         <input type="text" value={row.rating ?? ''}
                                             onChange={e => setRow(i, 'rating', e.target.value)}
-                                            placeholder="e.g. 85.50 or N/A" className={cls(i, 'rating')} />
+                                            placeholder="e.g. 85.50" className={cls(i, 'rating')} />
                                         {rowErr.rating && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.rating}</p>}
                                     </td>
                                     <td className="px-2 py-1.5">
@@ -315,13 +305,13 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                                     <td className="px-2 py-1.5">
                                         <input type="text" value={row.place_of_examination ?? ''}
                                             onChange={e => setRow(i, 'place_of_examination', e.target.value)}
-                                            placeholder="City, Province or N/A" className={cls(i, 'place_of_examination')} />
+                                            placeholder="City, Province" className={cls(i, 'place_of_examination')} />
                                         {rowErr.place_of_examination && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.place_of_examination}</p>}
                                     </td>
                                     <td className="px-2 py-1.5">
                                         <input type="text" value={row.license_number ?? ''}
                                             onChange={e => setRow(i, 'license_number', e.target.value)}
-                                            placeholder="License No. or N/A" className={inputCls} />
+                                            placeholder="License No." className={inputCls} />
                                     </td>
                                     <td className="px-2 py-1.5">
                                         <input type="date" value={row.license_validity ?? ''}

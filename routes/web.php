@@ -126,9 +126,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Location Routes
     Route::prefix('api/locations')->group(function () {
-    Route::get('/provinces',           [LocationController::class, 'provinces']);
-    Route::get('/cities/{provinceId}', [LocationController::class, 'cities']);
-    Route::get('/barangays/{cityId}',  [LocationController::class, 'barangays']);
+        Route::get('/provinces',           [LocationController::class, 'provinces']);
+        Route::get('/cities/{provinceId}', [LocationController::class, 'cities']);
+        Route::get('/barangays/{cityId}',  [LocationController::class, 'barangays']);
+    });
+
+    Route::get('/api/eligibilities', function () {
+    return response()->json(
+        \DB::table('eligibilities')->orderBy('title')->get(['id', 'title', 'abbreviation'])
+    );
 });
     
 });
