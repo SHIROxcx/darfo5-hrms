@@ -125,12 +125,6 @@
         </table>
 
         <table class="border-2 border-black">
-        <!-- <colgroup>
-            <col style="width:2.5%"><col style="width:10%"><col style="width:5%"><col style="width:12%">
-            <col style="width:5%"><col style="width:4.5%"><col style="width:7%"><col style="width:7.5%">
-            <col style="width:7.5%"><col style="width:6%"><col style="width:5%"><col style="width:8%">
-            <col style="width:7%"><col style="width:7%">
-        </colgroup> -->
 
         {{-- Section I Header --}}
         <tr><td colspan="19" class="{{ $sectionHeader }}">I. PERSONAL INFORMATION</td></tr>
@@ -138,19 +132,19 @@
         {{-- Name rows --}}
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">1. SURNAME</td>
-            <td colspan="16" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->last_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->last_name ?? '') }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">2. FIRST NAME</td>
-            <td colspan="11" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->first_name ?? '') }}</td>
+            <td colspan="11" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->first_name ?? '') }}</td>
             <td colspan="5" class="align-start px-1 bg-gray-100 text-[7pt]">
                 <span>NAME EXTENSION (JR., SR)</span>
-                <span class="font-bold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
+                <span class="font-semibold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
             </td>
         </tr>
         <tr style="height:17pt;border-bottom:2px solid #000;">
             <td colspan="3" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
-            <td colspan="16" class="font-bold text-[8pt] align-middle px-2">{{ strtoupper($user->middle_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->middle_name ?? '') }}</td>
         </tr>
 
         {{-- 3, 4, 5: Birth Info + 16. Citizenship (Spans 3 Rows) --}}
@@ -527,12 +521,12 @@
         <col style="width:3%"><col style="width:4%"><col style="width:22%"><col style="width:3.5%">
     </colgroup> -->
 
-    <tr><td colspan="19" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
+    <tr><td colspan="20" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
     <tr style="height:18pt;">
         <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[7pt]"><span>29.</span> <p class="inline pl-10">NAME &amp; ADDRESS OF ORGANIZATION<br><span class="normal-case pl-28">(Write in full)</span></p></td>
         <td colspan="4" class="{{ $lbl }} text-[7pt] text-center py-1">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></td>
         <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER OF<br> HOURS</td>
-        <td colspan="6" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">POSITION / NATURE OF WORK</td>
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">POSITION / NATURE OF WORK</td>
     </tr>
     <tr style="height:13pt;" class="text-center">
         <td colspan="2" class="{{ $lbl }} text-[6pt]  normal-case">From</td>
@@ -546,18 +540,18 @@
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_from) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_to) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $vw?->number_of_hours??'' }}</td>
-        <td colspan="6" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position??'' }}</td>
+        <td colspan="7" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position??'' }}</td>
     </tr>
     @endfor
-    <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-    <tr><td colspan="19" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
+    <tr><td colspan="20" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
     <tr style="height:18pt;">
         <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><span>30.</span> <p class="text-center inline pl-2">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br><span class="pl-24">TRAINING PROGRAMS<br></span></p><p class="normal-case text-center">(Write in full)</p></td>
         <td colspan="4" class="{{ $lbl }} text-[5.5pt] text-center">INCLUSIVE DATES<br><span class="normal-case">(mm/dd/yyyy)</span></td>
         <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER<br>OF HOURS</td>
         <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">Type of L&amp;D<br><span class="normal-case text-[6.5pt]">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
-        <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">CONDUCTED/ SPONSORED BY<br><span class="normal-case">(Write in full)</span></td>
+        <td colspan="5" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">CONDUCTED/ SPONSORED BY<br><span class="normal-case">(Write in full)</span></td>
     </tr>
     <tr style="height:13pt;" class="text-center">
         <td colspan="2" class="{{ $lbl }} text-[5.5pt] normal-case">From</td>
@@ -572,34 +566,34 @@
         <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours??'' }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld??'' }}</td>
-        <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by??'' }}</td>
     </tr>
     @endfor
-    <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
-    <tr><td colspan="19" class="{{ $sectionHeader }}">VIII. OTHER INFORMATION</td></tr>
+    <tr><td colspan="20" class="{{ $sectionHeader }}">VIII. OTHER INFORMATION</td></tr>
     <tr style="height:33pt;" class="text-center">
-        <td colspan="4" class="{{ $lbl }} align-middle text-[6pt]">31. SPECIAL SKILLS and HOBBIES</td>
-        <td colspan="11" class="{{ $lbl }} align-middle text-[6pt]">32. NON-ACADEMIC DISTINCTIONS / RECOGNITION<br><em class="normal-case">(Write in full)</em></td>
-        <td colspan="4" class="{{ $lbl }} align-middle text-[6pt]">33. MEMBERSHIP IN ASSOCIATION/ORGANIZATION<br><em class="normal-case">(Write in full)</em></td>
+        <td colspan="5" class="{{ $lbl }} align-middle text-[6pt]">31. SPECIAL SKILLS and HOBBIES</td>
+        <td colspan="10" class="{{ $lbl }} align-middle text-[6pt]">32. NON-ACADEMIC DISTINCTIONS / RECOGNITION<br><em class="normal-case">(Write in full)</em></td>
+        <td colspan="5" class="{{ $lbl }} align-middle text-[6pt]">33. MEMBERSHIP IN ASSOCIATION/ORGANIZATION<br><em class="normal-case">(Write in full)</em></td>
     </tr>
     @php $oi=$pds['other_info']??null; $skills=$oi?->special_skills??[]; $distinctions=$oi?->non_academic_distinctions??[]; $memberships=$oi?->organization_memberships??[]; @endphp
     @for($i=0;$i<7;$i++)
     <tr style="height:18pt;">
-        <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]??'' }}</td>
-        <td colspan="11" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]??'' }}</td>
-        <td colspan="4" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]??'' }}</td>
+        <td colspan="10" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]??'' }}</td>
     </tr>
     @endfor
-    <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
     {{-- Page 3 Signature --}}
             <tr style="height:17pt;">
                 {{-- Signature Label (3 cols) --}}
-                <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+                <td colspan="5" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
                 
                 {{-- Signature Value (8 cols to reach 11) --}}
-                <td colspan="7" class="{{ $sig }} text-center align-middle">
+                <td colspan="6" class="{{ $sig }} text-center align-middle">
                     @if(empty($govId?->signature))
                         <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
                     @else
@@ -611,7 +605,7 @@
                 <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
                 
                 {{-- Date Value (4 cols to reach 18) --}}
-                <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold">
+                <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold">
                     {{ $govId?->date_accomplished ?? '' }}
                 </td>
             </tr>
@@ -684,11 +678,14 @@
 
     {{-- References + Photo --}}
     <tr style="height:23pt;">
-        <td colspan="5" class="{{ $lbl }} align-top text-[6.5pt] px-1">
-            <strong>41.</strong> REFERENCES <span class="text-red-700 font-normal">(Person not related by consanguinity or affinity to applicant/appointee)</span>
+        <td colspan="14" class="{{ $lbl }} align-top text-[6.5pt] px-1">
+            41. REFERENCES <span class="text-red-700 font-normal">(Person not related by consanguinity or affinity to applicant/appointee)</span>
         </td>
-        <td class="{{ $lbl }} text-center text-[6.5pt]">OFFICE / RESIDENTIAL ADDRESS</td>
-        <td colspan="5" class="{{ $lbl }} text-center text-[6.5pt]">CONTACT NO. AND/OR EMAIL</td>
+    </tr>
+    <tr style="height:23pt;" class="uppercase">
+        <td colspan="6" class="{{ $lbl }} text-center text-[6.5pt]">NAME</td>
+        <td colspan="5" class="{{ $lbl }} text-center text-[6.5pt]">OFFICE / RESIDENTIAL ADDRESS</td>
+        <td colspan="3" class="{{ $lbl }} text-center text-[6.5pt]">CONTACT NO. AND/OR EMAIL</td>
         <td rowspan="5" colspan="2" class="text-center align-top p-1">
             <div class="photo-box">
                 @if(!empty($govId?->passport_photo))
@@ -699,60 +696,67 @@
             </div>
             <p class="text-[5.5pt] text-center my-0.5">PHOTO</p>
             <div class="border border-black h-14 bg-white"></div>
-            <div class="bg-gray-300 border-t border-black text-center p-px text-[6pt]">Right Thumbmark</div>
         </td>
     </tr>
     @for($i=0;$i<3;$i++)
     @php $ref=$refs[$i]??null; @endphp
-    <tr style="height:24pt;">
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->name??'' }}</td>
-        <td class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->address??'' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->telephone??'' }}</td>
+    <tr style="height:17pt;">
+        <td colspan="6" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->name??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->address??'' }}</td>
+        <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->telephone??'' }}</td>
     </tr>
     @endfor
 
     {{-- Declaration --}}
-    <tr style="height:39pt;">
-        <td colspan="11" class="{{ $lbl }} align-top text-[6.5pt] p-1 text-justify">
-            <strong>42.</strong> I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct and complete statement pursuant to the provisions of pertinent laws, rules and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.
+    <tr style="height:20pt;">
+        <td colspan="14" class="align-top text-[8pt] p-1 text-justify normal-case">
+            <div class="flex">
+                <span>42.</span><p class="px-2"> I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct, and complete statement pursuant to the provisions of pertinent laws, rules, and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.</p>
+            </div>
         </td>
-        <td colspan="2" class="{{ $lbl }}"></td>
     </tr>
 
     {{-- Gov't ID + Signature --}}
-    <tr style="height:7pt;"><td colspan="19" class="border-0 p-0"></td></tr>
-    <tr style="height:32pt;">
-        <td colspan="5" rowspan="6" class="border-2 border-black align-top p-1 text-[6.5pt]">
-            <div class="border-b border-black pb-1 mb-1">Government Issued ID < class="text-[6pt]">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</    span><br><em>PLEASE INDICATE ID Number and Date of Issuance</em></div>
-            <div class="border-b border-black py-px">Government Issued ID: {{ $govId?->id_type??'' }}</div>
-            <div class="border-b border-black py-px">ID/License/Passport No.: {{ $govId?->id_number??'' }}</div>
-            <div class="py-px">Date/Place of Issuance: {{ ($govId?->date_of_issuance??'').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</div>
+    <tr style="height:7pt;"><td colspan="19"></td></tr>
+    <tr style="height:32pt;" class="border-b-2 border-black">
+        <td colspan="7"  class=" align-top p-2 text-[7pt] border-white">
+            <div class="border-2 border-black">
+                <div class="border-b border-black pb-1 mb-1 bg-gray-100">Government Issued ID <span class="text-[6.5pt]">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</    span><br><em>PLEASE INDICATE ID Number and Date of Issuance</em></div>
+                <div class="border-b border-black py-1 px-0.5">Government Issued ID: {{ $govId?->id_type??'' }}</div>
+                <div class="border-b border-black py-1 px-0.5">ID/License/Passport No.: {{ $govId?->id_number??'' }}</div>
+                <div class="py-1 pl-0.5">Date/Place of Issuance: {{ ($govId?->date_of_issuance??'').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</div>
+            </div>
         </td>
-        <td colspan="5" rowspan="2" class="border-2 border-black text-center align-middle text-[6.5pt] italic">
-            (wet signature/e-signature/digital certificate)
-            @if(!empty($govId?->signature))<br><img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-10 max-w-full mx-auto mt-0.5">@endif
+        <td colspan="7" class="text-center align-middle text-[6.5pt] p-2 border-white">
+            <div class="border-2 border-black">
+                <div class="max-h-14 min-h-14 flex items-center"> 
+                    @if(empty($govId?->signature))
+                        <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
+                    @else
+                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
+                    @endif
+                </div>
+                <div class="text-center border-b border-t border-black text-[7pt] py-0.5 bg-gray-100">Signature (Sign inside the box)</div>
+                <div class="border-b border-black text-center align-middle text-[7pt] py-1">{{ $govId?->date_accomplished??'' }}</div>
+                <div class="text-center text-[7pt] py-0.5 bg-gray-100">Date Accomplished</div>
+            </div>
         </td>
-        <td colspan="3" rowspan="6" class="border-2 border-black text-center align-middle p-1">
+        <td colspan="5"  class="text-center align-middle p-1 m-2">
             <div class="border border-black h-20 bg-white"></div>
             <div class="bg-gray-300 border-t border-black text-center p-px text-[6pt]">Right Thumbmark</div>
         </td>
     </tr>
-    <tr style="height:8pt;"></tr>
-    <tr style="height:12pt;"><td colspan="5" class="{{ $lbl }} text-center border-2 border-black text-[6pt]">Signature (Sign inside the box)</td></tr>
-    <tr style="height:10pt;"><td colspan="5" class="border-2 border-black text-center align-middle text-[6.5pt]">{{ $govId?->date_accomplished??'' }}</td></tr>
-    <tr style="height:8pt;"></tr>
-    <tr style="height:12pt;"><td colspan="5" class="{{ $lbl }} text-center border-2 border-black text-[6pt]">Date Accomplished</td></tr>
 
     {{-- Subscribed --}}
     <tr style="height:28pt;">
-        <td colspan="19" class="border-t border-black border-2 border-b-0 text-center align-middle text-[7pt]">
-            <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this _________________________________, affiant exhibiting his/her validly issued government ID as indicated above.
+        <td colspan="19" class="border-2 border-t  border-black border-b-0 text-center align-middle text-[7pt]">
+            <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this _________________________________    , affiant exhibiting his/her validly issued government ID as indicated above.
         </td>
     </tr>
     <tr style="height:53pt;">
-        <td colspan="19" class="text-center align-bottom px-60 py-2 border-t-0">
-            <div class=" border-black border-2 max-w-full">
-                <div class="inline-block min-w-52  py-4 px-5 text-[7pt] text-red-500 font-bold">(wet signature/e-signature/digital certificate except for notary public)</div><br>
+        <td colspan="19" class="text-center align-bottom pl-72 py-2 border-t-0">
+            <div class="w-full border-black border-2 max-w-72">
+                <div class="inline-block  py-4 px-5 text-[7pt] text-red-500 font-bold">(wet signature/e-signature/digital certificate except for notary public)</div><br>
                 <div class="text-[7pt] border-t border-black bg-gray-100 py-1">Person Administering Oath</div>
             </div>
         </td>

@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
 
 const EMPTY: PdsTraining = { title: '', date_from: '', date_to: '', number_of_hours: '', type_of_ld: '', conducted_by: '' };
-const LD_TYPES = ['Managerial', 'Supervisory', 'Technical', 'Foundation', 'Orientation', 'Others'];
+const LD_TYPES = ['Managerial', 'Supervisory', 'Technical', 'Etc.'];
 
 export default function TrainingSection({ pdsData, onSave, saving }: Props) {
     const [rows, setRows] = useState<PdsTraining[]>(
