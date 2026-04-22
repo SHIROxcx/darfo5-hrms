@@ -38,6 +38,29 @@
         position: relative;
     }
 
+    .photo-box {
+        width: 3.5cm;
+        height: 4.5cm;
+        border: 2px solid black;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+    }
+    .thumb-box {
+        width: 4.5cm;
+        height: 3.5cm;
+        border: 2px solid black;
+        margin: 0 auto;
+        background-color: white;
+    }
+    .pds-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
     /* Table cells need specific sizing for PDF accuracy */
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     td, th {
@@ -676,93 +699,116 @@
     <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>c.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a solo parent?</td></tr>
     <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
 
-    {{-- References + Photo --}}
-    <tr style="height:23pt;">
-        <td colspan="14" class="{{ $lbl }} align-top text-[6.5pt] px-1">
+   <table class="pds-table">
+    {{-- 41. REFERENCES + PHOTO --}}
+    {{-- Photo Rowspan starts here --}}
+    <tr>
+        <td colspan="14" class="{{ $lbl }} align-top text-[6.5pt] px-1 border-b-0">
             41. REFERENCES <span class="text-red-700 font-normal">(Person not related by consanguinity or affinity to applicant/appointee)</span>
         </td>
-    </tr>
-    <tr style="height:23pt;" class="uppercase">
-        <td colspan="6" class="{{ $lbl }} text-center text-[6.5pt]">NAME</td>
-        <td colspan="5" class="{{ $lbl }} text-center text-[6.5pt]">OFFICE / RESIDENTIAL ADDRESS</td>
-        <td colspan="3" class="{{ $lbl }} text-center text-[6.5pt]">CONTACT NO. AND/OR EMAIL</td>
-        <td rowspan="5" colspan="2" class="text-center align-top p-1">
+        <td colspan="5" rowspan="5" class="text-center align-top p-1 border-l-0">
             <div class="photo-box">
                 @if(!empty($govId?->passport_photo))
-                    <img src="{{ storage_path('app/public/' . $govId->passport_photo) }}">
+                    <img src="{{ storage_path('app/public/' . $govId->passport_photo) }}" class="w-full h-full object-cover">
                 @else
-                    <span class="text-[5.5pt] text-gray-600 p-1">ID picture taken within the last 6 months<br>4.5cm × 3.5cm (passport size)<br><br>Computer generated or photocopied picture is not acceptable</span>
+                    <span class="text-[6pt] text-gray-600 p-1 normal-case leading-tight">
+                        Passport-sized unfiltered <br> digital picture taken within <br> the last 6 months <br> 4.5 cm X 3.5 cm
+                    </span>
                 @endif
             </div>
-            <p class="text-[5.5pt] text-center my-0.5">PHOTO</p>
-            <div class="border border-black h-14 bg-white"></div>
+            <p class="text-[6pt] font-bold text-center mt-1">PHOTO</p>
         </td>
     </tr>
-    @for($i=0;$i<3;$i++)
-    @php $ref=$refs[$i]??null; @endphp
-    <tr style="height:17pt;">
-        <td colspan="6" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->name??'' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->address??'' }}</td>
-        <td colspan="3" class="{{ $val }} text-[6.5pt] px-1">{{ $ref?->telephone??'' }}</td>
+
+    <tr class="uppercase">
+        <td colspan="6" class="{{ $lbl }} text-center text-[6pt] border-y">NAME</td>
+        <td colspan="5" class="{{ $lbl }} text-center text-[6pt] border-y">OFFICE / RESIDENTIAL ADDRESS</td>
+        <td colspan="3" class="{{ $lbl }} text-center text-[6pt] border-y">CONTACT NO. / EMAIL</td>
+    </tr>
+
+    @for($i=0; $i<3; $i++)
+    @php $ref = $refs[$i] ?? null; @endphp
+    <tr style="height:18pt;">
+        <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? '' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? '' }}</td>
+        <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->telephone ?? '' }}</td>
     </tr>
     @endfor
 
-    {{-- Declaration --}}
-    <tr style="height:20pt;">
-        <td colspan="14" class="align-top text-[8pt] p-1 text-justify normal-case">
+    {{-- 42. DECLARATION + THUMBMARK (Start) --}}
+    <tr>
+        <td colspan="14" class="align-top text-[7.5pt] p-2 text-justify normal-case border-2 border-black">
             <div class="flex">
-                <span>42.</span><p class="px-2"> I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct, and complete statement pursuant to the provisions of pertinent laws, rules, and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.</p>
+                <span class="font-bold">42.</span>
+                <p class="px-2 leading-tight">
+                    I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct, and complete statement pursuant to the provisions of pertinent laws, rules, and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.
+                </p>
+            </div>
+        </td>
+        {{-- Thumbmark Rowspan starts here --}}
+        <td colspan="5" rowspan="2" class="text-center align-bottom p-2 border-l-0">
+            <div class="thumb-box flex flex-col">
+                <div class="grow bg-white"></div>
+                <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[6.5pt]">
+                    Right Thumbmark
+                </div>
             </div>
         </td>
     </tr>
 
-    {{-- Gov't ID + Signature --}}
-    <tr style="height:7pt;"><td colspan="19"></td></tr>
-    <tr style="height:32pt;" class="border-b-2 border-black">
-        <td colspan="7"  class=" align-top p-2 text-[7pt] border-white">
-            <div class="border-2 border-black">
-                <div class="border-b border-black pb-1 mb-1 bg-gray-100">Government Issued ID <span class="text-[6.5pt]">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</    span><br><em>PLEASE INDICATE ID Number and Date of Issuance</em></div>
-                <div class="border-b border-black py-1 px-0.5">Government Issued ID: {{ $govId?->id_type??'' }}</div>
-                <div class="border-b border-black py-1 px-0.5">ID/License/Passport No.: {{ $govId?->id_number??'' }}</div>
-                <div class="py-1 pl-0.5">Date/Place of Issuance: {{ ($govId?->date_of_issuance??'').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</div>
+    {{-- GOV ID & SIGNATURE --}}
+    <tr>
+        {{-- ID Block --}}
+        <td colspan="7" class="align-top p-2 border-r-white">
+            <div class="border-2 border-black h-full">
+                <div class="bg-gray-100 border-b border-black p-1 text-[7pt] leading-tight">
+                    Government Issued ID <span class="text-[6.5pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
+                    <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
+                </div>
+                <div class="py-1.5 text-[7pt] border-b border-black">Government Issued ID: <span class="font-bold">{{ $govId?->id_type ?? '' }}</span></div>
+                <div class="py-1.5 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-bold">{{ $govId?->id_number ?? '' }}</span></div>
+                <div class="py-1.5 text-[7pt]">Date/Place of Issuance: <span class="font-bold">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
             </div>
         </td>
-        <td colspan="7" class="text-center align-middle text-[6.5pt] p-2 border-white">
-            <div class="border-2 border-black">
-                <div class="max-h-14 min-h-14 flex items-center"> 
+        {{-- Signature Block --}}
+        <td colspan="7" class="align-top p-2 pr-0 border-t-0 border-r-white">
+            <div class="border-2 border-black h-full flex flex-col">
+                <div class="grow flex items-center justify-center p-1 min-h-16">
                     @if(empty($govId?->signature))
-                        <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
+                        <span class="text-red-500 text-[7pt] text-center leading-tight">(wet signature/e-signature/digital certificate)</span>
                     @else
-                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
+                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-14">
                     @endif
                 </div>
-                <div class="text-center border-b border-t border-black text-[7pt] py-0.5 bg-gray-100">Signature (Sign inside the box)</div>
-                <div class="border-b border-black text-center align-middle text-[7pt] py-1">{{ $govId?->date_accomplished??'' }}</div>
-                <div class="text-center text-[7pt] py-0.5 bg-gray-100">Date Accomplished</div>
+                <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
+                <div class="text-center py-1 text-[7pt] min-h-[14pt]">{{ $govId?->date_accomplished ?? '' }}</div>
+                <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt]">Date Accomplished</div>
             </div>
-        </td>
-        <td colspan="5"  class="text-center align-middle p-1 m-2">
-            <div class="border border-black h-20 bg-white"></div>
-            <div class="bg-gray-300 border-t border-black text-center p-px text-[6pt]">Right Thumbmark</div>
         </td>
     </tr>
 
-    {{-- Subscribed --}}
-    <tr style="height:28pt;">
-        <td colspan="19" class="border-2 border-t  border-black border-b-0 text-center align-middle text-[7pt]">
-            <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this _________________________________    , affiant exhibiting his/her validly issued government ID as indicated above.
+    {{-- SUBSCRIBED AND SWORN --}}
+    <tr>
+        <td colspan="19" class="text-center p-3 text-[7.5pt] border-b-white">
+            <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this <span class="px-16 border-b border-black"></span>, affiant exhibiting his/her validly issued government ID as indicated above.
         </td>
     </tr>
-    <tr style="height:53pt;">
-        <td colspan="19" class="text-center align-bottom pl-72 py-2 border-t-0">
-            <div class="w-full border-black border-2 max-w-72">
-                <div class="inline-block  py-4 px-5 text-[7pt] text-red-500 font-bold">(wet signature/e-signature/digital certificate except for notary public)</div><br>
-                <div class="text-[7pt] border-t border-black bg-gray-100 py-1">Person Administering Oath</div>
+
+    {{-- PERSON ADMINISTERING OATH --}}
+    <tr>
+        <td colspan="19" class="p-4 pt-0">
+            <div class="ml-60 w-full max-w-[235pt] border-2 border-black">
+                <div class="p-6 text-center text-red-500 text-[7pt] leading-tight font-bold">
+                    (wet signature/e-signature/digital certificate except for notary public)
+                </div>
+                <div class="bg-gray-100 border-t border-black text-center py-1 text-[7pt] font-bold uppercase">
+                    Person Administering Oath
+                </div>
             </div>
         </td>
     </tr>
-    </table>
-    <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 4 of 4</p>
+</table>
+<div class="text-right italic text-[6.5pt] font-bold mt-1">CS FORM 212 (Revised 2025), Page 4 of 4</div>
 </div>
 
 </body>
