@@ -46,6 +46,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
         background-color: white;
     }
     .thumb-box {
@@ -59,6 +60,8 @@
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
+        border: 2px solid black;
+        border-top: 0px;
     }
 
     /* Table cells need specific sizing for PDF accuracy */
@@ -75,11 +78,9 @@
 
     /* Checkbox simulation */
     .cb { display: inline-block; width: 8px; height: 8px; border: 1px solid #000; margin-right: 2px; vertical-align: middle; background: #fff; }
-    .cb-on { background: #000; }
-    .cb-on::after { content: "✓"; color: #fff; font-size: 5pt; display: block; text-align: center; line-height: 8px; }
+    .cb-on { background: #fff; }
+    .cb-on::after { content: "✓"; color: #000; font-size: 5pt; display: block; text-align: center; line-height: 8px; }
 
-    /* Photo box */
-    .photo-box { border: 1px solid #000; width: 110px; height: 140px; margin: 2px auto; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .photo-box img { width: 100%; height: 100%; object-fit: cover; }
 
     @page { size: 8.5in 13in; margin: 0; }
@@ -643,172 +644,184 @@
 @php $q=$pds['questions']??null; $refs=$pds['references']??[]; @endphp
 <div class="page">
     <table class="border-2 border-black">
-    <!-- <colgroup>
-        <col style="width:2%"><col style="width:5%"><col style="width:12%"><col style="width:22%">
-        <col style="width:3%"><col style="width:25%"><col style="width:4%"><col style="width:6%">
-        <col style="width:3%"><col style="width:2%"><col style="width:7%"><col style="width:15%"><col style="width:2%">
-    </colgroup> -->
-
-    {{-- Q34 --}}
-    <tr style="height:13pt;">
-        <td colspan="2" rowspan="3" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>34.</strong></td>
-        <td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you related by consanguinity or affinity to the appointing or recommending authority, or to the</td>
-        <td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]">
-            <div class="mb-1">{!! yN($q?->q34_a) !!}</div>
-            <div class="mb-1">{!! yN($q?->q34_b) !!}</div>
-            <div class="text-[6pt]">If YES, give details:<br>{{ $q?->q34_details??'' }}</div></td>
-            <td rowspan="3" class="{{ $lbl }}"></td>
-    </tr>
-    <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">chief of bureau or office or to the person who has immediate supervision over you in the Office,</td></tr>
-    <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Bureau or Department where you will be appointed,</td></tr>
-    <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">a. within the third degree?</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-    <tr style="height:3pt;"><td colspan="13" class="border-0 p-0"></td></tr>
-    <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">b. within the fourth degree (for Local Government Unit - Career Employees)?</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-
-    {{-- Q35 --}}
-    <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>35.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been found guilty of any administrative offense?</td><td colspan="6" rowspan="4" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q35_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q35_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q35_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q35_b_details??'' }}<br>Date Filed: {{ $q?->q35_b_date??'' }}<br>Status: {{ $q?->q35_b_status??'' }}</div></td><td rowspan="4" class="{{ $lbl }}"></td></tr>
-    <tr style="height:14pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
-    <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you been criminally charged before any court?</td></tr>
-    <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="2" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td class="{{ $lbl }} text-[5.5pt]">Date Filed:</td><td class="{{ $lbl }} text-[5.5pt]">Status:</td></tr>
-
-    {{-- Q36 --}}
-    <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>36.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q36) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q36_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
-    <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-
-    {{-- Q37 (separation) --}}
-    <tr style="height:14pt;"><td colspan="2" rowspan="3" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>37.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been separated from the service in any of the following modes: resignation, retirement,</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q38) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q38_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
-    <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">dropped from the rolls, dismissal, termination, end of term, finished contract or phased out</td></tr>
-    <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">(abolition) in the public or private sector?</td></tr>
-    <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-
-    {{-- Q38 (candidacy) --}}
-    <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>38.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q37_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q37_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q37_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q37_b_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
-    <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
-    <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you resigned from the government service during the three (3)-month period before the last election to promote/actively campaign for a national or local candidate?</td></tr>
-
-    {{-- Q39 --}}
-    <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>39.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you acquired the status of an immigrant or permanent resident of another country?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q39) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q39_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
-    <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details (country):</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-
-    {{-- Q40 --}}
-    <tr style="height:41pt;"><td colspan="2" class="{{ $lbl }} align-top text-center pt-1" style="font-size:8pt;"><strong>40.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt] align-top">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</td><td colspan="6" class="align-top p-1 text-[7pt]" rowspan="6"><div class="mb-0.5">{!! yN($q?->q40_a) !!}</div><div class="text-[6pt] mb-1">If YES, specify: {{ $q?->q40_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_b) !!}</div><div class="text-[6pt] mb-1">If YES, specify ID No: {{ $q?->q40_b_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_c) !!}</div><div class="text-[6pt]">If YES, specify ID No: {{ $q?->q40_c_details??'' }}</div></td><td rowspan="6" class="{{ $lbl }}"></td></tr>
-    <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>a.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a member of any indigenous group?</td></tr>
-    <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify:</td></tr>
-    <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>b.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a person with disability?</td></tr>
-    <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td></tr>
-    <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>c.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a solo parent?</td></tr>
-    <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
-
-   <table class="pds-table">
-    {{-- 41. REFERENCES + PHOTO --}}
-    {{-- Photo Rowspan starts here --}}
-    <tr>
-        <td colspan="14" class="{{ $lbl }} align-top text-[6.5pt] px-1 border-b-0">
-            41. REFERENCES <span class="text-red-700 font-normal">(Person not related by consanguinity or affinity to applicant/appointee)</span>
-        </td>
-        <td colspan="5" rowspan="5" class="text-center align-top p-1 border-l-0">
-            <div class="photo-box">
-                @if(!empty($govId?->passport_photo))
-                    <img src="{{ storage_path('app/public/' . $govId->passport_photo) }}" class="w-full h-full object-cover">
-                @else
-                    <span class="text-[6pt] text-gray-600 p-1 normal-case leading-tight">
-                        Passport-sized unfiltered <br> digital picture taken within <br> the last 6 months <br> 4.5 cm X 3.5 cm
-                    </span>
-                @endif
-            </div>
-            <p class="text-[6pt] font-bold text-center mt-1">PHOTO</p>
-        </td>
-    </tr>
-
-    <tr class="uppercase">
-        <td colspan="6" class="{{ $lbl }} text-center text-[6pt] border-y">NAME</td>
-        <td colspan="5" class="{{ $lbl }} text-center text-[6pt] border-y">OFFICE / RESIDENTIAL ADDRESS</td>
-        <td colspan="3" class="{{ $lbl }} text-center text-[6pt] border-y">CONTACT NO. / EMAIL</td>
-    </tr>
-
-    @for($i=0; $i<3; $i++)
-    @php $ref = $refs[$i] ?? null; @endphp
-    <tr style="height:18pt;">
-        <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? '' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? '' }}</td>
-        <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->telephone ?? '' }}</td>
-    </tr>
-    @endfor
-
-    {{-- 42. DECLARATION + THUMBMARK (Start) --}}
-    <tr>
-        <td colspan="14" class="align-top text-[7.5pt] p-2 text-justify normal-case border-2 border-black">
-            <div class="flex">
-                <span class="font-bold">42.</span>
-                <p class="px-2 leading-tight">
-                    I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct, and complete statement pursuant to the provisions of pertinent laws, rules, and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.
-                </p>
-            </div>
-        </td>
-        {{-- Thumbmark Rowspan starts here --}}
-        <td colspan="5" rowspan="2" class="text-center align-bottom p-2 border-l-0">
-            <div class="thumb-box flex flex-col">
-                <div class="grow bg-white"></div>
-                <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[6.5pt]">
-                    Right Thumbmark
+        {{-- Q34 --}}
+        <tr style="height:13pt;">
+            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">
+                <div class="flex">
+                    <span>34.</span>
+                    <span>Are you related by consanguinity or affinity to the appointing or recommending authority, or to the</span>
                 </div>
-            </div>
-        </td>
-    </tr>
+            </td>
+            <td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]">
+                <div class="mb-1">{!! yN($q?->q34_a) !!}</div>
+                <div class="mb-1">{!! yN($q?->q34_b) !!}</div>
+                <div class="text-[6pt]">If YES, give details:<br>{{ $q?->q34_details??'' }}</div></td>
+                <td rowspan="3" class="{{ $lbl }}"></td>
+        </tr>
+        <tr style="height:12pt;">
+            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">chief of bureau or office or to the person who has immediate supervision over you in the Office,</td>
+        </tr>
+        <tr style="height:12pt;">
+            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">Bureau or Department where you will be appointed,</td>
+        </tr>
+        <tr style="height:14pt;">
+            <td colspan="2" class="{{ $lbl }}"></td>
+            <td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">a. within the third degree?</td>
+            <td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td>
+        </tr>
+        <tr style="height:3pt;">
+            <td colspan="13" class="border-0 p-0"></td>
+        </tr>
+        <tr style="height:15pt;">
+            <td colspan="2" class="{{ $lbl }}"></td>
+            <td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">b. within the fourth degree (for Local Government Unit - Career Employees)?</td>
+            <td colspan="6" class="{{ $lbl }}"></td>
+            <td class="{{ $lbl }}"></td>
+        </tr>
 
-    {{-- GOV ID & SIGNATURE --}}
-    <tr>
-        {{-- ID Block --}}
-        <td colspan="7" class="align-top p-2 border-r-white">
-            <div class="border-2 border-black h-full">
-                <div class="bg-gray-100 border-b border-black p-1 text-[7pt] leading-tight">
-                    Government Issued ID <span class="text-[6.5pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
-                    <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
-                </div>
-                <div class="py-1.5 text-[7pt] border-b border-black">Government Issued ID: <span class="font-bold">{{ $govId?->id_type ?? '' }}</span></div>
-                <div class="py-1.5 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-bold">{{ $govId?->id_number ?? '' }}</span></div>
-                <div class="py-1.5 text-[7pt]">Date/Place of Issuance: <span class="font-bold">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
-            </div>
-        </td>
-        {{-- Signature Block --}}
-        <td colspan="7" class="align-top p-2 pr-0 border-t-0 border-r-white">
-            <div class="border-2 border-black h-full flex flex-col">
-                <div class="grow flex items-center justify-center p-1 min-h-16">
-                    @if(empty($govId?->signature))
-                        <span class="text-red-500 text-[7pt] text-center leading-tight">(wet signature/e-signature/digital certificate)</span>
+        {{-- Q35 --}}
+        <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>35.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been found guilty of any administrative offense?</td><td colspan="6" rowspan="4" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q35_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q35_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q35_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q35_b_details??'' }}<br>Date Filed: {{ $q?->q35_b_date??'' }}<br>Status: {{ $q?->q35_b_status??'' }}</div></td><td rowspan="4" class="{{ $lbl }}"></td></tr>
+        <tr style="height:14pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
+        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you been criminally charged before any court?</td></tr>
+        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="2" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td class="{{ $lbl }} text-[5.5pt]">Date Filed:</td><td class="{{ $lbl }} text-[5.5pt]">Status:</td></tr>
+
+        {{-- Q36 --}}
+        <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>36.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q36) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q36_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+
+        {{-- Q37 (separation) --}}
+        <tr style="height:14pt;"><td colspan="2" rowspan="3" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>37.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been separated from the service in any of the following modes: resignation, retirement,</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q38) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q38_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
+        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">dropped from the rolls, dismissal, termination, end of term, finished contract or phased out</td></tr>
+        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">(abolition) in the public or private sector?</td></tr>
+        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+
+        {{-- Q38 (candidacy) --}}
+        <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>38.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q37_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q37_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q37_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q37_b_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
+        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
+        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you resigned from the government service during the three (3)-month period before the last election to promote/actively campaign for a national or local candidate?</td></tr>
+
+        {{-- Q39 --}}
+        <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>39.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you acquired the status of an immigrant or permanent resident of another country?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q39) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q39_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details (country):</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+
+        {{-- Q40 --}}
+        <tr style="height:41pt;"><td colspan="2" class="{{ $lbl }} align-top text-center pt-1" style="font-size:8pt;"><strong>40.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt] align-top">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</td><td colspan="6" class="align-top p-1 text-[7pt]" rowspan="6"><div class="mb-0.5">{!! yN($q?->q40_a) !!}</div><div class="text-[6pt] mb-1">If YES, specify: {{ $q?->q40_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_b) !!}</div><div class="text-[6pt] mb-1">If YES, specify ID No: {{ $q?->q40_b_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_c) !!}</div><div class="text-[6pt]">If YES, specify ID No: {{ $q?->q40_c_details??'' }}</div></td><td rowspan="6" class="{{ $lbl }}"></td></tr>
+        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>a.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a member of any indigenous group?</td></tr>
+        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify:</td></tr>
+        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>b.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a person with disability?</td></tr>
+        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td></tr>
+        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>c.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a solo parent?</td></tr>
+        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+
+        {{-- 41. REFERENCES + PHOTO --}}
+        <tr>
+            <td colspan="14" class="{{ $lbl }}  text-[6.5pt] p-1 border-b-0 border-t-2 border-black">
+                41. REFERENCES <span class="font-semibold normal-case">(Person not related by consanguinity or affinity to applicant/appointee)</span>
+            </td>
+            <td colspan="5" rowspan="6" class="text-center align-middle border-b-0 border-l-2 border-t-2 border-black">
+                <div class="photo-box mt-5">
+                    @if(!empty($govId?->passport_photo))
+                        <img src="{{ storage_path('app/public/' . $govId->passport_photo) }}" class="w-full h-full object-cover">
                     @else
-                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-14">
+                        <span class="text-[6.5pt] text-gray-600 p-1 normal-case font-semibold leading-tight">
+                            Passport-sized unfiltered <br> digital picture taken within <br> the last 6 months <br> 4.5 cm X 3.5 cm
+                        </span>
                     @endif
                 </div>
-                <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
-                <div class="text-center py-1 text-[7pt] min-h-[14pt]">{{ $govId?->date_accomplished ?? '' }}</div>
-                <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt]">Date Accomplished</div>
-            </div>
-        </td>
-    </tr>
+                <p class="text-[8pt] text-center mt-2 text-gray-400">PHOTO</p>
+            </td>
+        </tr>
 
-    {{-- SUBSCRIBED AND SWORN --}}
-    <tr>
-        <td colspan="19" class="text-center p-3 text-[7.5pt] border-b-white">
-            <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this <span class="px-16 border-b border-black"></span>, affiant exhibiting his/her validly issued government ID as indicated above.
-        </td>
-    </tr>
+        <tr style="height:20pt;" class="uppercase">
+            <td colspan="6" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">NAME</td>
+            <td colspan="5" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">OFFICE / RESIDENTIAL ADDRESS</td>
+            <td colspan="3" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">CONTACT NO. <br> AND/OR EMAIL</td>
+        </tr>
 
-    {{-- PERSON ADMINISTERING OATH --}}
-    <tr>
-        <td colspan="19" class="p-4 pt-0">
-            <div class="ml-60 w-full max-w-[235pt] border-2 border-black">
-                <div class="p-6 text-center text-red-500 text-[7pt] leading-tight font-bold">
-                    (wet signature/e-signature/digital certificate except for notary public)
+        @for($i=0; $i<3; $i++)
+        @php $ref = $refs[$i] ?? null; @endphp
+        <tr style="height:20pt;">
+            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? '' }}</td>
+            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? '' }}</td>
+            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->telephone ?? '' }}</td>
+        </tr>
+        @endfor
+
+        {{-- 42. DECLARATION + THUMBMARK (Start) --}}
+        <tr style="height:22pt;">
+            <td colspan="14" class="align-top text-[8pt] p-1 text-justify normal-case border-b-black border-2">
+                <div class="flex">
+                    <span>42.</span>
+                    <p class="px-2 leading-tight">
+                        I declare under oath that I have personally accomplished this Personal Data Sheet which is a true, correct, and complete statement pursuant to the provisions of pertinent laws, rules, and regulations of the Republic of the Philippines. I authorize the agency head/authorized representative to verify/validate the contents stated herein. I agree that any misrepresentation made in this document and its attachments shall cause the filing of administrative/criminal case/s against me.
+                    </p>
                 </div>
-                <div class="bg-gray-100 border-t border-black text-center py-1 text-[7pt] font-bold uppercase">
-                    Person Administering Oath
+            </td>
+        </tr>
+
+        {{-- GOV ID & SIGNATURE --}}
+        <tr>
+            {{-- ID Block --}}
+            <td colspan="7" class="align-top p-2 border-0 border-r-0">
+                <div class="border-2 border-black h-full">
+                    <div class="bg-gray-100 border-b border-black p-1 text-[6.5pt] leading-tight">
+                        Government Issued ID <span class="text-[6pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
+                        <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
+                    </div>
+                    <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-bold">{{ $govId?->id_type ?? '' }}</span></div>
+                    <div class="py-2 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-bold">{{ $govId?->id_number ?? '' }}</span></div>
+                    <div class="py-2 text-[7pt]">Date/Place of Issuance: <span class="font-bold">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
                 </div>
-            </div>
-        </td>
-    </tr>
-</table>
-<div class="text-right italic text-[6.5pt] font-bold mt-1">CS FORM 212 (Revised 2025), Page 4 of 4</div>
+            </td>
+            {{-- Signature Block --}}
+            <td colspan="7" class="align-top p-2 pr-0 border-t-0 border-r-0 border-l-0">
+                <div class="border-2 border-black h-full flex flex-col">
+                    <div class="grow flex items-center justify-center p-1 min-h-[55pt]">
+                        @if(empty($govId?->signature))
+                            <span class="text-red-500 text-[7pt] text-center leading-tight">(wet signature/e-signature/digital certificate)</span>
+                        @else
+                            <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-14">
+                        @endif
+                    </div>
+                    <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
+                    <div class="text-center py-1 text-[7pt] min-h-[14pt]">{{ $govId?->date_accomplished ?? '' }}</div>
+                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt]">Date Accomplished</div>
+                </div>
+            </td>
+
+            {{-- Thumbmark Rowspan starts here --}}
+            <td colspan="5" class="text-center align-bottom p-2 border-l-0 border-t-0 border-b-black">
+                <div class="thumb-box flex flex-col">
+                    <div class="grow bg-white"></div>
+                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[6.5pt]">
+                        Right Thumbmark
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        {{-- SUBSCRIBED AND SWORN --}}
+        <tr>
+            <td colspan="19" class="text-center p-3 text-[7.5pt] border-b-0 border-2 border-black">
+                <span class="uppercase">SUBSCRIBED AND SWORN</span> to before me this <span class="px-16 border-b border-black"></span>, affiant exhibiting his/her validly issued government ID as indicated above.
+            </td>
+        </tr>
+
+        {{-- PERSON ADMINISTERING OATH --}}
+        <tr>
+            <td colspan="19" class="p-4 pt-0 border-t-0">
+                <div class="ml-60 w-full max-w-[235pt] border-2 border-black">
+                    <div class="p-6 text-center text-red-500 text-[7pt] leading-tight font-bold">
+                        (wet signature/e-signature/digital certificate except for notary public)
+                    </div>
+                    <div class="bg-gray-100 border-t border-black text-center py-1 text-[7pt] normal-case">
+                        Person Administering Oath
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div class="text-right italic text-[6.5pt]">CS FORM 212 (Revised 2025), Page 4 of 4</div>
 </div>
 
 </body>
