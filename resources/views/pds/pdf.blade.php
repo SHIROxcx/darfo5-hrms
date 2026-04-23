@@ -10,6 +10,7 @@
         theme: {
             extend: {
                 fontFamily: {
+                    sans: ['"Arial Narrow"', 'Arial', 'sans-serif'],
                     'narrow': ['"Arial Narrow"', 'Arial', 'sans-serif'],
                 },
             }
@@ -26,7 +27,16 @@
         font-stretch: condensed;
     }
 
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 7pt; color: #000; background: #fff; }
+    body { 
+        font-family: "Arial Narrow", Arial, Helvetica, sans-serif; 
+        font-size: 7pt; 
+        color: #000; 
+        background: #fff; 
+    }
+
+    .pds_header {
+        font-family: Arial !important;
+    }
 
     /* Page dimensions: 8.5in × 13in with padding */
     .page {
@@ -51,7 +61,7 @@
     }
     .thumb-box {
         width: 4.5cm;
-        height: 3.5cm;
+        height: 3.7cm;
         border: 2px solid black;
         margin: 0 auto;
         background-color: white;
@@ -64,7 +74,6 @@
         border-top: 0px;
     }
 
-    /* Table cells need specific sizing for PDF accuracy */
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     td, th {
         border: 1px solid #000;
@@ -150,6 +159,7 @@
         $note = 'bg-gray-100 text-center italic text-[7pt] text-red-500 font-bold border-2 border-black'; // continue note
         $sig  = 'border-2 border-black align-middle text-center text-[7pt] font-semibold';
 
+        // Custom checkbox
         function checkbox($checked = false) {
             $checkClass = $checked 
                 ? 'bg-white border-black flex items-center justify-center' 
@@ -178,8 +188,8 @@
             
             <tr>
                 <td class="relative p-0.5 text-[6.5pt]">
-                    <p class="absolute italic font-semibold text-[8pt]">CS Form No. 212<span class="block font-normal text-[7pt]">Revised 2025 <span/></p>
-                    <p class="text-center text-[22pt] font-black tracking-wide my-2">PERSONAL DATA SHEET</p>
+                    <p class="absolute italic font-bold text-[8pt]">CS Form No. 212<span class="block font-normal text-[7pt]">Revised 2025 <span/></p>
+                    <p class="pds_header text-center text-[22pt] font-black tracking-wide my-3">PERSONAL DATA SHEET</p>
                     <p class="text-[7.5pt] italic font-semibold"><span class="uppercase">WARNING:</span> Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
                     <p class="text-[7.5pt] font-semibold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
                     <p class="text-[7.5pt] font-light tracking-tight">Print legibly if accomplished through own handwriting. Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="font-semibold text-[8pt]">DO NOT ABBREVIATE.</span></p>
@@ -196,11 +206,11 @@
         {{-- Name rows --}}
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">1. SURNAME</td>
-            <td colspan="16" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->last_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->last_name ?? '') }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">2. FIRST NAME</td>
-            <td colspan="11" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->first_name ?? '') }}</td>
+            <td colspan="11" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->first_name ?? '') }}</td>
             <td colspan="5" class="align-start px-1 bg-gray-100 text-[7pt]">
                 <span>NAME EXTENSION (JR., SR)</span>
                 <span class="font-semibold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
@@ -208,28 +218,28 @@
         </tr>
         <tr style="height:17pt;border-bottom:2px solid #000;">
             <td colspan="3" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
-            <td colspan="16" class="font-semibold text-[8pt] align-middle px-2">{{ strtoupper($user->middle_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->middle_name ?? '') }}</td>
         </tr>
 
         {{-- 3, 4, 5: Birth Info + 16. Citizenship (Spans 3 Rows) --}}
         <tr style="height:24pt;">
             <td colspan="3" class="{{ $lbl }} px-1"><strong>3.</strong> DATE OF BIRTH<br><span class="italic lowercase pl-3">(dd/mm/yyyy)</span></td>
-            <td colspan="4" class="{{ $val }} px-2 font-semibold">{{ $dob }}</td>
+            <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $dob }}</td>
             {{-- Citizenship Starts Here --}}
             <td colspan="4" rowspan="3" class="{{ $lbl }} text-start align-top text-[8pt] uppercase pt-0">
                 16. CITIZENSHIP<br><br>
                 <div class="normal-case text-center mt-3 text-[7pt]">If holder of dual citizenship,<br><br>please indicate the details.</div>
             </td>
             <td colspan="8" rowspan="3" class="align-top text-[7pt]">
-                <div class="flex gap-4 mb-2 pt-2 px-2">
-                    <span>{!! checkbox($pi?->citizenship == 'Filipino') !!} Filipino</span>
-                    <span>{!! checkbox($pi?->citizenship == 'Dual Citizenship') !!} Dual Citizenship</span>
+                <div class="flex gap-2 mb-2 pt-2">
+                    <p>{!! checkbox($pi?->citizenship == 'Filipino') !!} <span>Filipino</span></p>
+                    <p>{!! checkbox($pi?->citizenship == 'Dual Citizenship') !!} <span>Dual Citizenship</span></p>
                 </div>
-                <div class="pl-20 mb-2">
-                    {!! cb($pi?->dual_type == 'birth') !!} by birth &nbsp; 
-                    {!! cb($pi?->dual_type == 'naturalization') !!} by naturalization
+                <div class="flex gap-2 pl-20 mb-2">
+                    <p>{!! checkbox($pi?->dual_type == 'birth') !!} <span>by birth</span></p>
+                    <p>{!! checkbox($pi?->dual_type == 'naturalization') !!} <span>by naturalization</span></p>
                 </div>
-                <div class="text-[8pt] pl-20">Pls. indicate country:</div>
+                <div class="text-[8pt] pl-24">Pls. indicate country:</div>
                 <div class="w-full min-h-5">
                     <select name="dual_contry" id="dual_contry" class="w-full h-7 mt-2 bg-white border border-black">
                         <option value="" selected>{{ $pi?->dual_country ?? '' }}</option>
@@ -239,21 +249,21 @@
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">4. PLACE OF BIRTH</td>
-            <td colspan="4" class="{{ $val }} px-2 font-semibold">{{ $pi?->birth_place ?? '' }}</td>
+            <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $pi?->birth_place ?? '' }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">5. SEX AT BIRTH</td>
-            <td colspan="4" class="align-middle px-2 text-[8pt]">
+            <td colspan="4" class="align-middle px-1 text-[8pt]">
                 <span>{!! checkbox($pi?->sex === 'Male') !!} Male </span>
-                <span class="ml-8">{!! checkbox($pi?->sex === 'Female') !!} Female</span>
+                <span class="ml-12">{!! checkbox($pi?->sex === 'Female') !!} Female</span>
             </td>
         </tr>
 
         {{-- 6, 7, 8: Physical Info + 17. Residential Address (Spans 3 Rows) --}}
         <tr style="height:45pt;">
             <td colspan="3" class="{{ $lbl }} align-top px-1">6. CIVIL STATUS</td>
-            <td colspan="4" class="align-top p-2 py-1 text-[8pt]">
-                <div class="grid grid-cols-2 gap-y-1">
+            <td colspan="4" class="align-top p-1 py-1 text-[8pt]">
+                <div class="grid grid-cols-2 gap-y-1 gap-x-3">
                     @foreach(['Single', 'Married', 'Widowed', 'Separated'] as $s)
                         <div>{!! checkbox($cs === $s) !!} {{ $s }}</div>
                     @endforeach
@@ -349,7 +359,7 @@
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-b-gray-100">22. SPOUSE'S SURNAME</td>
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? '') }}</td>
             <td colspan="5" class="{{ $lbl }} text-[6pt] align-middle">23. NAME of CHILDREN <span class="normal-case text-[6.5pt]">(Write full name and list all)</span></td>
-            <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle">DATE OF BIRTH<span class="normal-case text-[6.5pt]"> (dd/mm/yyyy)</span></td>
+            <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle text-center">DATE OF BIRTH<span class="normal-case text-[6.5pt]"> (dd/mm/yyyy)</span></td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
@@ -436,7 +446,7 @@
             <td class="{{ $lbl }} text-[6pt] normal-case">To</td>
         </tr>
         @foreach([['ELEMENTARY','Elementary'],['SECONDARY','Secondary'],['VOCATIONAL / TRADE COURSE','Vocational'],['COLLEGE','College'],['GRADUATE STUDIES','Graduate Studies']] as [$eLabel,$eKey])
-        <tr style="height:16pt;">
+        <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 align-middle">{{ $eLabel }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'school_name') }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'course') }}</td>
@@ -450,9 +460,9 @@
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 1 Signature --}}
-        <tr style="height:20pt;">
+        <tr style="height:22pt;">
             {{-- Signature Label (3 cols) --}}
-            <td colspan="3" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+            <td colspan="3" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
             {{-- Signature Value (8 cols to reach 11) --}}
             <td colspan="8" class="{{ $sig }} text-center align-middle">
@@ -464,7 +474,7 @@
             </td>
 
             {{-- Date Label --}}
-            <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+            <td colspan="2" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">DATE</td>
             
             {{-- Date Value --}}
             <td colspan="6" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
@@ -545,7 +555,7 @@
         {{-- Page 2 Signature --}}
         <tr style="height:20pt;">
             {{-- Signature Label (3 cols) --}}
-            <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+            <td colspan="4" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
             {{-- Signature Value (8 cols to reach 11) --}}
             <td colspan="7" class="{{ $sig }} text-center align-middle">
@@ -557,7 +567,7 @@
             </td>
 
             {{-- Date Label (3 cols to reach 14) --}}
-            <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+            <td colspan="4" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">DATE</td>
             
             {{-- Date Value (4 cols to reach 18) --}}
             <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
@@ -644,7 +654,7 @@
     {{-- Page 3 Signature --}}
         <tr style="height:20pt;">
             {{-- Signature Label (3 cols) --}}
-            <td colspan="5" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+            <td colspan="5" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
             {{-- Signature Value (8 cols to reach 11) --}}
             <td colspan="6" class="{{ $sig }} text-center align-middle">
@@ -656,7 +666,7 @@
             </td>
 
             {{-- Date Label (3 cols to reach 14) --}}
-            <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+             <td colspan="4" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">DATE</td>
             
             {{-- Date Value (4 cols to reach 18) --}}
             <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
@@ -1012,10 +1022,10 @@
         {{-- GOV ID & SIGNATURE --}}
         <tr>
             {{-- ID Block --}}
-            <td colspan="7" class="align-top p-2 border-0 border-r-0">
+            <td colspan="7" class="align-top p-2 py-1.5 border-0 border-r-0">
                 <div class="border-2 border-black h-full">
-                    <div class="bg-gray-100 border-b border-black p-1 text-[6.5pt] leading-tight">
-                        Government Issued ID <span class="text-[6pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
+                    <div class="bg-gray-100 border-b border-black p-1 text-[8pt] leading-tight">
+                        Government Issued ID <span class="text-[7pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
                         <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
                     </div>
                     <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-semibold uppercase">{{ $govId?->id_type ?? '' }}</span></div>
@@ -1024,9 +1034,9 @@
                 </div>
             </td>
             {{-- Signature Block --}}
-            <td colspan="7" class="align-top p-2 pr-0 border-t-0 border-r-0 border-l-0">
+            <td colspan="7" class="align-top p-2 py-1.5 pr-0 border-t-0 border-r-0 border-l-0">
                 <div class="border-2 border-black h-full flex flex-col">
-                    <div class="grow flex items-center justify-center p-1 min-h-[55pt]">
+                    <div class="grow flex items-center justify-center p-1 min-h-20">
                         @if(empty($govId?->signature))
                             <span class="text-red-500 text-[7pt] text-center leading-tight">(wet signature/e-signature/digital certificate)</span>
                         @else
@@ -1040,10 +1050,10 @@
             </td>
 
             {{-- Thumbmark Rowspan starts here --}}
-            <td colspan="5" class="text-center align-bottom p-2 border-l-0 border-t-0 border-b-black">
+            <td colspan="5" class="text-center align-middle p-2 border-l-0 border-t-0 border-b-black">
                 <div class="thumb-box flex flex-col">
                     <div class="grow bg-white"></div>
-                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[6.5pt]">
+                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt]">
                         Right Thumbmark
                     </div>
                 </div>
@@ -1061,7 +1071,7 @@
         <tr>
             <td colspan="19" class="p-4 pt-0 border-t-0">
                 <div class="ml-60 w-full max-w-[235pt] border-2 border-black">
-                    <div class="p-6 text-center text-red-500 text-[7pt] leading-tight font-bold">
+                    <div class="py-8 text-center text-red-500 text-[7pt] leading-tight font-bold">
                         (wet signature/e-signature/digital certificate except for notary public)
                     </div>
                     <div class="bg-gray-100 border-t border-black text-center py-1 text-[7pt] normal-case">
