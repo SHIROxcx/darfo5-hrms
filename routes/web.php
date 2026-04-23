@@ -119,7 +119,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
     Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
-    
 
     // PDF Download
     Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');

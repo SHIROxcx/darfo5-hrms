@@ -339,29 +339,29 @@ class PdsController extends Controller
     private function saveQuestions(Request $request, int $userId)
     {
         $data = $request->validate([
-            'q34_a' => 'nullable|boolean',
-            'q34_b' => 'nullable|boolean',
-            'q34_details' => 'nullable|string',
-            'q35_a' => 'nullable|boolean',
+            'q34_a'         => 'nullable|boolean',
+            'q34_b'         => 'nullable|boolean',
+            'q34_details'   => 'nullable|string',
+            'q35_a'         => 'nullable|boolean',
             'q35_a_details' => 'nullable|string',
-            'q35_b' => 'nullable|boolean',
-            'q35_b_date' => 'nullable|string',
-            'q35_b_status' => 'nullable|string',
-            'q36' => 'nullable|boolean',
-            'q36_details' => 'nullable|string',
-            'q37_a' => 'nullable|boolean',
-            'q37_a_details' => 'nullable|string',
-            'q37_b' => 'nullable|boolean',
-            'q37_b_details' => 'nullable|string',
-            'q38' => 'nullable|boolean',
-            'q38_details' => 'nullable|string',
-            'q39' => 'nullable|boolean',
-            'q39_details' => 'nullable|string',
-            'q40_a' => 'nullable|boolean',
+            'q35_b'         => 'nullable|boolean',
+            'q35_b_date'    => 'nullable|string',
+            'q35_b_status'  => 'nullable|string',
+            'q36'           => 'nullable|boolean',
+            'q36_details'   => 'nullable|string',
+            'q37'           => 'nullable|boolean',
+            'q37_details'   => 'nullable|string',
+            'q38_a'         => 'nullable|boolean',
+            'q38_a_details' => 'nullable|string',
+            'q38_b'         => 'nullable|boolean',
+            'q38_b_details' => 'nullable|string',
+            'q39'           => 'nullable|boolean',
+            'q39_details'   => 'nullable|string',
+            'q40_a'         => 'nullable|boolean',
             'q40_a_details' => 'nullable|string',
-            'q40_b' => 'nullable|boolean',
+            'q40_b'         => 'nullable|boolean',
             'q40_b_details' => 'nullable|string',
-            'q40_c' => 'nullable|boolean',
+            'q40_c'         => 'nullable|boolean',
             'q40_c_details' => 'nullable|string',
         ]);
 
@@ -373,21 +373,25 @@ class PdsController extends Controller
     private function saveReferences(Request $request, int $userId)
     {
         $request->validate([
-            'references' => 'required|array',
-            'references.*.name' => 'nullable|string',
-            'references.*.address' => 'nullable|string',
-            'references.*.telephone' => 'nullable|string',
+            'references'             => 'required|array|max:3',
+            'references.*.name'      => 'required|string|max:255',
+            'references.*.address'   => 'required|string|max:500',
+            'references.*.telephone' => 'required|string|max:255',
         ]);
 
         PdsReference::where('user_id', $userId)->delete();
-        foreach ($request->references as $i => $ref) {
-            PdsReference::create(array_merge($ref, [
-                'user_id' => $userId,
+
+        foreach ($request->input('references') as $i => $ref) {
+            PdsReference::create([
+                'user_id'    => $userId,
                 'sort_order' => $i,
-            ]));
+                'name'       => $ref['name'],
+                'address'    => $ref['address'],
+                'telephone'  => $ref['telephone'],
+            ]);
         }
 
-        return back()->with('success', 'References saved.');
+        return response()->json(['message' => 'References saved.']);
     }
 
     private function saveGovernmentId(Request $request, int $userId)

@@ -194,7 +194,7 @@ function PassportCropModal({
         canvas.width  = PASSPORT_W;
         canvas.height = PASSPORT_H;
         ctx.drawImage(imgRef.current!, crop.x, crop.y, crop.w, crop.h, 0, 0, PASSPORT_W, PASSPORT_H);
-        canvas.toBlob(blob => { if (blob) onSave(blob); }, 'image/jpeg', 0.92);
+        canvas.toBlob(blob => { if (blob) onSave(blob); }, 'image/png', 0.92);
     }, [crop, onSave]);
 
     const d = { x: crop.x * scale, y: crop.y * scale, w: crop.w * scale, h: crop.h * scale, imgW: nat.w * scale };
@@ -555,7 +555,11 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         if (submitted) setRefErrors(p => p.map((e, idx) => idx === i ? { ...e, [k]: undefined } : e));
     };
 
-    const addRef    = () => { setRefs(p => [...p, { name: '', address: '', telephone: '' }]); setRefErrors(p => [...p, {}]); };
+    const addRef = () => {
+        if (refs.length >= 3) return; 
+        setRefs(p => [...p, { name: '', address: '', telephone: '' }]);
+        setRefErrors(p => [...p, {}]);
+    };
     const removeRef = (i: number) => { setRefs(p => p.filter((_, idx) => idx !== i)); setRefErrors(p => p.filter((_, idx) => idx !== i)); };
 
     const setPassportPhoto = (file: File, url: string) => {
@@ -575,8 +579,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         if (submitted) setPhotoErrors(p => ({ ...p, date_accomplished: undefined }));
     };
 
-    // Submit
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitted(true);
 
@@ -604,14 +607,17 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
 
         setGovErrors({}); setRefErrors([]); setPhotoErrors({});
 
-        onSave('references',    { references: refs } as unknown as Record<string, unknown>);
-        onSave('government_id', govId as unknown as Record<string, unknown>);
+        try {
+            await onSave('references',    { references: refs } as unknown as Record<string, unknown>);
+            await onSave('government_id', govId as unknown as Record<string, unknown>);
 
-        const fd = new FormData();
-        if (decl.passport_photo) fd.append('passport_photo', decl.passport_photo);
-        if (decl.signature)      fd.append('signature',      decl.signature);
-        fd.append('date_accomplished', decl.date_accomplished);
-        onSave('declaration', Object.fromEntries(fd.entries()) as unknown as Record<string, unknown>);
+            const declData: Record<string, unknown> = { date_accomplished: decl.date_accomplished };
+            if (decl.passport_photo) declData.passport_photo = decl.passport_photo;
+            if (decl.signature)      declData.signature      = decl.signature;
+            await onSave('declaration', declData);
+        } catch {
+            // errors already handled inside onSave
+        }
     };
 
     return (
@@ -631,7 +637,8 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-green-700 uppercase">References</h3>
                     <button type="button" onClick={addRef}
-                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium cursor-pointer">
+                        disabled={refs.length >= 3} 
+                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                         <Plus className="w-3.5 h-3.5" /> Add Reference
                     </button>
                 </div>
@@ -671,7 +678,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             </div>
 
             {/* Declaration */}
-            <div>
+            {/* <div>
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
                     Declaration
                 </h3>
@@ -684,7 +691,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                         against me.
                     </p>
                 </div>
-            </div>
+            </div> */}
 
             {/* Government ID */}
             <div>

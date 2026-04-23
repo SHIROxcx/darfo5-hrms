@@ -159,6 +159,7 @@ export interface PdsReference {
     name?: string;
     address?: string;
     telephone?: string;
+
 }
 
 export interface PdsGovernmentId {
@@ -171,7 +172,7 @@ export interface PdsGovernmentId {
     date_accomplished?: string | null;
 }
 
-export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => void;
+export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => Promise<void>;
 
 export interface PdsData {
     personal?: PdsPersonalInfo | null;

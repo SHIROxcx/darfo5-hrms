@@ -410,7 +410,7 @@
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 1 Signature --}}
-        <tr style="height:16pt;">
+        <tr style="height:20pt;">
             {{-- Signature Label (3 cols) --}}
             <td colspan="3" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
             
@@ -439,11 +439,6 @@
 
 <div class="page">
     <table class="border-2 border-black">
-        <!-- <colgroup>
-            <col style="width:3%"><col style="width:5.5%"><col style="width:8.5%"><col style="width:9%">
-            <col style="width:7%"><col style="width:11.5%"><col style="width:6%"><col style="width:16%">
-            <col style="width:8%"><col style="width:9.5%"><col style="width:10%">
-        </colgroup> -->
 
         <tr><td colspan="19" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
         <tr style="height:20pt;">
@@ -508,7 +503,7 @@
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 2 Signature --}}
-        <tr style="height:17pt;">
+        <tr style="height:20pt;">
             {{-- Signature Label (3 cols) --}}
             <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
             
@@ -539,11 +534,6 @@
 {{-- ══════════════════════════════════════════════════ --}}
 <div class="page">
     <table class="border-2 border-black">
-    <!-- <colgroup>
-        <col style="width:3.5%"><col style="width:26%"><col style="width:3%"><col style="width:17.5%">
-        <col style="width:9%"><col style="width:9%"><col style="width:9.5%">
-        <col style="width:3%"><col style="width:4%"><col style="width:22%"><col style="width:3.5%">
-    </colgroup> -->
 
     <tr><td colspan="20" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
     <tr style="height:18pt;">
@@ -612,27 +602,27 @@
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
     {{-- Page 3 Signature --}}
-            <tr style="height:17pt;">
-                {{-- Signature Label (3 cols) --}}
-                <td colspan="5" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
-                
-                {{-- Signature Value (8 cols to reach 11) --}}
-                <td colspan="6" class="{{ $sig }} text-center align-middle">
-                    @if(empty($govId?->signature))
-                        <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
-                    @else
-                        <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
-                    @endif
-                </td>
+        <tr style="height:20pt;">
+            {{-- Signature Label (3 cols) --}}
+            <td colspan="5" class="{{ $lbl }} text-center border-2 border-black align-middle font-bold italic text-md">SIGNATURE</td>
+            
+            {{-- Signature Value (8 cols to reach 11) --}}
+            <td colspan="6" class="{{ $sig }} text-center align-middle">
+                @if(empty($govId?->signature))
+                    <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
+                @else
+                    <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-8 max-w-full mx-auto block">
+                @endif
+            </td>
 
-                {{-- Date Label (3 cols to reach 14) --}}
-                <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
-                
-                {{-- Date Value (4 cols to reach 18) --}}
-                <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold">
-                    {{ $govId?->date_accomplished ?? '' }}
-                </td>
-            </tr>
+            {{-- Date Label (3 cols to reach 14) --}}
+            <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
+            
+            {{-- Date Value (4 cols to reach 18) --}}
+            <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold">
+                {{ $govId?->date_accomplished ?? '' }}
+            </td>
+        </tr>
     </table>
     <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 3 of 4</p>
 </div>
@@ -646,77 +636,185 @@
     <table class="border-2 border-black">
         {{-- Q34 --}}
         <tr style="height:13pt;">
-            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">
-                <div class="flex">
+            <td colspan="11" class="text-[8pt] bg-gray-100">
+                <div class="flex normal-case">
                     <span>34.</span>
-                    <span>Are you related by consanguinity or affinity to the appointing or recommending authority, or to the</span>
+                    <p class="px-1">Are you related by consanguinity or affinity to the appointing or recommending authority, or to the chief of bureau or office or to the person who has immediate supervision over you in the Office, Bureau or Department where you will be appointed,</p>
                 </div>
+                <div class="px-4 normal-case space-y-2">
+                    <p>a. within the third degree?</p>
+                    <p>b. within the fourth degree (for Local Government Unit - Career Employees)?</p>
+                </div>
+                <div class="py-5"></div>
             </td>
-            <td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]">
+            <td colspan="8" class="align-bottom p-2 text-[8pt]">
                 <div class="mb-1">{!! yN($q?->q34_a) !!}</div>
                 <div class="mb-1">{!! yN($q?->q34_b) !!}</div>
-                <div class="text-[6pt]">If YES, give details:<br>{{ $q?->q34_details??'' }}</div></td>
-                <td rowspan="3" class="{{ $lbl }}"></td>
+                <div class="text-[7pt]">
+                    <p>If YES, give details:</p>
+                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q34_details??'' }}</p>
+                </div>
+            </td>
         </tr>
-        <tr style="height:12pt;">
-            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">chief of bureau or office or to the person who has immediate supervision over you in the Office,</td>
-        </tr>
-        <tr style="height:12pt;">
-            <td colspan="4" class="{{ $lbl }} text-[6.5pt]">Bureau or Department where you will be appointed,</td>
-        </tr>
-        <tr style="height:14pt;">
-            <td colspan="2" class="{{ $lbl }}"></td>
-            <td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">a. within the third degree?</td>
-            <td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td>
-        </tr>
-        <tr style="height:3pt;">
-            <td colspan="13" class="border-0 p-0"></td>
-        </tr>
-        <tr style="height:15pt;">
-            <td colspan="2" class="{{ $lbl }}"></td>
-            <td colspan="4" class="{{ $lbl }} text-[6.5pt] pl-2">b. within the fourth degree (for Local Government Unit - Career Employees)?</td>
-            <td colspan="6" class="{{ $lbl }}"></td>
-            <td class="{{ $lbl }}"></td>
-        </tr>
-
+        
         {{-- Q35 --}}
-        <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>35.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been found guilty of any administrative offense?</td><td colspan="6" rowspan="4" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q35_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q35_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q35_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q35_b_details??'' }}<br>Date Filed: {{ $q?->q35_b_date??'' }}<br>Status: {{ $q?->q35_b_status??'' }}</div></td><td rowspan="4" class="{{ $lbl }}"></td></tr>
-        <tr style="height:14pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
-        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you been criminally charged before any court?</td></tr>
-        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="2" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td class="{{ $lbl }} text-[5.5pt]">Date Filed:</td><td class="{{ $lbl }} text-[5.5pt]">Status:</td></tr>
+        <tr style="height:18pt;">
+            <td colspan="11" class=" text-[8pt] bg-gray-100">
+                <div class="flex normal-case">
+                    <span>35.</span>
+                    <p class="px-1">a. Have you ever been found guilty of any administrative offense?</p>
+                </div>
+                <div class="px-4 normal-case my-8">
+                    <p>b. Have you been criminally charged before any court?</p>
+                </div>
+            </td>
+            <td colspan="8" class="align-top text-[8pt]">
+                <div class="mb-2 border-b border-black p-2 pb-1">
+                    <div class="mb-0.5">{!! yN($q?->q35_a) !!}</div>
+                    <div class=" flex flex-col text-[7pt] mb-1">
+                        <p>If YES, give details: </p>
+                        <p class="border-b border-black mt-2 mx-2 ">{{ $q?->q35_a_details??'' }}</p>
+                    </div>
+                </div>
+                <div class="mb-2 p-2 pb-0">
+                    <div class="mb-0.5">{!! yN($q?->q35_b) !!}</div>
+                    <div class="text-[7pt] space-y-1">
+                        <p>If YES, give details: </p>
+                        <p>{{ $q?->q35_b_details??'' }}</p>
+                        <div class="flex ml-5">
+                            <p class="shrink-0">Date Filed:</p> 
+                            <p class="border-b border-black w-full ml-3 mr-2">{{ $q?->q35_b_date??'' }}</p>
+                        </div>
+                        <div class="flex">
+                            <span class="shrink-0">Status of Case/s: </span>
+                            <p class="border-b border-black mx-2 w-full">{{ $q?->q35_b_status??'' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
 
         {{-- Q36 --}}
-        <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>36.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q36) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q36_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
-        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:18pt;">
+            <td colspan="11" class="text-[8pt] bg-gray-100">
+                <div class="flex normal-case mb-8">
+                    <p>36.</p>
+                    <p class="px-2">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal</p>
+                </div>
+            </td>
+            <td colspan="8" class="align-top p-2 text-[8pt]">
+                <div class="mb-0.5">{!! yN($q?->q36) !!}</div>
+                <div class="text-[7pt]">
+                    <p>If YES, give details:</p> 
+                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q36_details??'' }}</p>
+                </div>
+            </td>
+        </tr>
 
         {{-- Q37 (separation) --}}
-        <tr style="height:14pt;"><td colspan="2" rowspan="3" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>37.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you ever been separated from the service in any of the following modes: resignation, retirement,</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q38) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q38_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
-        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">dropped from the rolls, dismissal, termination, end of term, finished contract or phased out</td></tr>
-        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">(abolition) in the public or private sector?</td></tr>
-        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:14pt;">
+            <td colspan="11" class="text-[8pt] bg-gray-100">
+                <div class="flex normal-case mb-2">
+                    <p>37.</p>
+                    <p class="px-2">Have you ever been separated from the service in any of the following modes: resignation, retirement, dropped from the rolls, dismissal, termination, end of term, finished contract or phased out (abolition) in the public or private sector?</p>
+                </div>
+            </td>
+            <td colspan="8" class="align-top p-2 text-[8pt]">
+                <div class="mb-0.5">{!! yN($q?->q37) !!}</div>
+                <div class="text-[7pt]">
+                    <p>If YES, give details: </p>
+                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q37_details??'' }}</p>
+                </div>
+            </td>
+        </tr>
 
         {{-- Q38 (candidacy) --}}
-        <tr style="height:18pt;"><td colspan="2" rowspan="2" class="{{ $lbl }} text-center align-middle" style="font-size:8pt;"><strong>38.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">a. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</td><td colspan="6" rowspan="3" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q37_a) !!}</div><div class="text-[6pt] mb-1">If YES, give details: {{ $q?->q37_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q37_b) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q37_b_details??'' }}</div></td><td rowspan="3" class="{{ $lbl }}"></td></tr>
-        <tr style="height:12pt;"><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details:</td></tr>
-        <tr style="height:14pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">b. Have you resigned from the government service during the three (3)-month period before the last election to promote/actively campaign for a national or local candidate?</td></tr>
+        <tr style="height:18pt;">
+            <td colspan="11" class="text-[8pt] bg-gray-100">
+                <div class="flex normal-case mb-3">
+                    <p>38.</p>
+                    <p class="px-1">a. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</p>
+                </div>
+                <div class="px-4 normal-case mb-2">
+                    <p>b. Have you resigned from the government service during the three (3)-month period before the last election to promote/actively campaign for a national or local candidate?</p>
+                </div>
+            </td>
+            <td colspan="8" class="align-top p-2 text-[8pt]">
+                <div class="mb-0.5">{!! yN($q?->q38_a) !!}</div>
+                <div class="flex gap-1 text-[7pt] mb-1">
+                    <p class="shrink-0">If YES, give details:</p> 
+                    <p class="border-b border-black mr-2 w-full">{{ $q?->q38_a_details??'' }}</p>
+                </div>
+                <div class="mb-0.5">{!! yN($q?->q38_b) !!}</div>
+                <div class="flex gap-1 text-[7pt]">
+                    <p class="shrink-0">If YES, give details: </p>
+                    <p class="border-b border-black mr-2 w-full">{{ $q?->q38_b_details??'' }}</p>
+                </div>
+            </td>
+         </tr>
 
         {{-- Q39 --}}
-        <tr style="height:18pt;"><td colspan="2" class="{{ $lbl }} text-center" style="font-size:8pt;"><strong>39.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Have you acquired the status of an immigrant or permanent resident of another country?</td><td colspan="6" class="align-top p-1 text-[7pt]"><div class="mb-0.5">{!! yN($q?->q39) !!}</div><div class="text-[6pt]">If YES, give details: {{ $q?->q39_details??'' }}</div></td><td class="{{ $lbl }}"></td></tr>
-        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, give details (country):</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:18pt;">
+            <td colspan="11" class="text-[8pt] bg-gray-100">
+                <div class="flex normal-case">
+                    <p>39.</p>
+                    <p class="px-1">Have you acquired the status of an immigrant or permanent resident of another country?</p>
+                </div>
+            </td>
+            <td colspan="8" class="align-top p-2 text-[8pt]">
+                <div class="mb-0.5">{!! yN($q?->q39) !!}</div>
+                <div class="text-[7pt]">
+                    <p>If YES, give details (country): </p>
+                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q39_details??'' }}</p>
+                </div>
+            </td>
+        </tr>
 
         {{-- Q40 --}}
-        <tr style="height:41pt;"><td colspan="2" class="{{ $lbl }} align-top text-center pt-1" style="font-size:8pt;"><strong>40.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt] align-top">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</td><td colspan="6" class="align-top p-1 text-[7pt]" rowspan="6"><div class="mb-0.5">{!! yN($q?->q40_a) !!}</div><div class="text-[6pt] mb-1">If YES, specify: {{ $q?->q40_a_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_b) !!}</div><div class="text-[6pt] mb-1">If YES, specify ID No: {{ $q?->q40_b_details??'' }}</div><div class="mb-0.5">{!! yN($q?->q40_c) !!}</div><div class="text-[6pt]">If YES, specify ID No: {{ $q?->q40_c_details??'' }}</div></td><td rowspan="6" class="{{ $lbl }}"></td></tr>
-        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>a.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a member of any indigenous group?</td></tr>
-        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify:</td></tr>
-        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>b.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a person with disability?</td></tr>
-        <tr style="height:15pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td></tr>
-        <tr style="height:13pt;"><td colspan="2" class="{{ $lbl }} text-[6.5pt]"><strong>c.</strong></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">Are you a solo parent?</td></tr>
-        <tr style="height:12pt;"><td colspan="2" class="{{ $lbl }}"></td><td colspan="4" class="{{ $lbl }} text-[6.5pt]">If YES, please specify ID No:</td><td colspan="6" class="{{ $lbl }}"></td><td class="{{ $lbl }}"></td></tr>
+        <tr style="height:41pt;">
+            <td colspan="11" class="text-[8pt] align-top bg-gray-100">
+                <div class="flex normal-case">
+                    <p>40.</p>
+                    <p class="px-2">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</p>
+                </div>
+                <div class="normal-case space-y-4 mb-4">
+                    <div class="flex">
+                        <p>a.</p>
+                        <p class="px-4">Are you a member of any indigenous group?</p>
+                    </div>
+                    <div class="flex">
+                        <p>b.</p>
+                        <p class="px-4">Are you a person with disability?</p>
+                    </div>
+                    <div class="flex">
+                        <p>c.</p>
+                        <p class="px-4">Are you a solo parent?</p>
+                    </div>
+                </div>
+            </td>
+            <td colspan="8" class="align-bottom p-2 text-[7=8pt]">
+                <div class="mb-0.5">{!! yN($q?->q40_a) !!}</div>
+                <div class="flex gap-1 text-[7pt] mb-1">
+                    <p class="shrink-0">If YES, specify: </p>
+                    <p class="border-b border-black ml-8 mr-2 w-full">{{ $q?->q40_a_details??'' }}</p>
+                </div>
+                <div class="mb-0.5">{!! yN($q?->q40_b) !!}</div>
+                <div class="flex gap-1 text-[7pt] mb-1">
+                    <p class="shrink-0">If YES, specify ID No: </p>
+                    <p class="border-b border-black ml-1 mr-2 w-full">{{ $q?->q40_b_details??'' }}</p>
+                </div>
+                <div class="mb-0.5">{!! yN($q?->q40_c) !!}</div>
+                <div class="flex gap-1 text-[7pt]">
+                    <p class="shrink-0">If YES, specify ID No: </p>
+                    <p class="border-b border-black ml-1 mr-2 w-full">{{ $q?->q40_c_details??'' }}</p>
+                </div>
+            </td>
+        </tr>
 
         {{-- 41. REFERENCES + PHOTO --}}
         <tr>
-            <td colspan="14" class="{{ $lbl }}  text-[6.5pt] p-1 border-b-0 border-t-2 border-black">
-                41. REFERENCES <span class="font-semibold normal-case">(Person not related by consanguinity or affinity to applicant/appointee)</span>
+            <td colspan="14" class="text-[8pt] p-1 border-b-0 border-t-2 border-black bg-gray-100">
+                41. REFERENCES <span class="font-semibold normal-case text-[7pt]">(Person not related by consanguinity or affinity to applicant/appointee)</span>
             </td>
             <td colspan="5" rowspan="6" class="text-center align-middle border-b-0 border-l-2 border-t-2 border-black">
                 <div class="photo-box mt-5">
@@ -733,23 +831,23 @@
         </tr>
 
         <tr style="height:20pt;" class="uppercase">
-            <td colspan="6" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">NAME</td>
-            <td colspan="5" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">OFFICE / RESIDENTIAL ADDRESS</td>
-            <td colspan="3" class="{{ $lbl }} text-center text-[6pt] border-y align-middle">CONTACT NO. <br> AND/OR EMAIL</td>
+            <td colspan="6" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">NAME</td>
+            <td colspan="5" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">OFFICE / RESIDENTIAL ADDRESS</td>
+            <td colspan="3" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">CONTACT NO. <br> AND/OR EMAIL</td>
         </tr>
 
         @for($i=0; $i<3; $i++)
         @php $ref = $refs[$i] ?? null; @endphp
-        <tr style="height:20pt;">
+        <tr style="height:20pt;" class="uppercase">
             <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? '' }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? '' }}</td>
-            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->telephone ?? '' }}</td>
+            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y lowercase">{{ $ref?->telephone ?? '' }}</td>
         </tr>
         @endfor
 
         {{-- 42. DECLARATION + THUMBMARK (Start) --}}
         <tr style="height:22pt;">
-            <td colspan="14" class="align-top text-[8pt] p-1 text-justify normal-case border-b-black border-2">
+            <td colspan="14" class="align-top text-[8pt] p-1 text-justify normal-case border-b-black border-2 bg-gray-100">
                 <div class="flex">
                     <span>42.</span>
                     <p class="px-2 leading-tight">
@@ -768,9 +866,9 @@
                         Government Issued ID <span class="text-[6pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
                         <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
                     </div>
-                    <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-bold">{{ $govId?->id_type ?? '' }}</span></div>
-                    <div class="py-2 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-bold">{{ $govId?->id_number ?? '' }}</span></div>
-                    <div class="py-2 text-[7pt]">Date/Place of Issuance: <span class="font-bold">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
+                    <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-semibold uppercase">{{ $govId?->id_type ?? '' }}</span></div>
+                    <div class="py-2 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-semibold uppercase">{{ $govId?->id_number ?? '' }}</span></div>
+                    <div class="py-2 text-[7pt]">Date/Place of Issuance: <span class="font-semibold uppercase">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
                 </div>
             </td>
             {{-- Signature Block --}}
@@ -785,7 +883,7 @@
                     </div>
                     <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
                     <div class="text-center py-1 text-[7pt] min-h-[14pt]">{{ $govId?->date_accomplished ?? '' }}</div>
-                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt]">Date Accomplished</div>
+                    <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt] ">Date Accomplished</div>
                 </div>
             </td>
 

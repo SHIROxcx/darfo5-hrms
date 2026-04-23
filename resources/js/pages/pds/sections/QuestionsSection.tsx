@@ -273,7 +273,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     </p>
                     <RadioGroup qKey="q37" />
                     {form.q37 === true && (
-                        <div id="field-q37_a_details" className="mt-2">
+                        <div id="field-q37" className="mt-2">
                             <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                             <input type="text" value={form.q37_details ?? ''}
                                 onChange={e => set('q37_details', e.target.value)}
@@ -293,7 +293,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                         <div>
                             <RadioGroup qKey="q38_a" />
                             {form.q38_a === true && (
-                                <div id="field-q38_details" className="mt-2">
+                                <div id="field-q38_a_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
                                     <input type="text" value={form.q38_a_details ?? ''}
                                         onChange={e => set('q38_a_details', e.target.value)}

@@ -43,7 +43,7 @@ const SECTIONS = [
     { id: 'trainings',     label: 'VII. Learning & Development',   icon: BookMarked, page: 3 },
     { id: 'other_info',    label: 'VIII. Other Information',       icon: Info,       page: 3 },
     { id: 'questions',     label: 'IX. Questions',                 icon: HelpCircle, page: 4 },
-    { id: 'references',    label: "X. References & Gov't ID",      icon: UserCheck,  page: 4 },
+    { id: 'references',    label: "X. References & Photo",      icon: UserCheck,  page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -152,67 +152,43 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const completedCount = SECTIONS.filter(s => getSectionCompletion(s.id, pdsData)).length;
     const progressPct = Math.round((completedCount / SECTIONS.length) * 100);
 
-    const handleSave: PdsSaveCallback = (section, data) => {
+    const handleSave: PdsSaveCallback = async (section, data) => {
         setSaving(true);
+        const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+        const hasFiles = Object.values(data).some(v => v instanceof File);
 
-        // If data contains File objects (declaration section), use native fetch with FormData
-        const hasFiles = data && Object.values(data).some(v => v instanceof File);
-
-        if (hasFiles) {
-            const fd = new FormData();
-            // Inertia CSRF token
-            const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
-            Object.entries(data).forEach(([k, v]) => {
-                if (v instanceof File) fd.append(k, v);
-                else if (v !== null && v !== undefined) fd.append(k, String(v));
-            });
-            // Inertia expects _method for method spoofing; POST is fine here
-            fetch(`/pds/save/${section}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': token,
-                    'X-Inertia': 'true',
-                    'X-Inertia-Version': (window as any).__inertia_version ?? '',
-                    'Accept': 'text/html, application/xhtml+xml',
-                },
-                body: fd,
-            })
-                .then(res => {
-                    if (res.ok) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Saved!',
-                            text: 'Your information has been saved successfully.',
-                            confirmButtonColor: '#16a34a',
-                            timer: 1500,
-                            timerProgressBar: true,
-                        });
-                        // Reload the page data via Inertia to reflect saved state
-                        router.reload({ only: ['pdsData'] });
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save. Please try again.', confirmButtonColor: '#dc2626' });
-                    }
-                })
-                .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Network error. Please try again.', confirmButtonColor: '#dc2626' }))
-                .finally(() => setSaving(false));
-            return;
-        }
-
-        // Regular JSON save via Inertia
-        router.post(`/pds/save/${section}`, data as any, {
-            preserveScroll: true,
-            onSuccess: () => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saved!',
-                    text: 'Your information has been saved successfully.',
-                    confirmButtonColor: '#16a34a',
-                    timer: 1500,
-                    timerProgressBar: true,
+        try {
+            let res: Response;
+            if (hasFiles) {
+                const fd = new FormData();
+                Object.entries(data).forEach(([k, v]) => {
+                    if (v instanceof File) fd.append(k, v);
+                    else if (v !== null && v !== undefined) fd.append(k, String(v));
                 });
-            },
-            onFinish: () => setSaving(false),
-        });
+                res = await fetch(`/pds/save/${section}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': token },
+                    body: fd,
+                });
+            } else {
+                res = await fetch(`/pds/save/${section}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+            }
+
+            if (!res.ok) throw new Error('Save failed');
+        } catch (e){
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save. Please try again.', confirmButtonColor: '#dc2626' });
+            throw e;
+        } finally {
+            setSaving(false);
+        }
     };
 
     const renderSection = () => {
