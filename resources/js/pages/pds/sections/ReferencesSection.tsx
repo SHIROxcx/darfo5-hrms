@@ -607,16 +607,22 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
 
         setGovErrors({}); setRefErrors([]); setPhotoErrors({});
 
-        try {
-            await onSave('references',    { references: refs } as unknown as Record<string, unknown>);
-            await onSave('government_id', govId as unknown as Record<string, unknown>);
+        // Build a single payload combining all three sections
+        const payload: Record<string, unknown> = {
+            references:        refs,
+            id_type:           govId.id_type,
+            id_number:         govId.id_number,
+            date_of_issuance:  govId.date_of_issuance,
+            place_of_issuance: govId.place_of_issuance,
+            date_accomplished: decl.date_accomplished,
+        };
+        if (decl.passport_photo) payload.passport_photo = decl.passport_photo;
+        if (decl.signature)      payload.signature      = decl.signature;
 
-            const declData: Record<string, unknown> = { date_accomplished: decl.date_accomplished };
-            if (decl.passport_photo) declData.passport_photo = decl.passport_photo;
-            if (decl.signature)      declData.signature      = decl.signature;
-            await onSave('declaration', declData);
-        } catch {
-            // errors already handled inside onSave
+        try {
+            await onSave('references', payload);
+        } catch (e) {
+            // error toast already shown inside onSave
         }
     };
 

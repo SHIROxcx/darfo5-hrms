@@ -99,8 +99,35 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
     const [errors, setErrors]       = useState<FormErrors>({});
 
     const set = (key: keyof PdsQuestion, val: unknown) => {
-        setForm(prev => ({ ...prev, [key]: val }));
-        if (submitted) setErrors(prev => ({ ...prev, [key]: undefined }));
+        setForm(prev => {
+            const next = { ...prev, [key]: val };
+
+            // If a parent question is set to NO (false)
+            // reset its dependent detail fields.
+            if (val !== true) {
+                CONDITIONAL_DETAILS.forEach(item => {
+                    if (item.parentKey === key) {
+                        // Only clear if no OTHER parent for this detail is currently TRUE
+                        // (Relevant for Q34 where both 34a and 34b share 'q34_details')
+                        const hasOtherActiveParent = CONDITIONAL_DETAILS.some(
+                            d => d.detailKey === item.detailKey && 
+                                d.parentKey !== key && 
+                                next[d.parentKey] === true
+                        );
+
+                        if (!hasOtherActiveParent) {
+                            (next as any)[item.detailKey] = '';
+                        }
+                    }
+                });
+            }
+
+            return next;
+        });
+
+        if (submitted) {
+            setErrors(prev => ({ ...prev, [key]: undefined }));
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {

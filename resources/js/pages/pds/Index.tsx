@@ -183,7 +183,21 @@ export default function PdsIndex({ user, pdsData }: Props) {
             }
 
             if (!res.ok) throw new Error('Save failed');
-        } catch (e){
+
+            // ✅ Show success toast after every successful save
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: 'Your information has been saved successfully.',
+                confirmButtonColor: '#16a34a',
+                timer: 1500,
+                timerProgressBar: true,
+                showConfirmButton: false,
+            });
+
+            router.reload({ only: ['pdsData'] });
+
+        } catch (e) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save. Please try again.', confirmButtonColor: '#dc2626' });
             throw e;
         } finally {

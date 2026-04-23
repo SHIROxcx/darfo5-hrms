@@ -76,10 +76,33 @@
         overflow: hidden;
     }
 
-    /* Checkbox simulation */
-    .cb { display: inline-block; width: 8px; height: 8px; border: 1px solid #000; margin-right: 2px; vertical-align: middle; background: #fff; }
-    .cb-on { background: #fff; }
-    .cb-on::after { content: "✓"; color: #000; font-size: 5pt; display: block; text-align: center; line-height: 8px; }
+    /* Custom Checkbox Container */
+    .checkbox-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .box {
+        width: 12px;
+        height: 12px;
+        border: 1px solid #000;
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-center: center;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    /* Checkmark */
+    .box.checked::after {
+        content: "✓";
+        font-size: 9pt;
+        font-weight: bold;
+        color: #000;
+        line-height: 1;
+    }
 
     .photo-box img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -126,13 +149,30 @@
         $sectionHeader  = 'bg-neutral-400 text-white font-narrow font-black italic text-[10pt] uppercase tracking-wide border-2 border-black py-0';
         $note = 'bg-gray-100 text-center italic text-[7pt] text-red-500 font-bold border-2 border-black'; // continue note
         $sig  = 'border-2 border-black align-middle text-center text-[7pt] font-semibold';
+
+        function checkbox($checked = false) {
+            $checkClass = $checked 
+                ? 'bg-white border-black flex items-center justify-center' 
+                : 'bg-white border-black flex items-center justify-center';
+            
+            $mark = $checked 
+                ? '<span class="text-[9pt] leading-none font-bold text-black">✓</span>' 
+                : '';
+
+            return "
+                <div class='inline-flex items-center gap-1 align-middle'>
+                    <div class='w-3 h-3 border $checkClass'>
+                        $mark
+                    </div>
+                </div>
+            ";
+        }
     @endphp
 
     {{-- ══════════════════════════════════════════════════ --}}
     {{-- PAGE 1 – Personal Info / Family / Education        --}}
     {{-- ══════════════════════════════════════════════════ --}}
     <div class="page">
-
         {{-- Header --}}
         <table class="border-2 border-b-0 border-black">
             
@@ -182,8 +222,8 @@
             </td>
             <td colspan="8" rowspan="3" class="align-top text-[7pt]">
                 <div class="flex gap-4 mb-2 pt-2 px-2">
-                    <span>{!! cb($pi?->citizenship == 'Filipino') !!} Filipino</span>
-                    <span>{!! cb($pi?->citizenship == 'Dual Citizenship') !!} Dual Citizenship</span>
+                    <span>{!! checkbox($pi?->citizenship == 'Filipino') !!} Filipino</span>
+                    <span>{!! checkbox($pi?->citizenship == 'Dual Citizenship') !!} Dual Citizenship</span>
                 </div>
                 <div class="pl-20 mb-2">
                     {!! cb($pi?->dual_type == 'birth') !!} by birth &nbsp; 
@@ -204,8 +244,8 @@
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">5. SEX AT BIRTH</td>
             <td colspan="4" class="align-middle px-2 text-[8pt]">
-                <span>{!! cb($pi?->sex === 'Male') !!} Male </span>
-                <span class="ml-10">{!! cb($pi?->sex === 'Female') !!} Female</span>
+                <span>{!! checkbox($pi?->sex === 'Male') !!} Male </span>
+                <span class="ml-8">{!! checkbox($pi?->sex === 'Female') !!} Female</span>
             </td>
         </tr>
 
@@ -215,10 +255,10 @@
             <td colspan="4" class="align-top p-2 py-1 text-[8pt]">
                 <div class="grid grid-cols-2 gap-y-1">
                     @foreach(['Single', 'Married', 'Widowed', 'Separated'] as $s)
-                        <div>{!! cb($cs === $s) !!} {{ $s }}</div>
+                        <div>{!! checkbox($cs === $s) !!} {{ $s }}</div>
                     @endforeach
                 </div>
-                <div class="mt-1">{!! cb(!in_array($cs, ['Single', 'Married', 'Widowed', 'Separated'])) !!} Other/s: <span class="pl-1">{{ !in_array($cs, ['Single', 'Married', 'Widowed', 'Separated']) ? $cs : '' }}</span></div>
+                <div class="mt-1">{!! checkbox(!in_array($cs, ['Single', 'Married', 'Widowed', 'Separated'])) !!} Other/s: <span class="pl-1">{{ !in_array($cs, ['Single', 'Married', 'Widowed', 'Separated']) ? $cs : '' }}</span></div>
             </td>
             {{-- Residential Address Starts Here --}}
             <td colspan="3" rowspan="3" class="{{ $lbl }} align-top pt-0">17. RESIDENTIAL ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
@@ -423,12 +463,12 @@
                 @endif
             </td>
 
-            {{-- Date Label (3 cols to reach 14) --}}
+            {{-- Date Label --}}
             <td colspan="2" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
             
-            {{-- Date Value (4 cols to reach 18) --}}
-            <td colspan="6" class="border-2 border-black align-middle px-2 text-center font-bold">
-                {{ $govId?->date_accomplished ?? '' }}
+            {{-- Date Value --}}
+            <td colspan="6" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
             </td>
         </tr>
         </table>
@@ -520,8 +560,8 @@
             <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
             
             {{-- Date Value (4 cols to reach 18) --}}
-            <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold">
-                {{ $govId?->date_accomplished ?? '' }}
+            <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
             </td>
         </tr>
     </table>
@@ -619,8 +659,8 @@
             <td colspan="4" class="{{ $lbl }} text-center border-2 border-black align-middle">DATE</td>
             
             {{-- Date Value (4 cols to reach 18) --}}
-            <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold">
-                {{ $govId?->date_accomplished ?? '' }}
+            <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
             </td>
         </tr>
     </table>
@@ -645,14 +685,34 @@
                     <p>a. within the third degree?</p>
                     <p>b. within the fourth degree (for Local Government Unit - Career Employees)?</p>
                 </div>
-                <div class="py-5"></div>
+                <div class="py-3"></div>
             </td>
             <td colspan="8" class="align-bottom p-2 text-[8pt]">
-                <div class="mb-1">{!! yN($q?->q34_a) !!}</div>
-                <div class="mb-1">{!! yN($q?->q34_b) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q34_a === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q34_a === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q34_b === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q34_b === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details:</p>
-                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q34_details??'' }}</p>
+                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q34_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -670,24 +730,44 @@
             </td>
             <td colspan="8" class="align-top text-[8pt]">
                 <div class="mb-2 border-b border-black p-2 pb-1">
-                    <div class="mb-0.5">{!! yN($q?->q35_a) !!}</div>
+                    <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q35_a === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q35_a === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                     <div class=" flex flex-col text-[7pt] mb-1">
                         <p>If YES, give details: </p>
-                        <p class="border-b border-black mt-2 mx-2 ">{{ $q?->q35_a_details??'' }}</p>
+                        <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q35_a_details??'' }}</p>
                     </div>
                 </div>
                 <div class="mb-2 p-2 pb-0">
-                    <div class="mb-0.5">{!! yN($q?->q35_b) !!}</div>
+                    <div class="flex items-center gap-4 mb-1">
+                        <div class="checkbox-container">
+                            <div class="box {{ $q?->q35_b === true ? 'checked' : '' }}"></div>
+                            <span class="text-[7pt]">YES</span>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <div class="box {{ $q?->q35_b === false ? 'checked' : '' }}"></div>
+                            <span class="text-[7pt]">NO</span>
+                        </div>
+                    </div>
                     <div class="text-[7pt] space-y-1">
                         <p>If YES, give details: </p>
                         <p>{{ $q?->q35_b_details??'' }}</p>
                         <div class="flex ml-5">
                             <p class="shrink-0">Date Filed:</p> 
-                            <p class="border-b border-black w-full ml-3 mr-2">{{ $q?->q35_b_date??'' }}</p>
+                            <p class="border-b border-black w-full ml-3 mr-2 font-semibold">{{ $q?->q35_b_date??'' }}</p>
                         </div>
                         <div class="flex">
                             <span class="shrink-0">Status of Case/s: </span>
-                            <p class="border-b border-black mx-2 w-full">{{ $q?->q35_b_status??'' }}</p>
+                            <p class="border-b border-black mx-2 w-full font-semibold">{{ $q?->q35_b_status??'' }}</p>
                         </div>
                     </div>
                 </div>
@@ -703,10 +783,19 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="mb-0.5">{!! yN($q?->q36) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q36 === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q36 === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details:</p> 
-                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q36_details??'' }}</p>
+                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q36_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -720,10 +809,19 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="mb-0.5">{!! yN($q?->q37) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q37 === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q37 === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details: </p>
-                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q37_details??'' }}</p>
+                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q37_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -740,15 +838,33 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="mb-0.5">{!! yN($q?->q38_a) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q38_a === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q38_a === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, give details:</p> 
-                    <p class="border-b border-black mr-2 w-full">{{ $q?->q38_a_details??'' }}</p>
+                    <p class="border-b border-black mr-2 w-full font-semibold">{{ $q?->q38_a_details??'' }}</p>
                 </div>
-                <div class="mb-0.5">{!! yN($q?->q38_b) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q38_b === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q38_b === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="flex gap-1 text-[7pt]">
                     <p class="shrink-0">If YES, give details: </p>
-                    <p class="border-b border-black mr-2 w-full">{{ $q?->q38_b_details??'' }}</p>
+                    <p class="border-b border-black mr-2 w-full font-semibold">{{ $q?->q38_b_details??'' }}</p>
                 </div>
             </td>
          </tr>
@@ -762,10 +878,19 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="mb-0.5">{!! yN($q?->q39) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q39 === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q39 === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details (country): </p>
-                    <p class="border-b border-black mt-2 mx-2">{{ $q?->q39_details??'' }}</p>
+                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q39_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -793,20 +918,47 @@
                 </div>
             </td>
             <td colspan="8" class="align-bottom p-2 text-[7=8pt]">
-                <div class="mb-0.5">{!! yN($q?->q40_a) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_a === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_a === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, specify: </p>
-                    <p class="border-b border-black ml-8 mr-2 w-full">{{ $q?->q40_a_details??'' }}</p>
+                    <p class="border-b border-black ml-8 mr-2 w-full font-semibold">{{ $q?->q40_a_details??'' }}</p>
                 </div>
-                <div class="mb-0.5">{!! yN($q?->q40_b) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_b === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_b === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, specify ID No: </p>
-                    <p class="border-b border-black ml-1 mr-2 w-full">{{ $q?->q40_b_details??'' }}</p>
+                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold">{{ $q?->q40_b_details??'' }}</p>
                 </div>
-                <div class="mb-0.5">{!! yN($q?->q40_c) !!}</div>
+                <div class="flex items-center gap-4 mb-1">
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_c === true ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">YES</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <div class="box {{ $q?->q40_c === false ? 'checked' : '' }}"></div>
+                        <span class="text-[7pt]">NO</span>
+                    </div>
+                </div>
                 <div class="flex gap-1 text-[7pt]">
                     <p class="shrink-0">If YES, specify ID No: </p>
-                    <p class="border-b border-black ml-1 mr-2 w-full">{{ $q?->q40_c_details??'' }}</p>
+                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold">{{ $q?->q40_c_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -882,7 +1034,7 @@
                         @endif
                     </div>
                     <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
-                    <div class="text-center py-1 text-[7pt] min-h-[14pt]">{{ $govId?->date_accomplished ?? '' }}</div>
+                    <div class="text-center py-1 text-[7pt] min-h-[14pt] uppercase">{{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}</div>
                     <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt] ">Date Accomplished</div>
                 </div>
             </td>

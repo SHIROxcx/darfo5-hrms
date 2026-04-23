@@ -76,10 +76,6 @@ class PdsController extends Controller
                 return $this->saveQuestions($request, $userId);
             case 'references':
                 return $this->saveReferences($request, $userId);
-            case 'government_id':
-                return $this->saveGovernmentId($request, $userId);
-            case 'declaration':
-                return $this->saveDeclaration($request, $userId);
             default:
                 return response()->json(['message' => 'Invalid section'], 400);
         }
@@ -377,10 +373,17 @@ class PdsController extends Controller
             'references.*.name'      => 'required|string|max:255',
             'references.*.address'   => 'required|string|max:500',
             'references.*.telephone' => 'required|string|max:255',
+            'id_type'                => 'required|string',
+            'id_number'              => 'required|string',
+            'date_of_issuance'       => 'required|string',
+            'place_of_issuance'      => 'required|string',
+            'date_accomplished'      => 'required|string',
+            'passport_photo'         => 'nullable|image|max:4096',
+            'signature'              => 'nullable|image|max:2048',
         ]);
 
+        // Save references
         PdsReference::where('user_id', $userId)->delete();
-
         foreach ($request->input('references') as $i => $ref) {
             PdsReference::create([
                 'user_id'    => $userId,
@@ -391,61 +394,38 @@ class PdsController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'References saved.']);
-    }
+        // Save government ID fields
+        $govUpdates = [
+            'id_type'           => $request->input('id_type'),
+            'id_number'         => $request->input('id_number'),
+            'date_of_issuance'  => $request->input('date_of_issuance'),
+            'place_of_issuance' => $request->input('place_of_issuance'),
+            'date_accomplished' => $request->input('date_accomplished'),
+        ];
 
-    private function saveGovernmentId(Request $request, int $userId)
-    {
-        $data = $request->validate([
-            'id_type' => 'nullable|string',
-            'id_number' => 'nullable|string',
-            'date_of_issuance' => 'nullable|string',
-            'place_of_issuance' => 'nullable|string',
-        ]);
-
-        PdsGovernmentId::updateOrCreate(['user_id' => $userId], $data);
-
-        return back()->with('success', 'Government ID saved.');
-    }
-
-    private function saveDeclaration(Request $request, int $userId)
-    {
-        $data = $request->validate([
-            'date_accomplished' => 'required|string',
-            'passport_photo'    => 'nullable|image|max:4096',
-            'signature'         => 'nullable|image|max:2048',
-        ]);
-
-        $updates = ['date_accomplished' => $data['date_accomplished']];
-
-        // Store passport photo
+        // Handle passport photo
         if ($request->hasFile('passport_photo')) {
-            // Delete old file if exists
             $existing = PdsGovernmentId::where('user_id', $userId)->value('passport_photo');
             if ($existing) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($existing);
             }
-            $updates['passport_photo'] = $request->file('passport_photo')
+            $govUpdates['passport_photo'] = $request->file('passport_photo')
                 ->store("pds/{$userId}", 'public');
         }
 
-        // Store signature
+        // Handle signature
         if ($request->hasFile('signature')) {
             $existing = PdsGovernmentId::where('user_id', $userId)->value('signature');
             if ($existing) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($existing);
             }
-            $updates['signature'] = $request->file('signature')
+            $govUpdates['signature'] = $request->file('signature')
                 ->store("pds/{$userId}", 'public');
         }
 
-        // Save to pds_government_id (where the columns are per migration)
-        PdsGovernmentId::updateOrCreate(
-            ['user_id' => $userId],
-            $updates
-        );
+        PdsGovernmentId::updateOrCreate(['user_id' => $userId], $govUpdates);
 
-        return back()->with('success', 'Declaration saved.');
+        return response()->json(['message' => 'Saved successfully.']);
     }
 
     private function getPdsData(int $userId): array
