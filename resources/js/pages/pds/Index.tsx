@@ -162,8 +162,14 @@ export default function PdsIndex({ user, pdsData }: Props) {
             if (hasFiles) {
                 const fd = new FormData();
                 Object.entries(data).forEach(([k, v]) => {
-                    if (v instanceof File) fd.append(k, v);
-                    else if (v !== null && v !== undefined) fd.append(k, String(v));
+                    if (v instanceof File) {
+                        fd.append(k, v);
+                    } else if (Array.isArray(v)) {
+                        // Serialize arrays (like references) as JSON string
+                        fd.append(k, JSON.stringify(v));
+                    } else if (v !== null && v !== undefined) {
+                        fd.append(k, String(v));
+                    }
                 });
                 res = await fetch(`/pds/save/${section}`, {
                     method: 'POST',
@@ -184,7 +190,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
             if (!res.ok) throw new Error('Save failed');
 
-            // ✅ Show success toast after every successful save
             Swal.fire({
                 icon: 'success',
                 title: 'Saved!',

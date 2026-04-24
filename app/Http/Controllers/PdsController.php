@@ -368,6 +368,11 @@ class PdsController extends Controller
 
     private function saveReferences(Request $request, int $userId)
     {
+        if ($request->hasFile('passport_photo') || $request->hasFile('signature')) {
+            $references = json_decode($request->input('references'), true) ?? [];
+            $request->merge(['references' => $references]);
+        }
+
         $request->validate([
             'references'             => 'required|array|max:3',
             'references.*.name'      => 'required|string|max:255',
