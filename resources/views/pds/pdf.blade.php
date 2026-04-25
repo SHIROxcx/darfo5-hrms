@@ -153,9 +153,9 @@
                 ? $c->date_of_birth 
                 : \Carbon\Carbon::parse($c->date_of_birth)->format('d/m/Y');
         }
-        function eduF($list, $level, $field) { $e = $list->firstWhere('level', $level); return $e?->$field ?? ''; }
+        function eduF($list, $level, $field) { $e = $list->firstWhere('level', $level); return $e?->$field ?? 'N/A'; }
         function pDate($v) {
-            if (!$v) return '';
+            if (!$v) return 'N/A';
             return is_string($v) ? $v : \Carbon\Carbon::parse($v)->format('d/m/Y');
         }
         function cb($on) { return '<span class="cb ' . ($on ? 'cb-on' : '') . '"></span>'; }
@@ -512,8 +512,12 @@
         <tr><td colspan="19" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
         <tr style="height:20pt;">
             <td colspan="8" rowspan="2" class="{{ $lbl }} align-middle uppercase">
-                <span>27.</span> <p class="text-center">CES/CSEE/CAREER SERVICE/RA 1080 (BOARD/<br>BAR)/UNDER SPECIAL LAWS/CATEGORY II/IV<br>ELIGIBILITY <span class="normal-case">and</span>
-                ELIGIBILITIES FOR UNIFORMED<br> PERSONNEL</p>
+                <div class="flex justify-center text-center">
+                    <p>27.</p> 
+                    <p class="grow">CES/CSEE/CAREER SERVICE/RA 1080 (BOARD/<br>BAR)/UNDER SPECIAL LAWS/CATEGORY II/IV<br>ELIGIBILITY <span class="normal-case">and</span>
+                    ELIGIBILITIES FOR UNIFORMED<br> PERSONNEL
+                    </p>
+                </div>
             </td>
             <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] uppercase text-center">RATING<br><span class="normal-case">(if applicable)</span></td>
             <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">DATE OF EXAMINATION/<br>CONFERMENT</td>
@@ -528,11 +532,11 @@
         @for($i = 0; $i < 8; $i++)
         @php $el = $eligibilities[$i] ?? null; @endphp
         <tr style="height:20pt;">
-            <td colspan="8" class="{{ $val }} text-[7pt] px-1">{{ $el?->career_service ?? '' }}</td>
-            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->rating ?? '' }}</td>
+            <td colspan="8" class="{{ $val }} text-[7pt] px-1">{{ $el?->career_service ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->rating ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($el?->date_of_examination) }}</td>
-            <td colspan="3" class="{{ $val }} text-[7pt] px-1">{{ $el?->place_of_examination ?? '' }}</td>
-            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->license_number ?? '' }}</td>
+            <td colspan="3" class="{{ $val }} text-center text-[7pt] px-1">{{ $el?->place_of_examination ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->license_number ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($el?->license_validity) }}</td>
         </tr>
         @endfor
@@ -560,13 +564,13 @@
         @php $workExp = $pds['work_experience'] ?? []; @endphp
         @for($i = 0; $i < 28; $i++)
         @php $we = $workExp[$i] ?? null; @endphp
-        <tr style="height:19pt;">
+        <tr style="height:19pt;" class="uppercase">
             <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($we?->date_from) }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">@if($we?->is_present)<em>Present</em>@else{{ pDate($we?->date_to) }}@endif</td>
-            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->position_title ?? '' }}</td>
-            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->department ?? '' }}</td>
-            <td colspan="2" class="{{ $val }} text-[6.5pt] px-1">{{ $we?->status_of_appointment ?? '' }}</td>
-            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : '' }}</td>
+            <td colspan="6" class="{{ $val }} text-center text-[6.5pt] px-1">{{ $we?->position_title ?? 'N/A' }}</td>
+            <td colspan="5" class="{{ $val }} text-center text-[6.5pt] px-1">{{ $we?->department ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[6.5pt] px-1">{{ $we?->status_of_appointment ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : 'N/A' }}</td>
         </tr>
         @endfor
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>

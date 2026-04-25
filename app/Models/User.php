@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -89,6 +90,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function pdsEligibilities()
     {
         return $this->hasMany(\App\Models\PdsEligibility::class, 'user_id');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function leaveCredits(): HasMany
+    {
+        return $this->hasMany(LeaveCredit::class);
     }
  
 }

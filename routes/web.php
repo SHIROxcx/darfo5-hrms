@@ -10,6 +10,8 @@ use App\Http\Controllers\PdsController;
 use App\Http\Controllers\PdsPdfController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\LeaveController;
 use App\Models\Division;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -51,6 +53,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/employees/{user}/toggle-approval', [EmployeeController::class, 'toggleApproval'])->name('employees.toggle-approval');
         Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
         Route::get('/employees/{user}/profile', [EmployeeController::class, 'show'])->name('employees.profile');
+        Route::get('/leave', [AdminLeaveController::class, 'index'])->name('leave.index');
+        Route::get('/leave/pending', [AdminLeaveController::class, 'pending'])->name('leave.pending');
+        Route::get('/leave/{leaveRequest}', [AdminLeaveController::class, 'show'])->name('leave.show');
+        Route::post('/leave/{leaveRequest}/approve', [AdminLeaveController::class, 'approve'])->name('leave.approve');
+        Route::post('/leave/{leaveRequest}/deny', [AdminLeaveController::class, 'deny'])->name('leave.deny');
     });
 
 // Authenticated Routes for verified users
@@ -134,7 +141,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     return response()->json(
         \DB::table('eligibilities')->orderBy('title')->get(['id', 'title', 'abbreviation'])
     );
-});
+
+    });
+    // Leave Routes
+    Route::get('/my-leave', [LeaveController::class, 'index'])->name('leave.my');
+    Route::post('/my-leave', [LeaveController::class, 'store'])->name('leave.store');
+    Route::put('/my-leave/{leaveRequest}', [LeaveController::class, 'update'])->name('leave.update');
+    Route::post('/my-leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('leave.cancel');
     
 });
 
