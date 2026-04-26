@@ -44,10 +44,8 @@ interface Props {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TYPE_COLORS: Record<string, string> = {
-    VL: 'bg-amber-400', SL: 'bg-sky-400', ML: 'bg-pink-400',
-    PL: 'bg-indigo-400', SPL: 'bg-purple-400', SOLO: 'bg-orange-400',
-    STUDY: 'bg-teal-400', VAWC: 'bg-red-400', RL: 'bg-lime-400',
-    SLW: 'bg-fuchsia-400', CL: 'bg-cyan-400', AL: 'bg-rose-400', FL: 'bg-yellow-400',
+    VL: 'bg-amber-400', SL: 'bg-sky-400',
+    PL: 'bg-indigo-400', WL: 'bg-purple-400',
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -139,7 +137,7 @@ function CalendarPicker({ startDate, endDate, onSelect }: CalendarPickerProps) {
     }
 
     const monthName = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-    const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
         <div className="select-none">
@@ -171,7 +169,7 @@ function CalendarPicker({ startDate, endDate, onSelect }: CalendarPickerProps) {
             {/* Day headers */}
             <div className="grid grid-cols-7 mb-1">
                 {days.map(d => (
-                    <div key={d} className={`text-center text-[10px] font-semibold py-1 ${d === 'Su' || d === 'Sa' ? 'text-gray-300' : 'text-gray-400'}`}>{d}</div>
+                    <div key={d} className={`text-center text-[10px] font-semibold py-1 ${d === 'Sun' || d === 'Sat' ? 'text-gray-300' : 'text-gray-400'}`}>{d}</div>
                 ))}
             </div>
 
@@ -424,8 +422,7 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-green-700" />
+                        <h1 className="text-2xl font-bold text-green-700 flex items-center gap-2">
                             My Leave — {year}
                         </h1>
                         <p className="text-sm text-gray-500 mt-0.5">Manage your leave requests and track your credits</p>
@@ -445,15 +442,35 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                         {/* Stat chips */}
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { label: 'Pending',  val: stats.pending,  icon: <Clock className="h-4 w-4 text-amber-600" />,  bg: 'bg-amber-50',  border: 'border-amber-100' },
-                                { label: 'Approved', val: stats.approved, icon: <CheckCircle2 className="h-4 w-4 text-green-600" />, bg: 'bg-green-50',  border: 'border-green-100' },
-                                { label: 'Denied',   val: stats.denied,   icon: <XCircle className="h-4 w-4 text-red-500" />,   bg: 'bg-red-50',    border: 'border-red-100' },
+                                {
+                                    label: 'Pending',
+                                    val: stats.pending,
+                                    icon: <Clock className="h-3.5 w-3.5" />,
+                                    chip: 'bg-amber-50 border-amber-200',
+                                    iconWrap: 'bg-amber-100 border-amber-200 text-amber-700',
+                                },
+                                {
+                                    label: 'Approved',
+                                    val: stats.approved,
+                                    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+                                    chip: 'bg-green-50 border-green-200',
+                                    iconWrap: 'bg-green-100 border-green-200 text-green-700',
+                                },
+                                {
+                                    label: 'Denied',
+                                    val: stats.denied,
+                                    icon: <XCircle className="h-3.5 w-3.5" />,
+                                    chip: 'bg-rose-50 border-rose-200',
+                                    iconWrap: 'bg-rose-100 border-rose-200 text-rose-600',
+                                },
                             ].map(s => (
-                                <div key={s.label} className={`rounded-xl border ${s.border} ${s.bg} p-3 flex items-center gap-2`}>
-                                    {s.icon}
+                                <div key={s.label} className={`rounded-xl border ${s.chip} p-3 flex items-center gap-2.5`}>
+                                    <div className={`h-8 w-8 rounded-full border flex items-center justify-center shrink-0 ${s.iconWrap}`}>
+                                        {s.icon}
+                                    </div>
                                     <div>
                                         <p className="text-lg font-bold text-gray-900 leading-none">{s.val}</p>
-                                        <p className="text-[10px] text-gray-500">{s.label}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
                                     </div>
                                 </div>
                             ))}

@@ -128,7 +128,7 @@
         $govId    = $pds['government_id']       ?? null;
 
         $dob = $pi?->date_of_birth
-            ? \Carbon\Carbon::parse($pi->date_of_birth)->format('d/m/Y') : '';
+            ? \Carbon\Carbon::parse($pi->date_of_birth)->format('d/m/Y') : 'N/A';
 
         $isFil   = !$pi || $pi->citizenship === 'Filipino' || !$pi->citizenship;
         $isDual  = $pi?->citizenship === 'Dual Citizenship';
@@ -215,26 +215,26 @@
         {{-- Name rows --}}
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">1. SURNAME</td>
-            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->last_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->last_name ?? 'N/A') }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 border-b-gray-100">2. FIRST NAME</td>
-            <td colspan="11" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->first_name ?? '') }}</td>
+            <td colspan="11" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->first_name ?? 'N/A') }}</td>
             <td colspan="5" class="align-start px-1 bg-gray-100 text-[7pt]">
                 <span>NAME EXTENSION (JR., SR)</span>
-                <span class="font-semibold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? '') }}</span>
+                <span class="font-semibold text-[8pt] align-middle text-end pl-10">{{ strtoupper($user->name_ext ?? 'N/A') }}</span>
             </td>
         </tr>
         <tr style="height:17pt;border-bottom:2px solid #000;">
             <td colspan="3" class="{{ $lbl }} pl-3 px-1">MIDDLE NAME</td>
-            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->middle_name ?? '') }}</td>
+            <td colspan="16" class="font-semibold text-[8pt] align-middle px-1">{{ strtoupper($user->middle_name ?? 'N/A') }}</td>
         </tr>
 
         {{-- 3, 4, 5: Birth Info + 16. Citizenship --}}
         <tr style="height:24pt;">
             <td colspan="3" class="{{ $lbl }} px-1">3. DATE OF BIRTH<br><span class="italic lowercase pl-3">(dd/mm/yyyy)</span></td>
             <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $dob }}</td>
-            {{-- Citizenship Starts Here --}}
+            {{-- Citizenship --}}
             <td colspan="4" rowspan="3" class="{{ $lbl }} text-start align-top text-[8pt] uppercase pt-0">
                 16. CITIZENSHIP<br><br>
                 <div class="normal-case text-center mt-3 text-[7pt]">If holder of dual citizenship,<br><br>please indicate the details.</div>
@@ -251,14 +251,14 @@
                 <div class="text-[8pt] pl-24">Pls. indicate country:</div>
                 <div class="w-full min-h-5">
                     <select name="dual_contry" id="dual_contry" class="w-full h-7 mt-2 bg-white border border-black px-2 font-semibold">
-                        <option value="" selected>{{ $pi?->citizenship_country ?? '' }}</option>
+                        <option value="" selected>{{ $pi?->citizenship_country ?? 'N/A' }}</option>
                     </select>
                 </div>
             </td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">4. PLACE OF BIRTH</td>
-            <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $pi?->birth_place ?? '' }}</td>
+            <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $pi?->birth_place ?? 'N/A' }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">5. SEX AT BIRTH</td>
@@ -285,47 +285,47 @@
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->res_house_no, $pi?->res_street], ['Subdivision/Village', 'Barangay', $pi?->res_subdivision, $pi?->res_barangay], ['City/Municipality', 'Province', $pi?->res_city, $pi?->res_province]] as [$l1, $l2, $v1, $v2])
                     <div class="flex border-b border-black italic">
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 ?? 'N/A' }}</div>
                             <div class="italic text-[7pt] text-center border-t border-black/50">{{ $l1 }}</div>
                         </div>
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 ?? 'N/A' }}</div>
                             <div class="italic text-[7pt] text-center border-t border-black/40">{{ $l2 }}</div>
                         </div>
                     </div>
                 @endforeach
-                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->res_zipcode ?? '' }}</div>
+                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->res_zipcode ?? 'N/A' }}</div>
             </td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">7. HEIGHT (m)</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->height ?? '' }}</td>
+            <td colspan="4" class="{{ $val }}">{{ $pi?->height ?? 'N/A' }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">8. WEIGHT (kg)</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->weight ?? '' }}</td>
+            <td colspan="4" class="{{ $val }}">{{ $pi?->weight ?? 'N/A' }}</td>
         </tr>
 
         {{-- 9, 10, 11, 12: IDs + 18. Permanent Address (Spans 4 Rows) --}}
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">9. BLOOD TYPE</td>
-            <td colspan="4" class="{{ $val }}">{{ $pi?->blood_type ?? '' }}</td>
+            <td colspan="4" class="{{ $val }}">{{ $pi?->blood_type ?? 'N/A' }}</td>
             {{-- Permanent Address Starts Here --}}
             <td colspan="3" rowspan="4" class="{{ $lbl }} align-top pt-0">18. PERMANENT ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
             <td colspan="9" rowspan="4" class="align-top py-1 px-0 text-[7pt]">
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->perm_house_no, $pi?->perm_street], ['Subdivision/Village', 'Barangay', $pi?->perm_subdivision, $pi?->perm_barangay], ['City/Municipality', 'Province', $pi?->perm_city, $pi?->perm_province]] as [$l1, $l2, $v1, $v2])
                     <div class="flex border-b border-black italic">
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 ?? 'N/A' }}</div>
                             <div class="italic text-[7pt] text-center border-t border-black/40">{{ $l1 }}</div>
                         </div>
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 ?? 'N/A' }}</div>
                             <div class="italic text-[7pt] text-center border-t border-black/40">{{ $l2 }}</div>
                         </div>
                     </div>
                 @endforeach
-                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->perm_zipcode ?? '' }}</div>
+                <div class="text-center text-[8pt] font-semibold mt-2">{{ $pi?->perm_zipcode ?? 'N/A' }}</div>
             </td>
         </tr>
         <tr style="height:17pt;">
@@ -358,7 +358,7 @@
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">15. AGENCY EMPLOYEE NO.</td>
             <td colspan="4" class="{{ $val }} px-1">{{ $pi?->agency_employee_no ?? 'N/A' }}</td>
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">21. E-MAIL ADDRESS <span class="lowercase">(if any)</span></td>
-            <td colspan="9" class="{{ $val }} px-1 text-center">{{ $user?->email ?? '' }}</td>
+            <td colspan="9" class="{{ $val }} px-1 text-center">{{ $user?->email ?? 'N/A' }}</td>
         </tr>
 
         {{-- Section II: Family Background --}}
@@ -366,13 +366,13 @@
 
         <tr style="height:16pt;">
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-b-gray-100">22. SPOUSE'S SURNAME</td>
-            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? '') }}</td>
+            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $lbl }} text-[6pt] align-middle">23. NAME of CHILDREN <span class="normal-case text-[6.5pt]">(Write full name and list all)</span></td>
             <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle text-center">DATE OF BIRTH<span class="normal-case text-[6.5pt]"> (dd/mm/yyyy)</span></td>
         </tr>
         <tr style="height:16pt;">
             <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
-            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_first_name ?? '') }}</td>
+            <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_first_name ?? 'N/A') }}</td>
             <td colspan="3" class="{{ $lbl }} text-[6pt]">
                 <div>
                     <p>NAME EXTENSION (JR., SR)</p>
@@ -438,12 +438,12 @@
         <tr style="height:16pt;">
             <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt] border-b-gray-100">{{ $mLbl }}</td>
             @if(!$mLast)
-            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? '') }}</td>
+            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $mChI) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $mChI) }}</td>
             @else
             {{-- Mother middle name: last child col replaced by continue note --}}
-            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? '') }}</td>
+            <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? 'N/A') }}</td>
             <td colspan="9" class="{{ $note }} border-none align-middle">(Continue on separate sheet if necessary)</td>
             @endif
         </tr>
@@ -473,7 +473,7 @@
             <td class="{{ $val }} text-[6pt] border-r-2 border-black text-center">{{ eduF($eduList, $eKey, 'period_to') }}</td>
             <td colspan="2" class="{{ $val }} text-[6pt] text-center">{{ eduF($eduList, $eKey, 'highest_level') }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'year_graduated') }}</td>
-            <td colspan=2"" class="{{ $val }} text-[6pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
+            <td colspan=2"" class="{{ $val }} text-center text-[6pt]">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
         </tr>
         @endforeach
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
@@ -497,7 +497,7 @@
             
             {{-- Date Value --}}
             <td colspan="6" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
-                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}
             </td>
         </tr>
         </table>
@@ -594,7 +594,7 @@
             
             {{-- Date Value (4 cols to reach 18) --}}
             <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
-                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}
             </td>
         </tr>
     </table>
@@ -623,11 +623,11 @@
     @for($i=0;$i<7;$i++)
     @php $vw=$volWork[$i]??null; @endphp
     <tr style="height:20pt;">
-        <td colspan="7" class="{{ $val }} text-[7pt] px-1">@if($vw){{ ($vw->organization_name??'').(($vw->organization_address)?(', '.$vw->organization_address):'') }}@endif</td>
+        <td colspan="7" class="{{ $val }} text-[7pt] px-1">@if($vw){{ ($vw->organization_name??'').(($vw->organization_address)?(', '.$vw->organization_address): 'N/A') }}@endif</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_from) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_to) }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $vw?->number_of_hours??'' }}</td>
-        <td colspan="7" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position??'' }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $vw?->number_of_hours?? 'N/A' }}</td>
+        <td colspan="7" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position?? 'N/A' }}</td>
     </tr>
     @endfor
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
@@ -651,9 +651,9 @@
         <td colspan="7" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->title??'' }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_from) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours??'' }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld??'' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by??'' }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours ?? 'N/A' }}</td>
+        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld ?? 'N/A' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by ?? 'N/A' }}</td>
     </tr>
     @endfor
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
@@ -687,9 +687,9 @@
     @php $oi=$pds['other_info']??null; $skills=$oi?->special_skills??[]; $distinctions=$oi?->non_academic_distinctions??[]; $memberships=$oi?->organization_memberships??[]; @endphp
     @for($i=0;$i<7;$i++)
     <tr style="height:18pt;">
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]??'' }}</td>
-        <td colspan="10" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]??'' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]??'' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]?? 'N/A' }}</td>
+        <td colspan="10" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]?? 'N/A' }}</td>
+        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]?? 'N/A' }}</td>
     </tr>
     @endfor
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
@@ -713,7 +713,7 @@
             
             {{-- Date Value (4 cols to reach 18) --}}
             <td colspan="5" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
-                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}
+                {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}
             </td>
         </tr>
     </table>
@@ -765,7 +765,7 @@
                 </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details:</p>
-                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q34_details??'' }}</p>
+                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q34_details?? '' }}</p>
                 </div>
             </td>
         </tr>
@@ -1044,9 +1044,9 @@
         @for($i=0; $i<3; $i++)
         @php $ref = $refs[$i] ?? null; @endphp
         <tr style="height:20pt;" class="uppercase">
-            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? '' }}</td>
-            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? '' }}</td>
-            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y lowercase">{{ $ref?->telephone ?? '' }}</td>
+            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? 'N/A' }}</td>
+            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? 'N/A' }}</td>
+            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y lowercase">{{ $ref?->telephone ?? 'N/A' }}</td>
         </tr>
         @endfor
 
@@ -1071,9 +1071,9 @@
                         Government Issued ID <span class="text-[7pt] font-normal">(i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)</span><br>
                         <span class="italic">PLEASE INDICATE ID Number and Date of Issuance</span>
                     </div>
-                    <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-semibold uppercase">{{ $govId?->id_type ?? '' }}</span></div>
-                    <div class="py-2 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-semibold uppercase">{{ $govId?->id_number ?? '' }}</span></div>
-                    <div class="py-2 text-[7pt]">Date/Place of Issuance: <span class="font-semibold uppercase">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : '') }}</span></div>
+                    <div class="py-2 text-[7pt] border-b border-black">Government Issued ID: <span class="font-semibold uppercase">{{ $govId?->id_type ?? 'N/A' }}</span></div>
+                    <div class="py-2 text-[7pt] border-b border-black">ID/License/Passport No.: <span class="font-semibold uppercase">{{ $govId?->id_number ?? 'N/A' }}</span></div>
+                    <div class="py-2 text-[7pt]">Date/Place of Issuance: <span class="font-semibold uppercase">{{ ($govId?->date_of_issuance ?? '').($govId?->place_of_issuance ? ' / '.$govId->place_of_issuance : 'N/A') }}</span></div>
                 </div>
             </td>
             {{-- Signature Block --}}
@@ -1087,7 +1087,7 @@
                         @endif
                     </div>
                     <div class="bg-gray-100 border-t border-b border-black text-center py-0.5 text-[7pt]">Signature (Sign inside the box)</div>
-                    <div class="text-center py-1 text-[7pt] min-h-[14pt] uppercase">{{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : '' }}</div>
+                    <div class="text-center py-1 text-[7pt] min-h-[14pt] uppercase">{{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}</div>
                     <div class="bg-gray-100 border-t border-black text-center py-0.5 text-[7pt] ">Date Accomplished</div>
                 </div>
             </td>

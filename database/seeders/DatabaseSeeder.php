@@ -13,12 +13,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
 
         $this->call([
             RoleAndPermissionSeeder::class,
@@ -29,6 +23,7 @@ class DatabaseSeeder extends Seeder
             EligibilitySeeder::class,
             PhilippineLocationSeeder::class,
             PhilippineBarangaySeeder::class,
+            LeaveTypeSeeder::class,
         ]);
     }
 }

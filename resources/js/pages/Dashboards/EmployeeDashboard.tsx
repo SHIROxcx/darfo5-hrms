@@ -1,16 +1,15 @@
 import AppLayout from "@/layouts/app-layout";
 import { Head } from '@inertiajs/react';
 import {
-    TicketsPlane, BriefcaseMedical, Award, Activity,
+    TicketsPlane, BriefcaseMedical, Award, Activity, Heart,
     Megaphone, Clock, Monitor, Clock8, Clock12, Clock5,
-    Paperclip, Link as LinkIcon, ExternalLink, FileText, Image, File, X,
+    Paperclip, ExternalLink, FileText, Image, File, X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface AttachmentFile { path: string; url: string; name: string; }
-interface AnnouncementLink { label: string; url: string; }
 
 interface Announcement {
     id: number;
@@ -24,6 +23,15 @@ interface Announcement {
     delete_after: string | null;
 }
 
+interface LeaveCredit {
+    leave_type: string;
+    code: string;
+    available: number;
+    total: number;
+    used: number;
+    pending: number;
+}
+
 interface Props {
     user: {
         name: string;
@@ -31,9 +39,10 @@ interface Props {
         roles: string[];
     };
     announcements: Announcement[];
+    leaveCredits: LeaveCredit[];
 }
 
-// Greeting
+// ── Greeting ─────────────────────────────────────────────────────────────────
 
 const MORNING_GREETINGS   = ['Good morning','Rise and shine','Starting the day strong','A wonderful morning to you','Great morning to see you'];
 const AFTERNOON_GREETINGS = ['Afternoon','Good afternoon','Enjoy the rest of your day','A bright afternoon to you',"You're doing great today",'Halfway through the day'];
@@ -41,21 +50,23 @@ const EVENING_GREETINGS   = ['Evening','Hey, good evening!','Good evening','Grea
 
 const PREVIEW = 3;
 
-function getGreeting(firstName: string): string {
+function getGreeting(): string {
     const now  = new Date();
     const hour = now.getHours();
     const pool = hour < 12 ? MORNING_GREETINGS : hour < 18 ? AFTERNOON_GREETINGS : EVENING_GREETINGS;
     return pool[now.getTime() % pool.length];
 }
 
-// ── Static data ───────────────────────────────────────────────────────────────
+// ── Leave icon map by code ────────────────────────────────────────────────────
 
-const leaveBalances = [
-    { label: 'Vacation Leave',  value: 5, icon: 'vacation',  color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Sick Leave',      value: 3, icon: 'sick',      color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Privilege Leave', value: 5, icon: 'privilege', color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Wellness Leave',  value: 5, icon: 'wellness',  color: 'text-green-600', bg: 'bg-green-50' },
-];
+const LEAVE_ICONS: Record<string, React.ReactNode> = {
+    VL:   <TicketsPlane className="h-7 w-7" />,
+    SL:   <BriefcaseMedical className="h-7 w-7" />,
+    PL:   <Award className="h-7 w-7" />,
+    WL:   <Heart className="h-7 w-7" />,
+};
+
+// ── Static mock data (DTR + Properties) ───────────────────────────────────────
 
 const dtrs = [
     { date: '2025-01-10', timeIn: '08:01 AM', breakTime: '12:00 PM | 01:00 PM', timeOut: '05:02 PM', remarks: '', late: false },
@@ -66,31 +77,39 @@ const dtrs = [
 ];
 
 const properties = [
-    { number: 'PE-001', description: 'Laptop Dell Latitude 3420',  acquired: '2022-05-10', status: 'Serviceable' },
-    { number: 'PE-002', description: 'HP LaserJet Printer',         acquired: '2021-08-15', status: 'For Repair' },
-    { number: 'PE-003', description: 'Epson Scanner',               acquired: '2020-11-21', status: 'Serviceable' },
-    { number: 'PE-004', description: 'Office Chair – Ergonomic',    acquired: '2023-01-02', status: 'Serviceable' },
-    { number: 'PE-005', description: 'Projector – Acer',            acquired: '2023-02-18', status: 'Not Serviceable' },
+    { number: 'PE-001', description: 'Laptop Dell Latitude 3420', acquired: '2022-05-10', status: 'Serviceable' },
+    { number: 'PE-002', description: 'HP LaserJet Printer',        acquired: '2021-08-15', status: 'For Repair' },
+    { number: 'PE-003', description: 'Epson Scanner',              acquired: '2020-11-21', status: 'Serviceable' },
+    { number: 'PE-004', description: 'Office Chair – Ergonomic',   acquired: '2023-01-02', status: 'Serviceable' },
+    { number: 'PE-005', description: 'Projector – Acer',           acquired: '2023-02-18', status: 'Not Serviceable' },
 ];
 
-// Sub-components
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function LeaveIcon({ type }: { type: string }) {
-    if (type === 'vacation')  return <TicketsPlane className="h-7 w-7" />;
-    if (type === 'sick')      return <BriefcaseMedical className="h-7 w-7" />;
-    if (type === 'privilege') return <Award className="h-7 w-7" />;
-    return <Activity className="h-7 w-7" />;
-}
+function LeaveCard({ credit }: { credit: LeaveCredit }) {
+    const icon = LEAVE_ICONS[credit.code] ?? <Activity className="h-7 w-7" />;
+    const usedPct    = credit.total > 0 ? Math.min(100, (credit.used / credit.total) * 100) : 0;
+    const pendingPct = credit.total > 0 ? Math.min(100 - usedPct, (credit.pending / credit.total) * 100) : 0;
 
-function LeaveCard({ label, value, icon, color, bg }: { label: string; value: number; icon: string; color: string; bg: string }) {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-            <span className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 border border-green-200 ${bg} ${color}`}>
-                <LeaveIcon type={icon} />
+            <span className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 border border-green-200 bg-green-50 text-green-600">
+                {icon}
             </span>
-            <div>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                <p className="text-sm text-gray-500">{label}</p>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-end justify-between">
+                    <p className="text-2xl font-bold text-gray-900">{credit.available}</p>
+                    <p className="text-xs text-gray-400 mb-0.5">/ {credit.total} days</p>
+                </div>
+                <p className="text-sm text-gray-500 truncate">{credit.leave_type}</p>
+                {/* Mini progress bar */}
+                <div className="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden flex">
+                    <div className="h-full bg-green-400 transition-all" style={{ width: `${usedPct}%` }} />
+                    <div className="h-full bg-amber-300 transition-all" style={{ width: `${pendingPct}%` }} />
+                </div>
+                {credit.pending > 0 && (
+                    <p className="text-[10px] text-amber-500 mt-0.5">{credit.pending} day{credit.pending !== 1 ? 's' : ''} pending</p>
+                )}
             </div>
         </div>
     );
@@ -149,11 +168,11 @@ function PropertyRow({ number, description, acquired, status }: typeof propertie
 function fileIcon(name: string) {
     const ext = name.split('.').pop()?.toLowerCase() ?? '';
     if (['jpg','jpeg','png','gif','webp'].includes(ext)) return <Image className="h-4 w-4" />;
-    if (['pdf'].includes(ext)) return <FileText className="h-4 w-4" />;
+    if (ext === 'pdf') return <FileText className="h-4 w-4" />;
     return <File className="h-4 w-4" />;
 }
 
-// View Modal
+// ── Announcement Modal ────────────────────────────────────────────────────────
 
 function AnnouncementViewModal({ announcement, onClose }: { announcement: Announcement; onClose: () => void }) {
     const parsed  = new Date(announcement.date);
@@ -164,7 +183,6 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
             <div className="w-full max-w-lg min-h-60 rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
-
                 <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 gap-4">
                     <div className="flex items-start gap-3">
                         <div className="shrink-0 h-14 w-14 border rounded-lg inline-flex flex-col items-center justify-center">
@@ -183,13 +201,11 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
                     <div>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
                         <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
                     </div>
-
                     {announcement.attachments.length > 0 && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
@@ -213,13 +229,12 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
     );
 }
 
-// Announcement list item
+// ── Announcement list item ────────────────────────────────────────────────────
 
 function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: Omit<Announcement, 'id' | 'body' | 'auto_delete' | 'delete_after'> & { onClick: () => void }) {
-    const parsed   = new Date(date);
-    const dayNum   = parsed.toLocaleDateString('en-US', { day: '2-digit' });
-    const dayAbbr  = parsed.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const hasExtras = attachments.length > 0;
+    const parsed  = new Date(date);
+    const dayNum  = parsed.toLocaleDateString('en-US', { day: '2-digit' });
+    const dayAbbr = parsed.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
     return (
         <li className="py-3 border-b border-gray-100 last:border-0 px-4 cursor-pointer hover:bg-gray-50 transition" onClick={onClick}>
@@ -233,9 +248,9 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
                         <p className="text-xs text-gray-400">Posted: {date}</p>
-                        {hasExtras && (
+                        {attachments.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                {attachments.length > 0 && <><Paperclip className="h-3 w-3" />{attachments.length}</>}
+                                <Paperclip className="h-3 w-3" />{attachments.length}
                             </span>
                         )}
                     </div>
@@ -245,11 +260,11 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
     );
 }
 
-// Main Dashboard
+// ── Main Dashboard ────────────────────────────────────────────────────────────
 
-export default function EmployeeDashboard({ user, announcements: initialAnnouncements }: Props) {
+export default function EmployeeDashboard({ user, announcements: initialAnnouncements, leaveCredits }: Props) {
     const firstName  = user.name.split(' ')[0];
-    const greeting   = getGreeting(firstName);
+    const greeting   = getGreeting();
     const hour       = new Date().getHours();
     const timeEmoji  = hour < 12 ? '⛅' : hour < 18 ? '🌤️' : '🌙';
     const timeString = new Date().toLocaleDateString('en-PH', {
@@ -263,14 +278,10 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
     const hasMore = announcements.length > PREVIEW;
     const visible = expanded ? announcements : announcements.slice(0, PREVIEW);
 
-    // Real-time listener
     useEffect(() => {
         function onNew(e: Event) {
-            const announcement = (e as CustomEvent<Announcement>).detail;
-            setAnnouncements(prev => {
-                if (prev.some(a => a.id === announcement.id)) return prev;
-                return [announcement, ...prev];
-            });
+            const a = (e as CustomEvent<Announcement>).detail;
+            setAnnouncements(prev => prev.some(x => x.id === a.id) ? prev : [a, ...prev]);
         }
         function onDeleted(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
@@ -278,15 +289,12 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
         }
         function onUpdated(e: Event) {
             const updated = (e as CustomEvent<Announcement>).detail;
-            setAnnouncements(prev =>
-                prev.map(a => a.id === updated.id ? updated : a)
-            );
+            setAnnouncements(prev => prev.map(a => a.id === updated.id ? updated : a));
         }
 
         window.addEventListener('announcement:new', onNew);
         window.addEventListener('announcement:deleted', onDeleted);
         window.addEventListener('announcement:updated', onUpdated);
-
         return () => {
             window.removeEventListener('announcement:new', onNew);
             window.removeEventListener('announcement:deleted', onDeleted);
@@ -297,9 +305,8 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
     useEffect(() => {
         if (window.location.hash === '#announcements-panel') {
             setTimeout(() => {
-                const el = document.getElementById('announcements-panel');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300); 
+                document.getElementById('announcements-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
         }
     }, []);
 
@@ -316,7 +323,7 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
 
-                {/* Greeting Header */}
+                {/* Greeting */}
                 <div className="mb-6">
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                         <span className="text-green-700">{greeting}, </span>
@@ -330,14 +337,17 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
 
-                    {/* Leave Score Cards */}
+                    {/* Leave Credit Cards — dynamic from DB */}
                     <div className="lg:col-span-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {leaveBalances.map(item => (
-                                <LeaveCard key={item.label} label={item.label} value={item.value}
-                                    icon={item.icon} color={item.color} bg={item.bg} />
-                            ))}
-                        </div>
+                        {leaveCredits.length === 0 ? (
+                            <p className="text-sm text-gray-400 italic">No leave credits found for this year.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                {leaveCredits.map(credit => (
+                                    <LeaveCard key={credit.code} credit={credit} />
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Left: DTR + Properties */}
@@ -389,7 +399,7 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                         </div>
                     </div>
 
-                    {/* Right: Announcements — real-time */}
+                    {/* Right: Announcements */}
                     <div className="flex flex-col gap-4 lg:col-span-1" id="announcements-panel">
                         <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
                             <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
@@ -401,7 +411,6 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                                     </span>
                                 )}
                             </div>
-
                             <ul className="flex-1">
                                 {announcements.length === 0 ? (
                                     <li className="px-5 py-8 text-center text-xs text-gray-400 italic">
@@ -415,28 +424,22 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                                             date={item.date}
                                             tag={item.tag}
                                             tagColor={item.tagColor}
-                                            attachments={item.attachments} 
+                                            attachments={item.attachments}
                                             onClick={() => setViewing(item)}
                                         />
                                     ))
                                 )}
                             </ul>
-
                             {hasMore && (
                                 <div className="px-5 py-3 border-t text-center">
-                                    <button
-                                        onClick={() => setExpanded(prev => !prev)}
-                                        className="text-xs text-green-700 font-medium hover:underline transition"
-                                    >
-                                        {expanded
-                                            ? 'Show less'
-                                            : `View all ${announcements.length} announcements`}
+                                    <button onClick={() => setExpanded(p => !p)}
+                                        className="text-xs text-green-700 font-medium hover:underline transition">
+                                        {expanded ? 'Show less' : `View all ${announcements.length} announcements`}
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
         </AppLayout>

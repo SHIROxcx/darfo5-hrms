@@ -48,17 +48,8 @@ interface Props {
 const TYPE_COLORS: Record<string, { bar: string; label: string; dot: string }> = {
     VL:    { bar: 'bg-amber-400',   label: 'text-amber-700',   dot: 'bg-amber-400' },
     SL:    { bar: 'bg-sky-400',     label: 'text-sky-700',     dot: 'bg-sky-400' },
-    ML:    { bar: 'bg-pink-400',    label: 'text-pink-700',    dot: 'bg-pink-400' },
     PL:    { bar: 'bg-indigo-400',  label: 'text-indigo-700',  dot: 'bg-indigo-400' },
-    SPL:   { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
-    SOLO:  { bar: 'bg-orange-400',  label: 'text-orange-700',  dot: 'bg-orange-400' },
-    STUDY: { bar: 'bg-teal-400',    label: 'text-teal-700',    dot: 'bg-teal-400' },
-    VAWC:  { bar: 'bg-red-400',     label: 'text-red-700',     dot: 'bg-red-400' },
-    RL:    { bar: 'bg-lime-400',    label: 'text-lime-700',    dot: 'bg-lime-400' },
-    SLW:   { bar: 'bg-fuchsia-400', label: 'text-fuchsia-700', dot: 'bg-fuchsia-400' },
-    CL:    { bar: 'bg-cyan-400',    label: 'text-cyan-700',    dot: 'bg-cyan-400' },
-    AL:    { bar: 'bg-rose-400',    label: 'text-rose-700',    dot: 'bg-rose-400' },
-    FL:    { bar: 'bg-yellow-400',  label: 'text-yellow-700',  dot: 'bg-yellow-400' },
+    WL:   { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
 };
 const DEFAULT_COLOR = { bar: 'bg-gray-400', label: 'text-gray-700', dot: 'bg-gray-400' };
 
@@ -104,15 +95,18 @@ function isToday(dateStr: string): boolean {
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
+function StatCard({ label, value, icon, color, iconColor }: {
+    label: string; value: number;
+    icon: React.ReactNode; color: string; iconColor: string;
+}) {
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${color}`}>
-                {icon}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 border ${color}`}>
+                <div className={iconColor}>{icon}</div>
             </div>
             <div>
-                <p className="text-xl font-bold text-gray-900 leading-none">{value}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
+                <p className="text-sm text-gray-500">{label}</p>
             </div>
         </div>
     );
@@ -337,20 +331,18 @@ export default function AdminLeaveIndex({ employees, leaveTypes, weekStart, week
                 {/* Page header */}
                 <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-green-700" />
+                        <h1 className="text-2xl font-bold text-green-700 flex items-center gap-2">
                             Leave Management
                         </h1>
-                        <p className="text-sm text-gray-500 mt-0.5">Monitor and action employee leave requests</p>
                     </div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                    <StatCard label="Pending Requests"  value={stats.pending}        icon={<Clock className="h-5 w-5 text-amber-600" />}  color="bg-amber-50" />
-                    <StatCard label="On Leave Today"    value={stats.on_leave_today} icon={<Users className="h-5 w-5 text-sky-600" />}    color="bg-sky-50" />
-                    <StatCard label="Approved (YTD)"    value={stats.approved}       icon={<CheckCircle2 className="h-5 w-5 text-green-600" />} color="bg-green-50" />
-                    <StatCard label="Denied (YTD)"      value={stats.denied}         icon={<XCircle className="h-5 w-5 text-red-600" />}   color="bg-red-50" />
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-6">
+                    <StatCard label="Pending requests"  value={stats.pending}        icon={<Clock className="h-6 w-6" />}       color="bg-green-50 border-green-200"  iconColor="text-green-600" />
+                    <StatCard label="On leave today"    value={stats.on_leave_today} icon={<Users className="h-6 w-6" />}       color="bg-green-50 border-green-200"      iconColor="text-green-600" />
+                    <StatCard label="Approved (YTD)"    value={stats.approved}       icon={<CheckCircle2 className="h-6 w-6"/>} color="bg-green-50 border-green-200"  iconColor="text-green-600" />
+                    <StatCard label="Denied (YTD)"      value={stats.denied}         icon={<XCircle className="h-6 w-6" />}     color="bg-green-50 border-green-200"      iconColor="text-green-600" />
                 </div>
 
                 {/* Filters */}
@@ -361,7 +353,7 @@ export default function AdminLeaveIndex({ employees, leaveTypes, weekStart, week
                         <input
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Search employee…"
+                            placeholder="Search Employee"
                             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
                         />
                     </div>
@@ -454,7 +446,7 @@ export default function AdminLeaveIndex({ employees, leaveTypes, weekStart, week
                                 </div>
                             ) : (
                                 employees.map(emp => (
-                                    <div key={emp.id} className="flex border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors min-h-[56px]">
+                                    <div key={emp.id} className="flex border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors min-h-14">
 
                                         {/* Employee info */}
                                         <div className="shrink-0 w-48 px-4 py-3 flex items-center gap-2 border-r border-gray-200">
