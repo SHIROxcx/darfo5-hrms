@@ -61,7 +61,7 @@
     }
     .thumb-box {
         width: 4.5cm;
-        height: 3.7cm;
+        height: 3.6cm;
         border: 2px solid black;
         margin: 0 auto;
         background-color: white;
@@ -159,7 +159,6 @@
             return is_string($v) ? $v : \Carbon\Carbon::parse($v)->format('d/m/Y');
         }
         function cb($on) { return '<span class="cb ' . ($on ? 'cb-on' : '') . '"></span>'; }
-        function yN($v) { return cb($v) . ' YES &nbsp; ' . cb(!$v) . ' NO'; }
 
         // Tailwind utilities
         $lbl  = 'bg-gray-100 text-[7pt] uppercase';                                     // label cell
@@ -198,7 +197,7 @@
             <tr>
                 <td class="relative p-0.5 text-[6.5pt]">
                     <p class="absolute italic font-bold text-[8pt]">CS Form No. 212<span class="block font-normal text-[7pt]">Revised 2025 <span/></p>
-                    <p class="pds_header text-center text-[22pt] font-black tracking-wide my-3">PERSONAL DATA SHEET</p>
+                    <p class="pds_header text-center text-[22pt] font-black tracking-wide my-2">PERSONAL DATA SHEET</p>
                     <p class="text-[8pt] italic font-semibold mb-2"><span class="uppercase">WARNING:</span> Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
                     <p class="text-[8pt] font-semibold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
                     <p class="text-[8pt] font-light tracking-tight">Print legibly if accomplished through own handwriting. Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="font-semibold text-[8pt]">DO NOT ABBREVIATE.</span></p>
@@ -250,7 +249,7 @@
                 </div>
                 <div class="text-[8pt] pl-24">Pls. indicate country:</div>
                 <div class="w-full min-h-5">
-                    <select name="dual_contry" id="dual_contry" class="w-full h-7 mt-2 bg-white border border-black px-2 font-semibold">
+                    <select name="dual_contry" id="dual_contry" class="w-full h-7 mt-2 bg-white border border-black px-2 font-semibold uppercase">
                         <option value="" selected>{{ $pi?->citizenship_country ?? 'N/A' }}</option>
                     </select>
                 </div>
@@ -258,7 +257,7 @@
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">4. PLACE OF BIRTH</td>
-            <td colspan="4" class="{{ $val }} px-1 font-semibold">{{ $pi?->birth_place ?? 'N/A' }}</td>
+            <td colspan="4" class="{{ $val }} px-1 font-semibold uppercase">{{ $pi?->birth_place ?? 'N/A' }}</td>
         </tr>
         <tr style="height:17pt;">
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">5. SEX AT BIRTH</td>
@@ -364,19 +363,19 @@
         {{-- Section II: Family Background --}}
         <tr><td colspan="19" class="{{ $sectionHeader }}">II. FAMILY BACKGROUND</td></tr>
 
-        <tr style="height:16pt;">
+        <tr style="height:16pt;" class="uppercase">
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-b-gray-100">22. SPOUSE'S SURNAME</td>
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_surname ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $lbl }} text-[6pt] align-middle">23. NAME of CHILDREN <span class="normal-case text-[6.5pt]">(Write full name and list all)</span></td>
             <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle text-center">DATE OF BIRTH<span class="normal-case text-[6.5pt]"> (dd/mm/yyyy)</span></td>
         </tr>
-        <tr style="height:16pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
+        <tr style="height:16pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} pl-4 text-[6pt]  border-b-gray-100">FIRST NAME</td>
             <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->spouse_first_name ?? 'N/A') }}</td>
             <td colspan="3" class="{{ $lbl }} text-[6pt]">
                 <div>
                     <p>NAME EXTENSION (JR., SR)</p>
-                    <p class="text-center">{{ strtoupper($fam?->spouse_name_ext ?? 'N/A') }}</p>
+                    <p class="text-center font-semibold">{{ strtoupper($fam?->spouse_name_ext ?? 'N/A') }}</p>
                 </div>
             </td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 0) }}</td>
@@ -393,8 +392,8 @@
             ];
         @endphp
         @foreach($spouseRows as [$rowLbl, $field, $indent, $chI])
-        <tr style="height:16pt;">
-            <td colspan="3" class="{{ $lbl }} text-[6pt] {{ $indent ? 'pl-2' : 'px-1' }}">{{ $rowLbl }}</td>
+        <tr style="height:16pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} text-[6pt] {{ $indent ? 'pl-4' : 'px-4' }}">{{ $rowLbl }}</td>
             <td colspan="7" class="{{ $val }} text-[6.5pt] px-1">{{ strtoupper($fam?->$field ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $chI) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, $chI) }}</td>
@@ -402,41 +401,41 @@
         @endforeach
 
         {{-- Father --}}
-        <tr style="height:16pt;">
+        <tr style="height:16pt;" class="uppercase">
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1  border-b-gray-100">24. FATHER'S SURNAME</td>
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->father_surname ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 6) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 6) }}</td>
         </tr>
-        <tr style="height:16pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt]  border-b-gray-100">FIRST NAME</td>
+        <tr style="height:16pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} pl-4 text-[6pt]  border-b-gray-100 pt-1">FIRST NAME</td>
             <td colspan="4" class="{{ $val }} px-1">{{ strtoupper($fam?->father_first_name ?? 'N/A') }}</td>
             <td colspan="3" class="{{ $lbl }} text-[6pt]">
                 <div>
                     <p>NAME EXTENSION (JR., SR)</p>
-                    <p class="text-center">{{ strtoupper($fam?->father_name_ext ?? 'N/A') }}</p>
+                    <p class="text-center font-semibold">{{ strtoupper($fam?->father_name_ext ?? 'N/A') }}</p>
                 </div>
             </td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 7) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 7) }}</td>
         </tr>
-        <tr style="height:16pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt] ">MIDDLE NAME</td>
+        <tr style="height:16pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} pl-4 text-[6pt]">MIDDLE NAME</td>
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->father_middle_name ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 8) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 8) }}</td>
         </tr>
 
         {{-- Mother --}}
-        <tr style="height:16pt;">
+        <tr style="height:16pt;" class="uppercase">
             <td colspan="3" class="{{ $lbl }} text-[6pt] px-1 border-r-0 border-b-gray-100">25. MOTHER'S MAIDEN NAME</td>
             <td colspan="7" class="bg-gray-100 border-l-0 "></td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, 9) }}</td>
             <td colspan="4" class="{{ $val }} text-center text-[6.5pt]">{{ chDob($children, 9) }}</td>
         </tr>
         @foreach([['SURNAME','mother_surname',false,10],['FIRST NAME','mother_first_name',false,11],['MIDDLE NAME','mother_middle_name',true,null]] as [$mLbl,$mField,$mLast,$mChI])
-        <tr style="height:16pt;">
-            <td colspan="3" class="{{ $lbl }} pl-2 text-[6pt] border-b-gray-100">{{ $mLbl }}</td>
+        <tr style="height:16pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} pl-4 text-[6pt] border-b-gray-100">{{ $mLbl }}</td>
             @if(!$mLast)
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? 'N/A') }}</td>
             <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ chName($children, $mChI) }}</td>
@@ -444,14 +443,14 @@
             @else
             {{-- Mother middle name: last child col replaced by continue note --}}
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? 'N/A') }}</td>
-            <td colspan="9" class="{{ $note }} border-none align-middle">(Continue on separate sheet if necessary)</td>
+            <td colspan="9" class="{{ $note }} border-none align-middle normal-case">(Continue on separate sheet if necessary)</td>
             @endif
         </tr>
         @endforeach
 
         {{-- Section III: Education --}}
         <tr><td colspan="19" class="{{ $sectionHeader }}">III. EDUCATIONAL BACKGROUND</td></tr>
-        <tr style="height:14pt;">
+        <tr style="height:14pt;" class="uppercase">
             <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[6pt]"><span>26.</span> <p class="text-center">LEVEL</p></td>
             <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-center text-[5.5pt]">NAME OF SCHOOL<br><span class="normal-case">(Write in full)</span></td>
             <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-center text-[5.5pt]">BASIC EDUCATION/DEGREE/COURSE<br><span class="normal-case">(Write in full)</span></td>
@@ -465,8 +464,8 @@
             <td class="{{ $lbl }} text-[6pt] normal-case border-r-2 border-black">To</td>
         </tr>
         @foreach([['ELEMENTARY','Elementary'],['SECONDARY','Secondary'],['VOCATIONAL / TRADE COURSE','Vocational'],['COLLEGE','College'],['GRADUATE STUDIES','Graduate Studies']] as [$eLabel,$eKey])
-        <tr style="height:22pt;">
-            <td colspan="3" class="{{ $lbl }} text-[6pt] px-2 align-middle">{{ $eLabel }}</td>
+        <tr style="height:22pt;" class="uppercase">
+            <td colspan="3" class="{{ $lbl }} text-[6pt] px-2 pl-4 align-middle">{{ $eLabel }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'school_name') }}</td>
             <td colspan="4" class="{{ $val }} text-[5pt] px-1">{{ eduF($eduList, $eKey, 'course') }}</td>
             <td class="{{ $val }} text-[6pt] border-l-2 border-black text-center">{{ eduF($eduList, $eKey, 'period_from') }}</td>
@@ -479,7 +478,7 @@
         <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 1 Signature --}}
-        <tr style="height:20pt;">
+        <tr style="height:18pt;">
             {{-- Signature Label (3 cols) --}}
             <td colspan="3" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
@@ -510,7 +509,7 @@
     <table class="border-2 border-black">
 
         <tr><td colspan="19" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
-        <tr style="height:20pt;">
+        <tr style="height:20pt;" >
             <td colspan="8" rowspan="2" class="{{ $lbl }} align-middle uppercase">
                 <div class="flex justify-center text-center">
                     <p>27.</p> 
@@ -519,19 +518,19 @@
                     </p>
                 </div>
             </td>
-            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] uppercase text-center">RATING<br><span class="normal-case">(if applicable)</span></td>
+            <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] uppercase text-center">RATING<br><span class="normal-case">(If Applicable)</span></td>
             <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">DATE OF EXAMINATION/<br>CONFERMENT</td>
             <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">PLACE OF EXAMINATION /<br>CONFERMENT</td>
-            <td colspan="4" class="{{ $lbl }} text-[6pt] text-center">LICENSE <span class="normal-case">(if applicable)</span></td>
+            <td colspan="4" class="{{ $lbl }} text-[6pt] align-middle text-center">LICENSE <span class="normal-case">(If Applicable)</span></td>
         </tr>
         <tr style="height:17pt;" class="text-center">
-            <td colspan="2" class="{{ $lbl }} text-[6pt] align-middle">NUMBER</td>
+            <td colspan="2" class="{{ $lbl }} text-[6pt] align-middle uppercase">NUMBER</td>
             <td colspan="2" class="{{ $lbl }} text-[6pt] align-middle normal-case">Valid Until</td>
         </tr>
         @php $eligibilities = $pds['eligibilities'] ?? []; @endphp
         @for($i = 0; $i < 8; $i++)
         @php $el = $eligibilities[$i] ?? null; @endphp
-        <tr style="height:20pt;">
+        <tr style="height:22pt;">
             <td colspan="8" class="{{ $val }} text-[7pt] px-1">{{ $el?->career_service ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $el?->rating ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($el?->date_of_examination) }}</td>
@@ -550,7 +549,11 @@
             </td>
         </tr>
         <tr style="height:18pt;">
-            <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><span>28. </span><p class="text-center">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></p></td>
+            <td colspan="4" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">
+                <div class="flex justify-center text-center">
+                    <p>28. </p>
+                    <p class="grow">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></p></td>
+                </div>
             <td colspan="6" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">POSITION TITLE<br><span class="normal-case">(Write in full/Do not abbreviate)</span></td>
             <td colspan="5" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">DEPARTMENT / AGENCY / OFFICE / COMPANY <br><span class="normal-case">(Write in full/Do not abbreviate)</span> </td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-[5.5pt] text-center">STATUS OF APPOINTMENT</td>
@@ -589,16 +592,16 @@
                 @endif
             </td>
 
-            {{-- Date Label (3 cols to reach 14) --}}
+            {{-- Date Label --}}
             <td colspan="4" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">DATE</td>
             
-            {{-- Date Value (4 cols to reach 18) --}}
+            {{-- Date Value --}}
             <td colspan="4" class="border-2 border-black align-middle px-2 text-center font-bold uppercase">
                 {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}
             </td>
         </tr>
     </table>
-    <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 2 of 4</p>
+    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2025), Page 2 of 4</p>
 </div>
 
 
@@ -610,9 +613,13 @@
 
     <tr><td colspan="20" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
     <tr style="height:18pt;">
-        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[7pt]"><span>29.</span> <p class="inline pl-10">NAME &amp; ADDRESS OF ORGANIZATION<br><span class="normal-case pl-28">(Write in full)</span></p></td>
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[7pt]">
+            <div class="flex justify-center text-center">
+                <p>29.</p> 
+                <p class="grow">NAME &amp; ADDRESS OF ORGANIZATION<br><span class="normal-case">(Write in full)</span></p></td>
+            </div>
         <td colspan="4" class="{{ $lbl }} text-[7pt] text-center py-1">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></td>
-        <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER OF<br> HOURS</td>
+        <td colspan="2" rowspan="2" class=" align-middle text-[7pt] text-center">NUMBER OF<br> HOURS</td>
         <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[6pt] text-center">POSITION / NATURE OF WORK</td>
     </tr>
     <tr style="height:13pt;" class="text-center">
@@ -623,21 +630,33 @@
     @for($i=0;$i<7;$i++)
     @php $vw=$volWork[$i]??null; @endphp
     <tr style="height:20pt;">
-        <td colspan="7" class="{{ $val }} text-[7pt] px-1">@if($vw){{ ($vw->organization_name??'').(($vw->organization_address)?(', '.$vw->organization_address): 'N/A') }}@endif</td>
+        <td colspan="7" class="{{ $val }} text-[7pt] px-1 text-center">
+            @if($vw && ($vw->organization_name || $vw->organization_address))
+                {{ $vw->organization_name }}
+                {{ ($vw->organization_name && $vw->organization_address) ? ', ' : '' }}
+                {{ $vw->organization_address }}
+            @else
+                N/A
+            @endif
+        </td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_from) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ pDate($vw?->date_to) }}</td>
         <td colspan="2" class="{{ $val }} text-center text-[7pt]">{{ $vw?->number_of_hours?? 'N/A' }}</td>
-        <td colspan="7" class="{{ $val }} text-[7pt] px-1">{{ $vw?->position?? 'N/A' }}</td>
+        <td colspan="7" class="{{ $val }} text-center text-[7pt]">{{ $vw?->position?? 'N/A' }}</td>
     </tr>
     @endfor
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
     <tr><td colspan="20" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
     <tr style="height:18pt;">
-        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]"><span>30.</span> <p class="text-center inline pl-2">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br><span class="pl-24">TRAINING PROGRAMS<br></span></p><p class="normal-case text-center">(Write in full)</p></td>
-        <td colspan="4" class="{{ $lbl }} text-[5.5pt] text-center">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></td>
-        <td colspan="2" rowspan="2" class=" align-middle text-[6.5pt] text-center">NUMBER<br>OF HOURS</td>
-        <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">Type of L&amp;D<br><span class="normal-case text-[6.5pt]">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt]">
+            <div class="flex justify-center text-center">
+                <p>30.</p> 
+                <p class="grow">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br>TRAINING PROGRAMS <span class="normal-case block">(Write in full)</span></p>
+            </div>
+        <td colspan="4" class="{{ $lbl }} text-[5.5pt] text-center">INCLUSIVE DATES OF <br>ATTENDANCE<br><span class="normal-case">(dd/mm/yyyy)</span></td>
+        <td colspan="2" rowspan="2" class=" align-middle text-[7pt] text-center">NUMBER OF<br> HOURS</td>
+        <td colspan="2" rowspan="2" class="align-middle text-[6pt] text-center">Type of L&amp;D<br><span class="normal-case text-[7pt]">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
         <td colspan="5" rowspan="2" class="{{ $lbl }} align-middle text-[5.5pt] text-center">CONDUCTED/ SPONSORED BY<br><span class="normal-case">(Write in full)</span></td>
     </tr>
     <tr style="height:13pt;" class="text-center">
@@ -647,12 +666,12 @@
     @php $trainings=$pds['trainings']??[]; @endphp
     @for($i=0;$i<21;$i++)
     @php $tr=$trainings[$i]??null; @endphp
-    <tr style="height:19pt;" class="uppercase">
-        <td colspan="7" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->title??'' }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_from) }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->number_of_hours ?? 'N/A' }}</td>
-        <td colspan="2" class="{{ $val }} text-center text-[6.5pt]">{{ $tr?->type_of_ld ?? 'N/A' }}</td>
+    <tr style="height:19pt;" class="uppercase text-center">
+        <td colspan="7" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->title?? 'N/A' }}</td>
+        <td colspan="2" class="{{ $val }} text-[6.5pt]">{{ pDate($tr?->date_from) }}</td>
+        <td colspan="2" class="{{ $val }} text-[6.5pt]">{{ pDate($tr?->date_to) }}</td>
+        <td colspan="2" class="{{ $val }} text-[6.5pt]">{{ $tr?->number_of_hours ?? 'N/A' }}</td>
+        <td colspan="2" class="{{ $val }} text-[6.5pt]">{{ $tr?->type_of_ld ?? 'N/A' }}</td>
         <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $tr?->conducted_by ?? 'N/A' }}</td>
     </tr>
     @endfor
@@ -686,16 +705,16 @@
     </tr>
     @php $oi=$pds['other_info']??null; $skills=$oi?->special_skills??[]; $distinctions=$oi?->non_academic_distinctions??[]; $memberships=$oi?->organization_memberships??[]; @endphp
     @for($i=0;$i<7;$i++)
-    <tr style="height:18pt;">
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $skills[$i]?? 'N/A' }}</td>
-        <td colspan="10" class="{{ $val }} text-[6.5pt] px-1">{{ $distinctions[$i]?? 'N/A' }}</td>
-        <td colspan="5" class="{{ $val }} text-[6.5pt] px-1">{{ $memberships[$i]?? 'N/A' }}</td>
+    <tr style="height:19pt;" class="text-center">
+        <td colspan="5" class="{{ $val }} text-[7pt] px-1">{{ $skills[$i]?? 'N/A' }}</td>
+        <td colspan="10" class="{{ $val }} text-[7pt] px-1">{{ $distinctions[$i]?? 'N/A' }}</td>
+        <td colspan="5" class="{{ $val }} text-[7pt] px-1">{{ $memberships[$i]?? 'N/A' }}</td>
     </tr>
     @endfor
     <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
     {{-- Page 3 Signature --}}
-        <tr style="height:20pt;">
+        <tr style="height:22pt;">
             {{-- Signature Label (3 cols) --}}
             <td colspan="5" class="text-center border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
@@ -717,7 +736,7 @@
             </td>
         </tr>
     </table>
-    <p class="text-right italic text-[6.5pt] mt-0.5">CS FORM 212 (Revised 2025), Page 3 of 4</p>
+    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2025), Page 3 of 4</p>
 </div>
 
 
@@ -741,7 +760,7 @@
                 <div class="py-3"></div>
             </td>
             <td colspan="8" class="align-bottom p-2 text-[8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q34_a === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -752,7 +771,7 @@
                         <span class="text-[7pt]">NO</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q34_b === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -765,7 +784,7 @@
                 </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details:</p>
-                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q34_details?? '' }}</p>
+                    <p class="border-b border-black h-4 mx-2 font-semibold">{{ $q?->q34_details?? '' }}</p>
                 </div>
             </td>
         </tr>
@@ -777,18 +796,17 @@
                     <span>35.</span>
                     <p class="px-1">a. Have you ever been found guilty of any administrative offense?</p>
                 </div>
-                <div class="px-4 normal-case my-8">
+                <div class="px-4 normal-case my-14">
                     <p>b. Have you been criminally charged before any court?</p>
                 </div>
             </td>
             <td colspan="8" class="align-top text-[8pt]">
                 <div class="mb-2 border-b border-black p-2 pb-1">
-                    <div class="flex items-center gap-4 mb-1">
+                    <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q35_a === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
                     </div>
-
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q35_a === false ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">NO</span>
@@ -796,11 +814,11 @@
                 </div>
                     <div class=" flex flex-col text-[7pt] mb-1">
                         <p>If YES, give details: </p>
-                        <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q35_a_details??'' }}</p>
+                        <p class="border-b border-black h-4 mx-2 font-semibold">{{ $q?->q35_a_details?? '' }}</p>
                     </div>
                 </div>
                 <div class="mb-2 p-2 pb-0">
-                    <div class="flex items-center gap-4 mb-1">
+                    <div class="flex items-center gap-10 mb-1">
                         <div class="checkbox-container">
                             <div class="box {{ $q?->q35_b === true ? 'checked' : '' }}"></div>
                             <span class="text-[7pt]">YES</span>
@@ -816,7 +834,7 @@
                         <p>{{ $q?->q35_b_details??'' }}</p>
                         <div class="flex ml-5">
                             <p class="shrink-0">Date Filed:</p> 
-                            <p class="border-b border-black w-full ml-3 mr-2 font-semibold">{{ $q?->q35_b_date??'' }}</p>
+                            <p class="border-b border-black w-full mx-2 font-semibold">{{ $q?->q35_b_date??'' }}</p>
                         </div>
                         <div class="flex">
                             <span class="shrink-0">Status of Case/s: </span>
@@ -832,11 +850,11 @@
             <td colspan="11" class="text-[8pt] bg-gray-100">
                 <div class="flex normal-case mb-8">
                     <p>36.</p>
-                    <p class="px-2">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal</p>
+                    <p class="px-2">Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</p>
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q36 === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -848,7 +866,7 @@
                 </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details:</p> 
-                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q36_details??'' }}</p>
+                    <p class="border-b border-black h-4 mx-2 font-semibold">{{ $q?->q36_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -862,7 +880,7 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q37 === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -874,7 +892,7 @@
                 </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details: </p>
-                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q37_details??'' }}</p>
+                    <p class="border-b border-black h-4 mx-2 font-semibold">{{ $q?->q37_details??'' }}</p>
                 </div>
             </td>
         </tr>
@@ -891,7 +909,7 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q38_a === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -903,9 +921,9 @@
                 </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, give details:</p> 
-                    <p class="border-b border-black mr-2 w-full font-semibold">{{ $q?->q38_a_details??'' }}</p>
+                    <p class="border-b border-black h-4 mr-2 w-full font-semibold">{{ $q?->q38_a_details??'' }}</p>
                 </div>
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q38_b === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -917,7 +935,7 @@
                 </div>
                 <div class="flex gap-1 text-[7pt]">
                     <p class="shrink-0">If YES, give details: </p>
-                    <p class="border-b border-black mr-2 w-full font-semibold">{{ $q?->q38_b_details??'' }}</p>
+                    <p class="border-b border-black h-4 mr-2 w-full font-semibold">{{ $q?->q38_b_details??'' }}</p>
                 </div>
             </td>
          </tr>
@@ -931,7 +949,7 @@
                 </div>
             </td>
             <td colspan="8" class="align-top p-2 text-[8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q39 === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -943,19 +961,19 @@
                 </div>
                 <div class="text-[7pt]">
                     <p>If YES, give details (country): </p>
-                    <p class="border-b border-black mt-2 mx-2 font-semibold">{{ $q?->q39_details??'' }}</p>
+                    <p class="border-b border-black h-4 mx-2 font-semibold">{{ $q?->q39_details??'' }}</p>
                 </div>
             </td>
         </tr>
 
         {{-- Q40 --}}
-        <tr style="height:41pt;">
+        <tr style="height:45pt;">
             <td colspan="11" class="text-[8pt] align-top bg-gray-100">
                 <div class="flex normal-case">
                     <p>40.</p>
-                    <p class="px-2">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</p>
+                    <p class="px-2">Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277, as ammended); and (c) Expanded Solo Parents Welfare Act (RA 11861), please answer the following items:</p>
                 </div>
-                <div class="normal-case space-y-4 mb-4">
+                <div class="normal-case space-y-5 mb-6">
                     <div class="flex">
                         <p>a.</p>
                         <p class="px-4">Are you a member of any indigenous group?</p>
@@ -971,7 +989,7 @@
                 </div>
             </td>
             <td colspan="8" class="align-bottom p-2 text-[7=8pt]">
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q40_a === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -983,9 +1001,9 @@
                 </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, specify: </p>
-                    <p class="border-b border-black ml-8 mr-2 w-full font-semibold">{{ $q?->q40_a_details??'' }}</p>
+                    <p class="border-b border-black ml-8 mr-2 w-full font-semibold h-3">{{ $q?->q40_a_details??'' }}</p>
                 </div>
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q40_b === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -997,9 +1015,9 @@
                 </div>
                 <div class="flex gap-1 text-[7pt] mb-1">
                     <p class="shrink-0">If YES, specify ID No: </p>
-                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold">{{ $q?->q40_b_details??'' }}</p>
+                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold h-3">{{ $q?->q40_b_details??'' }}</p>
                 </div>
-                <div class="flex items-center gap-4 mb-1">
+                <div class="flex items-center gap-10 mb-1">
                     <div class="checkbox-container">
                         <div class="box {{ $q?->q40_c === true ? 'checked' : '' }}"></div>
                         <span class="text-[7pt]">YES</span>
@@ -1011,13 +1029,13 @@
                 </div>
                 <div class="flex gap-1 text-[7pt]">
                     <p class="shrink-0">If YES, specify ID No: </p>
-                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold">{{ $q?->q40_c_details??'' }}</p>
+                    <p class="border-b border-black ml-1 mr-2 w-full font-semibold h-3">{{ $q?->q40_c_details??'' }}</p>
                 </div>
             </td>
         </tr>
 
         {{-- 41. REFERENCES + PHOTO --}}
-        <tr>
+        <tr style="height:18pt;">
             <td colspan="14" class="text-[8pt] p-1 border-b-0 border-t-2 border-black bg-gray-100">
                 41. REFERENCES <span class="font-semibold normal-case text-[7pt]">(Person not related by consanguinity or affinity to applicant/appointee)</span>
             </td>
@@ -1035,18 +1053,18 @@
             </td>
         </tr>
 
-        <tr style="height:20pt;" class="uppercase">
-            <td colspan="6" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">NAME</td>
-            <td colspan="5" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">OFFICE / RESIDENTIAL ADDRESS</td>
-            <td colspan="3" class="{{ $lbl }} text-center text-[7pt] border-y align-middle">CONTACT NO. <br> AND/OR EMAIL</td>
+        <tr style="height:20pt;" class="uppercase text-center">
+            <td colspan="6" class="{{ $lbl }} text-[7pt] border-y align-middle">NAME</td>
+            <td colspan="5" class="{{ $lbl }} text-[7pt] border-y align-middle">OFFICE / RESIDENTIAL ADDRESS</td>
+            <td colspan="3" class="{{ $lbl }} text-[7pt] border-y align-middle">CONTACT NO. <br> AND/OR EMAIL</td>
         </tr>
 
         @for($i=0; $i<3; $i++)
         @php $ref = $refs[$i] ?? null; @endphp
-        <tr style="height:20pt;" class="uppercase">
-            <td colspan="6" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->name ?? 'N/A' }}</td>
-            <td colspan="5" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->address ?? 'N/A' }}</td>
-            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y lowercase">{{ $ref?->telephone ?? 'N/A' }}</td>
+        <tr style="height:20pt;">
+            <td colspan="6" class="{{ $val }} uppercase text-[6.5pt] px-1 border-y">{{ $ref?->name ?? 'N/A' }}</td>
+            <td colspan="5" class="{{ $val }} uppercase text-[6.5pt] px-1 border-y">{{ $ref?->address ?? 'N/A' }}</td>
+            <td colspan="3" class="{{ $val }} text-[6.5pt] px-1 border-y">{{ $ref?->telephone ?? 'N/A' }}</td>
         </tr>
         @endfor
 

@@ -48,8 +48,17 @@ interface Props {
 const TYPE_COLORS: Record<string, { bar: string; label: string; dot: string }> = {
     VL:    { bar: 'bg-amber-400',   label: 'text-amber-700',   dot: 'bg-amber-400' },
     SL:    { bar: 'bg-sky-400',     label: 'text-sky-700',     dot: 'bg-sky-400' },
+    ML:    { bar: 'bg-pink-400',    label: 'text-pink-700',    dot: 'bg-pink-400' },
     PL:    { bar: 'bg-indigo-400',  label: 'text-indigo-700',  dot: 'bg-indigo-400' },
     WL:   { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
+    SOLO:  { bar: 'bg-orange-400',  label: 'text-orange-700',  dot: 'bg-orange-400' },
+    STUDY: { bar: 'bg-teal-400',    label: 'text-teal-700',    dot: 'bg-teal-400' },
+    VAWC:  { bar: 'bg-red-400',     label: 'text-red-700',     dot: 'bg-red-400' },
+    RL:    { bar: 'bg-lime-400',    label: 'text-lime-700',    dot: 'bg-lime-400' },
+    SLW:   { bar: 'bg-fuchsia-400', label: 'text-fuchsia-700', dot: 'bg-fuchsia-400' },
+    CL:    { bar: 'bg-cyan-400',    label: 'text-cyan-700',    dot: 'bg-cyan-400' },
+    AL:    { bar: 'bg-rose-400',    label: 'text-rose-700',    dot: 'bg-rose-400' },
+    FL:    { bar: 'bg-yellow-400',  label: 'text-yellow-700',  dot: 'bg-yellow-400' },
 };
 const DEFAULT_COLOR = { bar: 'bg-gray-400', label: 'text-gray-700', dot: 'bg-gray-400' };
 

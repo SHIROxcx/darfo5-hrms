@@ -3,6 +3,8 @@ import { Head, router } from '@inertiajs/react';
 import {
     Calendar, Clock, CheckCircle2, XCircle, Plus, X, ChevronLeft,
     ChevronRight, Edit2, Ban, FileText, AlertCircle,
+    ArrowBigRight,
+    ArrowRight,
 } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
@@ -44,8 +46,19 @@ interface Props {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TYPE_COLORS: Record<string, string> = {
-    VL: 'bg-amber-400', SL: 'bg-sky-400',
-    PL: 'bg-indigo-400', WL: 'bg-purple-400',
+    VL: 'bg-amber-400', 
+    SL: 'bg-sky-400',
+    ML: 'bg-pink-400', 
+    PL: 'bg-indigo-400',
+    WL: 'bg-purple-400',
+    SOLO: 'bg-orange-400',
+    STUDY: 'bg-teal-400',
+    VAWC: 'bg-red-500',
+    RL: 'bg-lime-400',
+    SWL: 'bg-fuchsia-400',
+    CL: 'bg-cyan-400',
+    AL: 'bg-rose-400',
+    FL: 'bg-yellow-400'
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -71,7 +84,12 @@ function isWeekend(date: Date): boolean { return date.getDay() === 0 || date.get
 
 function addDays(d: Date, n: number): Date { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
-function toDateString(d: Date): string { return d.toISOString().slice(0, 10); }
+function toDateString(d: Date): string {
+    const year  = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day   = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
 function countWorkingDays(start: string, end: string): number {
     if (!start || !end || end < start) return 0;
@@ -144,12 +162,12 @@ function CalendarPicker({ startDate, endDate, onSelect }: CalendarPickerProps) {
             {/* Picking indicator */}
             <div className="flex gap-2 mb-3">
                 <button onClick={() => setPicking('start')}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition
+                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition cursor-pointer
                         ${picking === 'start' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500'}`}>
                     Start: {startDate ? fmt(startDate, { month: 'short', day: 'numeric' }) : 'Pick date'}
                 </button>
                 <button onClick={() => setPicking('end')}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition
+                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition cursor-pointer
                         ${picking === 'end' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500'}`}>
                     End: {endDate ? fmt(endDate, { month: 'short', day: 'numeric' }) : 'Pick date'}
                 </button>
@@ -259,9 +277,9 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 shrink-0">
                     <h3 className="font-semibold text-green-800 text-sm flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {isEdit ? 'Edit Leave Request' : 'Apply for Leave'}
+                        {isEdit ? 'Edit Leave Request' : 'Leave Application'}
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -275,7 +293,7 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
                             value={leaveTypeId}
                             onChange={e => { setLeaveTypeId(e.target.value); setErrors(p => ({ ...p, leave_type_id: '' })); }}
                             className={inputCls}>
-                            <option value="">Select leave type…</option>
+                            <option value="">Select leave type</option>
                             {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name} ({t.code})</option>)}
                         </select>
                         {errors.leave_type_id && <p className="mt-1 text-xs text-red-500">{errors.leave_type_id}</p>}
@@ -330,11 +348,11 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
 
                 <div className="flex justify-end gap-2 border-t px-6 py-4 shrink-0">
                     <button onClick={onClose}
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition cursor-pointer">
                         Cancel
                     </button>
                     <button onClick={handleSubmit} disabled={saving}
-                        className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
+                        className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60 cursor-pointer">
                         {saving ? (
                             <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -428,59 +446,41 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                         <p className="text-sm text-gray-500 mt-0.5">Manage your leave requests and track your credits</p>
                     </div>
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm">
+                        className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm cursor-pointer">
                         <Plus className="h-4 w-4" />
                         Apply for Leave
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
                     {/* Left — Requests */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-3 space-y-4">
 
                         {/* Stat chips */}
-                        <div className="grid grid-cols-3 gap-3">
+                        {/* <div className="grid grid-cols-3 gap-4">
                             {[
-                                {
-                                    label: 'Pending',
-                                    val: stats.pending,
-                                    icon: <Clock className="h-3.5 w-3.5" />,
-                                    chip: 'bg-amber-50 border-amber-200',
-                                    iconWrap: 'bg-amber-100 border-amber-200 text-amber-700',
-                                },
-                                {
-                                    label: 'Approved',
-                                    val: stats.approved,
-                                    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-                                    chip: 'bg-green-50 border-green-200',
-                                    iconWrap: 'bg-green-100 border-green-200 text-green-700',
-                                },
-                                {
-                                    label: 'Denied',
-                                    val: stats.denied,
-                                    icon: <XCircle className="h-3.5 w-3.5" />,
-                                    chip: 'bg-rose-50 border-rose-200',
-                                    iconWrap: 'bg-rose-100 border-rose-200 text-rose-600',
-                                },
+                                { label: 'Pending',  val: stats.pending,  icon: <Clock className="h-6 w-6" /> },
+                                { label: 'Approved', val: stats.approved, icon: <CheckCircle2 className="h-6 w-6" /> },
+                                { label: 'Denied',   val: stats.denied,   icon: <XCircle className="h-6 w-6" /> },
                             ].map(s => (
-                                <div key={s.label} className={`rounded-xl border ${s.chip} p-3 flex items-center gap-2.5`}>
-                                    <div className={`h-8 w-8 rounded-full border flex items-center justify-center shrink-0 ${s.iconWrap}`}>
+                                <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 border border-green-200 bg-green-50 text-green-600">
                                         {s.icon}
                                     </div>
                                     <div>
-                                        <p className="text-lg font-bold text-gray-900 leading-none">{s.val}</p>
-                                        <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                                        <p className="text-2xl font-bold text-gray-900">{s.val}</p>
+                                        <p className="text-sm text-gray-500">{s.label}</p>
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                        </div> */}
 
                         {/* Filter tabs */}
                         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
                             {['all', 'pending', 'approved', 'denied', 'cancelled'].map(f => (
                                 <button key={f} onClick={() => setFilter(f)}
-                                    className={`flex-1 text-xs font-medium rounded-lg py-1.5 transition capitalize
+                                    className={`flex-1 text-xs font-medium rounded-lg py-1.5 transition capitalize cursor-pointer
                                         ${filter === f ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                                     {f}
                                 </button>
@@ -495,8 +495,8 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                                     <p className="text-sm italic">No {filter !== 'all' ? filter : ''} leave requests.</p>
                                     {filter === 'all' && (
                                         <button onClick={openCreate}
-                                            className="mt-2 text-xs text-green-600 font-semibold hover:underline">
-                                            Apply for your first leave →
+                                            className="flex items-center gap-1 mt-2 text-xs text-green-600 font-semibold hover:underline cursor-pointer">
+                                            Apply for your first leave
                                         </button>
                                     )}
                                 </div>

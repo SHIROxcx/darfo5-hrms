@@ -224,22 +224,22 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
         setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: undefined } : e));
     };
 
-    const validate = (): boolean => {
-        const next: RowErrors[] = rows.map(row => {
-            const e: RowErrors = {};
-            if (!row.career_service?.trim())       e.career_service       = 'Required. Write N/A if not applicable.';
-            if (!row.rating?.trim())               e.rating               = 'Required. Write N/A if not applicable.';
-            if (!row.date_of_examination?.trim())  e.date_of_examination  = 'Required.';
-            if (!row.place_of_examination?.trim()) e.place_of_examination = 'Required. Write N/A if not applicable.';
-            return e;
-        });
-        setErrors(next);
-        return next.every(e => Object.keys(e).length === 0);
-    };
+    // const validate = (): boolean => {
+    //     const next: RowErrors[] = rows.map(row => {
+    //         const e: RowErrors = {};
+    //         if (!row.career_service?.trim())       e.career_service       = 'Required. Write N/A if not applicable.';
+    //         if (!row.rating?.trim())               e.rating               = 'Required. Write N/A if not applicable.';
+    //         if (!row.date_of_examination?.trim())  e.date_of_examination  = 'Required.';
+    //         if (!row.place_of_examination?.trim()) e.place_of_examination = 'Required. Write N/A if not applicable.';
+    //         return e;
+    //     });
+    //     setErrors(next);
+    //     return next.every(e => Object.keys(e).length === 0);
+    // };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validate()) return;
+        // if (!validate()) return;
         onSave('eligibility', { eligibilities: rows } as unknown as Record<string, unknown>);
     };
 
@@ -269,10 +269,10 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                 <table className="w-full text-xs">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-200 uppercase">
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-50">Career Service / Eligibility <span className="text-red-500">*</span></th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Rating <span className="text-red-500">*</span></th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Date of Exam <span className="text-red-500">*</span></th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-35">Place of Examination <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-50">Career Service / Eligibility</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Rating</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Date of Exam</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-35">Place of Examination</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">License No.</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Validity</th>
                             <th className="w-8"></th>

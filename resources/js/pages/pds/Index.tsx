@@ -40,7 +40,7 @@ const SECTIONS = [
     { id: 'eligibility',   label: 'IV. Civil Service Eligibility', icon: Award,      page: 2 },
     { id: 'work_experience', label: 'V. Work Experience',          icon: Briefcase,  page: 2 },
     { id: 'voluntary_work',  label: 'VI. Voluntary Work',          icon: Heart,      page: 3 },
-    { id: 'trainings',     label: 'VII. Learning & Development',   icon: BookMarked, page: 3 },
+    { id: 'trainings',     label: 'VII. L&D Interventions',   icon: BookMarked, page: 3 },
     { id: 'other_info',    label: 'VIII. Other Information',       icon: Info,       page: 3 },
     { id: 'questions',     label: 'IX. Questions',                 icon: HelpCircle, page: 4 },
     { id: 'references',    label: "X. References & Photo",      icon: UserCheck,  page: 4 },
