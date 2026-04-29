@@ -368,7 +368,7 @@ function SignatureUploadBox({
                 <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="mt-1 w-full text-[10px] text-green-600 hover:text-green-700 text-center cursor-pointer"
+                    className="mt-1 w-full text-xs font-medium text-green-600 hover:text-green-700 text-center cursor-pointer"
                 >
                     Change
                 </button>
@@ -472,8 +472,9 @@ function PassportPhotoUploadBox({
                             className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 cursor-pointer w-full h-full"
                         >
                             <Upload className="w-5 h-5 text-gray-400" />
-                            <span className="text-[10px] text-gray-400 text-center px-2 leading-tight">
-                                Passport-sized photo (3.5 × 4.5 cm){'\n'}taken within the last 6 months
+                            <span className="text-xs text-gray-400 text-center px-2 leading-tight">
+                                Passport-sized photo (3.5 × 4.5 cm) taken within the last 6 months.
+                                Preferrably white background.
                             </span>
                         </button>
                     )}
@@ -491,7 +492,7 @@ function PassportPhotoUploadBox({
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}
-                        className="mt-1 w-full text-[10px] text-green-600 hover:text-green-700 text-center cursor-pointer"
+                        className="mt-1 w-full text-xs font-medium text-green-600 hover:text-green-700 text-center cursor-pointer"
                     >
                         Change
                     </button>
@@ -622,7 +623,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
         try {
             await onSave('references', payload);
         } catch (e) {
-            // error toast already shown inside onSave
         }
     };
 
@@ -683,22 +683,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                 </div>
             </div>
 
-            {/* Declaration */}
-            {/* <div>
-                <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
-                    Declaration
-                </h3>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-4">
-                    <p className="text-xs text-amber-800 leading-relaxed text-justify">
-                        <span className='font-semibold'>I declare under oath</span> that I have personally accomplished this 
-                        <span className='font-semibold'> Personal Data Sheet</span> which is a true, correct and complete statement pursuant to the provisions of pertinent laws, rules and regulations of the Republic of the Philippines. I authorize the agency head/authorized
-                        representative to verify/validate the contents stated herein. I agree that any misrepresentation
-                        made in this document and its attachments shall cause the filing of administrative/criminal case/s
-                        against me.
-                    </p>
-                </div>
-            </div> */}
-
             {/* Government ID */}
             <div>
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
@@ -744,7 +728,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                     {/* Passport Photo */}
                     <div id="field-passport_photo">
                         <div className="flex items-center gap-1.5 mb-2">
-                            <Camera className="w-3.5 h-3.5 text-green-600" />
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 Passport-Size Photo <span className="text-red-500">*</span>
                             </span>
@@ -761,7 +744,6 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
                     {/* Signature */}
                     <div id="field-signature">
                         <div className="flex items-center gap-1.5 mb-2">
-                            <PenLine className="w-3.5 h-3.5 text-green-600" />
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 Signature <span className="text-red-500">*</span>
                             </span>

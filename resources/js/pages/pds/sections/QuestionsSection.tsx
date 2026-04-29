@@ -191,7 +191,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-                <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">IX. Questions</h2>
+                <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">IX. Legal Declarations</h2>
                 <p className="text-xs text-gray-500">
                     All questions must be answered. Any misrepresentation may result in administrative/criminal cases.
                 </p>

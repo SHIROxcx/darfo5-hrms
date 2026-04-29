@@ -350,8 +350,8 @@ export default function AdminLeaveIndex({ employees, leaveTypes, weekStart, week
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-6">
                     <StatCard label="Pending requests"  value={stats.pending}        icon={<Clock className="h-6 w-6" />}       color="bg-green-50 border-green-200"  iconColor="text-green-600" />
                     <StatCard label="On leave today"    value={stats.on_leave_today} icon={<Users className="h-6 w-6" />}       color="bg-green-50 border-green-200"      iconColor="text-green-600" />
-                    <StatCard label="Approved (YTD)"    value={stats.approved}       icon={<CheckCircle2 className="h-6 w-6"/>} color="bg-green-50 border-green-200"  iconColor="text-green-600" />
-                    <StatCard label="Denied (YTD)"      value={stats.denied}         icon={<XCircle className="h-6 w-6" />}     color="bg-green-50 border-green-200"      iconColor="text-green-600" />
+                    <StatCard label="Approved"    value={stats.approved}       icon={<CheckCircle2 className="h-6 w-6"/>} color="bg-green-50 border-green-200"  iconColor="text-green-600" />
+                    <StatCard label="Denied"      value={stats.denied}         icon={<XCircle className="h-6 w-6" />}     color="bg-green-50 border-green-200"      iconColor="text-green-600" />
                 </div>
 
                 {/* Filters */}

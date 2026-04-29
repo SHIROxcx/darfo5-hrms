@@ -202,12 +202,14 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                             </div>
 
                             {/* Date To */}
-                            <div>
-                                <label className={labelClass}>Date To</label>
-                                <input type="date" value={row.date_to ?? ''}
-                                    onChange={e => setRow(i, 'date_to', e.target.value)}
-                                    disabled={!!row.is_present}
-                                    className={inputClass} />
+                            <div className='flex gap-2 items-center justify-center'>
+                                <div className='grow'>
+                                    <label className={labelClass}>Date To</label>
+                                    <input type="date" value={row.date_to ?? ''}
+                                        onChange={e => setRow(i, 'date_to', e.target.value)}
+                                        disabled={!!row.is_present}
+                                        className={inputClass} />
+                                </div>
                                 <label className="flex items-center gap-1 mt-1 text-xs text-gray-600 cursor-pointer">
                                     <input type="checkbox" checked={!!row.is_present}
                                         onChange={e => setRow(i, 'is_present', e.target.checked)}

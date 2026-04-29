@@ -64,6 +64,11 @@ const LEAVE_ICONS: Record<string, React.ReactNode> = {
     SL:   <BriefcaseMedical className="h-7 w-7" />,
     PL:   <Award className="h-7 w-7" />,
     WL:   <Heart className="h-7 w-7" />,
+    ML:   <Activity className="h-7 w-7" />,
+    SPL:  <Award className="h-7 w-7" />,
+    SOLO: <Activity className="h-7 w-7" />,
+    CL:   <Activity className="h-7 w-7" />,
+    FL:   <Activity className="h-7 w-7" />,
 };
 
 // ── Static mock data (DTR + Properties) ───────────────────────────────────────

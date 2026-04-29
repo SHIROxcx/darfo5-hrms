@@ -231,6 +231,19 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
         if (submitted) setErrors(prev => ({ ...prev, [key]: undefined }));
     };
 
+    const handleCitizenshipChange = (value: string) => {
+        if (value === 'Filipino') {
+            setForm(prev => ({
+                ...prev,
+                citizenship: value,
+                citizenship_type: '',
+                citizenship_country: '',
+            }));
+        } else {
+            set('citizenship', value);
+        }
+    };
+
     // Location select handlers
 
     const handleResProvince = (opt: SelectOption | null) => {
@@ -527,7 +540,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                                 <label key={c} className="flex items-center gap-1.5 text-sm cursor-pointer">
                                     <input type="radio" name="citizenship" value={c}
                                         checked={form.citizenship === c}
-                                        onChange={e => set('citizenship', e.target.value)}
+                                        onChange={e => handleCitizenshipChange(e.target.value)} // ← moved here
                                         className="accent-green-600" />
                                     {c}
                                 </label>
@@ -544,7 +557,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                                         <label key={t} className="flex items-center gap-1.5 text-sm cursor-pointer">
                                             <input type="radio" name="citizenship_type" value={t}
                                                 checked={form.citizenship_type === t}
-                                                onChange={e => set('citizenship_type', e.target.value)}
+                                                onChange={e => set('citizenship_type', e.target.value)} // ← back to set()
                                                 className="accent-green-600" />
                                             {t === 'by_birth' ? 'By Birth' : 'By Naturalization'}
                                         </label>
@@ -717,8 +730,8 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
                 <h3 className="text-sm font-medium text-green-800 pb-2 mb-3 border-b border-gray-100 uppercase">Contact & Government IDs</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                        <label className={labelClass}>Telephone No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.telephone}
+                        <label className={labelClass}>Telephone No.</label>
+                        <input type="text" value={form.telephone ?? ''}
                             onChange={e => set('telephone', e.target.value)}
                             className={inputClass} />
                     </div>

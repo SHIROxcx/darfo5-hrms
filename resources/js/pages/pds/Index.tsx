@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
 import {
-    User as UserIcon, Users, BookOpen, Award, Briefcase, Download,
+    User as UserIcon, Users, Award, Briefcase, Download,
     Heart, BookMarked, Info, HelpCircle, UserCheck,
     CheckCircle2, Circle, ChevronRight, FileText,
-    ChevronLeft, Dot, Eye, X, Printer
+    ChevronLeft, Dot, X,
+    GraduationCap,
+    HeartHandshake
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -34,16 +37,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const SECTIONS = [
-    { id: 'personal',      label: 'I. Personal Information',      icon: UserIcon,   page: 1 },
-    { id: 'family',        label: 'II. Family Background',         icon: Users,      page: 1 },
-    { id: 'education',     label: 'III. Educational Background',   icon: BookOpen,   page: 1 },
-    { id: 'eligibility',   label: 'IV. Civil Service Eligibility', icon: Award,      page: 2 },
-    { id: 'work_experience', label: 'V. Work Experience',          icon: Briefcase,  page: 2 },
-    { id: 'voluntary_work',  label: 'VI. Voluntary Work',          icon: Heart,      page: 3 },
-    { id: 'trainings',     label: 'VII. L&D Interventions',   icon: BookMarked, page: 3 },
-    { id: 'other_info',    label: 'VIII. Other Information',       icon: Info,       page: 3 },
-    { id: 'questions',     label: 'IX. Questions',                 icon: HelpCircle, page: 4 },
-    { id: 'references',    label: "X. References & Photo",      icon: UserCheck,  page: 4 },
+    { id: 'personal',       label: 'I. Personal Information',        icon: UserIcon,        page: 1 },
+    { id: 'family',         label: 'II. Family Background',          icon: Users,           page: 1 },
+    { id: 'education',      label: 'III. Education',                 icon: GraduationCap,   page: 1 },
+    { id: 'eligibility',    label: 'IV. Licenses & Eligibilities',   icon: Award,           page: 2 },
+    { id: 'work_experience',label: 'V. Work Experience',             icon: Briefcase,       page: 2 },
+    { id: 'voluntary_work', label: 'VI. Voluntary Work',             icon: HeartHandshake,  page: 3 },
+    { id: 'trainings',      label: 'VII. L&D Interventions',         icon: BookMarked,      page: 3 },
+    { id: 'other_info',     label: 'VIII. Other Information',        icon: Info,            page: 3 },
+    { id: 'questions',      label: 'IX. Legal Declarations',         icon: HelpCircle,      page: 4 },
+    { id: 'references',     label: "X. References & ID",             icon: UserCheck,       page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -154,41 +157,20 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
     const handleSave: PdsSaveCallback = async (section, data) => {
         setSaving(true);
-        const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
         const hasFiles = Object.values(data).some(v => v instanceof File);
 
         try {
-            let res: Response;
+            const payload = hasFiles ? new FormData() : data;
+
             if (hasFiles) {
-                const fd = new FormData();
                 Object.entries(data).forEach(([k, v]) => {
-                    if (v instanceof File) {
-                        fd.append(k, v);
-                    } else if (Array.isArray(v)) {
-                        // Serialize arrays (like references) as JSON string
-                        fd.append(k, JSON.stringify(v));
-                    } else if (v !== null && v !== undefined) {
-                        fd.append(k, String(v));
-                    }
-                });
-                res = await fetch(`/pds/save/${section}`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': token },
-                    body: fd,
-                });
-            } else {
-                res = await fetch(`/pds/save/${section}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': token,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify(data),
+                    if (v instanceof File)              (payload as FormData).append(k, v);
+                    else if (Array.isArray(v))          (payload as FormData).append(k, JSON.stringify(v));
+                    else if (v !== null && v !== undefined) (payload as FormData).append(k, String(v));
                 });
             }
 
-            if (!res.ok) throw new Error('Save failed');
+            await axios.post(`/pds/save/${section}`, payload);
 
             Swal.fire({
                 icon: 'success',
@@ -260,22 +242,26 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
-                                <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
-                                    <div
-                                        className="h-full bg-green-600 rounded-full transition-all duration-500"
-                                        style={{ width: `${progressPct}%` }}
-                                    />
+                            {progressPct < 100 && (
+                                <div className="text-right">
+                                    <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
+                                    <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
+                                        <div
+                                            className="h-full bg-green-600 rounded-full transition-all duration-500"
+                                            style={{ width: `${progressPct}%` }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <button
-                                onClick={() => setShowPreview(true)}
-                                title='Preview'
-                                className="flex items-center gap-1.5 p-3 bg-green-700 hover:bg-green-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
-                            >
-                                <Download className="w-3.5 h-3.5" />
-                            </button>
+                            )}
+                            {progressPct === 100 && (
+                                <button
+                                    onClick={() => setShowPreview(true)}
+                                    title='Generate PDS'
+                                    className="flex items-center gap-2 p-3 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
+                                >
+                                   <Download className="w-3.5 h-3.5" />  Generate PDS
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -284,7 +270,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <div className="flex flex-1 overflow-hidden">
 
                     {/* Sidebar */}
-                    <aside className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
+                    <aside className="w-68 bg-gray-50 border-r border-gray-200 overflow-y-auto shrink-0">
                         <nav className="p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
                                 const Icon = section.icon;
