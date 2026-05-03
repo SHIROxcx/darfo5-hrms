@@ -6,6 +6,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Models\EmployeeProfile;
 use App\Models\LeaveCredit;
 use App\Models\LeaveType;
+use App\Models\PdsPersonalInfo;
 use App\Services\LeaveService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,6 +29,10 @@ class DashboardController extends Controller
                 'permanent' => EmployeeProfile::where('employment_type', 'permanent')->count(),
                 'job_order' => EmployeeProfile::where('employment_type', 'jo')->count(),
                 'cos'       => EmployeeProfile::where('employment_type', 'cos')->count(),
+                'male'      => PdsPersonalInfo::where('sex', 'male')->count(),
+                'female'    => PdsPersonalInfo::where('sex', 'female')->count(),
+                'age_18_30' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 30')->count(),
+                'age_31_60' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 31 AND 60')->count(),
             ];
 
             return Inertia::render('Dashboards/AdminDashboard', [

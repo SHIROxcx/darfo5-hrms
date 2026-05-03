@@ -6,7 +6,7 @@
         "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
-        "start": "concurrently --names \"SERVER,VITE,REVERB\" --prefix-colors \"green,blue,magenta\" \"php artisan serve\" \"npm run dev\" \"php artisan reverb:start --debug\"",
+        "start": "concurrently --names \"SERVER,VITE\" --prefix-colors \"green,blue\" \"php artisan serve\" \"npm run dev\"",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",

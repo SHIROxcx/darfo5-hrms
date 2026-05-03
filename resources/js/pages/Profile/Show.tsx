@@ -5,6 +5,7 @@ import {
     Dot, ZoomIn, ZoomOut, RotateCw, Check,
     SquareUser,
     Image,
+    Download,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -913,9 +914,14 @@ export default function ProfileShow() {
                                         <Pencil className="h-4 w-4" /> Edit profile
                                     </button>
                                 ) : (
-                                    <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
-                                        <MessagesSquare className="w-4 h-4" /> Message
-                                    </button>
+                                    <>
+                                        <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
+                                            <MessagesSquare className="w-4 h-4" /> Message
+                                        </button>
+                                        <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
+                                            <Download className="w-4 h-4" /> Generate PDS
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>

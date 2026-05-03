@@ -1,5 +1,5 @@
 import AppLayout from "@/layouts/app-layout";
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import {
     Users, ShieldCheck, Briefcase, SquareUserRound,
     Megaphone, Zap, ChevronRight, Plus, X,
@@ -26,7 +26,16 @@ interface Announcement {
 
 interface Props {
     user: { name: string; email: string; roles: string[]; };
-    stats: { total: number; permanent: number; job_order: number; cos: number; };
+    stats: {
+        total: number;
+        permanent: number;
+        job_order: number;
+        cos: number;
+        male: number;
+        female: number;
+        age_18_30: number;
+        age_31_60: number;
+    };
     announcements: Announcement[];
 }
 
@@ -64,7 +73,141 @@ function fileIcon(name: string) {
     return <File className="h-4 w-4" />;
 }
 
-// Sub-components
+// ─── Demographics Chart Card ───────────────────────────────────────────────
+
+function DemographicsCard({ male, female, age_18_30, age_31_60 }: {
+    male: number; female: number; age_18_30: number; age_31_60: number;
+}) {
+    const total     = male + female || 1;
+    const malePct   = Math.round((male   / total) * 100);
+    const femalePct = 100 - malePct;
+
+    // SVG donut params
+    const r      = 36;
+    const cx     = 52;
+    const cy     = 52;
+    const circ   = 2 * Math.PI * r;
+    const maleDash     = (malePct   / 100) * circ;
+    const femaleDash   = (femalePct / 100) * circ;
+    const maleOffset   = circ * 0.25;
+    const femaleOffset = maleOffset - maleDash;
+
+    // Age bar chart
+    const ageTotal  = age_18_30 + age_31_60 || 1;
+    const youngPct  = Math.round((age_18_30 / ageTotal) * 100);
+    const seniorPct = Math.round((age_31_60 / ageTotal) * 100);
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-gray-100">
+
+                {/* ── Left: Gender donut ── */}
+                <div className="flex flex-col items-center justify-center gap-3 p-5">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide self-start">Gender</p>
+
+                    <div className="relative">
+                        <svg width="150" height="150" viewBox="0 0 104 104">
+                            {/* Track */}
+                            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f3f4f6" strokeWidth="14" />
+                            {/* Female arc (pink) */}
+                            <circle
+                                cx={cx} cy={cy} r={r}
+                                fill="none"
+                                stroke="#fb64b6"
+                                strokeWidth="14"
+                                strokeDasharray={`${femaleDash} ${circ - femaleDash}`}
+                                strokeDashoffset={femaleOffset}
+                                strokeLinecap="butt"
+                                style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                            />
+                            {/* Male arc (blue) */}
+                            <circle
+                                cx={cx} cy={cy} r={r}
+                                fill="none"
+                                stroke="#2b7fff"
+                                strokeWidth="14"
+                                strokeDasharray={`${maleDash} ${circ - maleDash}`}
+                                strokeDashoffset={maleOffset}
+                                strokeLinecap="butt"
+                                style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                            />
+                            {/* Centre label */}
+                            <text x={cx} y={cy - 6} textAnchor="middle" fontSize="15" fontWeight="700" fill="#111827">{total}</text>
+                            <text x={cx} y={cy + 10} textAnchor="middle" fontSize="9" fill="#9ca3af">Total</text>
+                        </svg>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex flex-col gap-1.5 w-full">
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-xs text-gray-600">
+                                <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
+                                Male
+                            </span>
+                            <span className="text-xs font-bold text-gray-800">
+                                {male.toLocaleString()} <span className="font-normal text-gray-400">({malePct}%)</span>
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-xs text-gray-600">
+                                <span className="inline-block h-2.5 w-2.5 rounded-full bg-pink-400" />
+                                Female
+                            </span>
+                            <span className="text-xs font-bold text-gray-800">
+                                {female.toLocaleString()} <span className="font-normal text-gray-400">({femalePct}%)</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Right: Age horizontal bars ── */}
+                <div className="flex flex-col justify-center gap-4 px-5 py-5">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Age Range</p>
+
+                    {/* 18–30 */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600 font-medium">18 – 30</span>
+                            <span className="text-xs font-bold text-gray-800">{age_18_30.toLocaleString()}</span>
+                        </div>
+                        <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-violet-400 transition-all duration-700 ease-out"
+                                style={{ width: `${youngPct}%` }}
+                            />
+                        </div>
+                        <p className="text-[10px] text-gray-400">{youngPct}% of tracked age group</p>
+                    </div>
+
+                    {/* 31–60 */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600 font-medium">31 – 60</span>
+                            <span className="text-xs font-bold text-gray-800">{age_31_60.toLocaleString()}</span>
+                        </div>
+                        <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-amber-400 transition-all duration-700 ease-out"
+                                style={{ width: `${seniorPct}%` }}
+                            />
+                        </div>
+                        <p className="text-[10px] text-gray-400">{seniorPct}% of tracked age group</p>
+                    </div>
+
+                    {/* Mini summary */}
+                    <div className="mt-1 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+                        <p className="text-[10px] text-gray-400 leading-relaxed">
+                            <span className="font-semibold text-gray-600">{age_18_30 + age_31_60}</span> employees in tracked age groups out of <span className="font-semibold text-gray-600">{total}</span> total.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+}
+
+// ─── ScoreCard ─────────────────────────────────────────────────────────────
 
 function ScoreCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ReactNode; color: string; bg: string }) {
     return (
@@ -80,16 +223,7 @@ function ScoreCard({ label, value, icon, color, bg }: { label: string; value: nu
     );
 }
 
-function QuickActionItem({ label, href }: { label: string; href: string }) {
-    return (
-        <a href={href} className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-green-50 hover:border-green-600 text-gray-700 hover:text-green-700 transition group">
-            <div className="flex items-center gap-3 text-sm font-medium"><Zap className="h-4 w-4" />{label}</div>
-            <ChevronRight className="h-4 w-4 transition" />
-        </a>
-    );
-}
-
-// Announcement list item
+// ─── Announcement list item ────────────────────────────────────────────────
 
 function AnnouncementItem({
     id, title, date, tag, tagColor, attachments,
@@ -142,7 +276,7 @@ function AnnouncementItem({
     );
 }
 
-// View Modal
+// ─── View Modal ────────────────────────────────────────────────────────────
 
 function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelete }: {
     announcement: Announcement;
@@ -223,7 +357,7 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
     );
 }
 
-// Post / Edit Modal
+// ─── Post / Edit Modal ─────────────────────────────────────────────────────
 
 interface ModalProps {
     editing?: Announcement;
@@ -236,7 +370,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
 
     const [title,        setTitle]        = useState(editing?.title  ?? '');
     const [body,         setBody]         = useState(editing?.body   ?? '');
-    // Announcement date
     const [date, setDate] = useState(
         editing?.date
             ? (() => {
@@ -325,7 +458,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
 
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
 
-                    {/* Title */}
                     <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">Title</label>
                         <input value={title} onChange={e => { setTitle(e.target.value); setErrors(p => ({ ...p, title: '' })); }}
@@ -333,7 +465,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
                     </div>
 
-                    {/* Description */}
                     <div>
                         <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
                             <span>Description</span>
@@ -344,7 +475,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         {errors.body && <p className="mt-1 text-xs text-red-500">{errors.body}</p>}
                     </div>
 
-                    {/* Date + Tag */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="mb-1 block text-xs font-medium text-gray-500">Announcement Date</label>
@@ -359,7 +489,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         </div>
                     </div>
 
-                    {/* Attachments */}
                     <div>
                         <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-500">
                             <Paperclip className="h-3.5 w-3.5" /> Attachments
@@ -410,7 +539,6 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         />
                     </div>
 
-                    {/* Auto-delete */}
                     <div className="rounded-lg border border-gray-200 px-4 py-3 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                             <input type="checkbox" checked={autoDelete}
@@ -451,7 +579,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
     );
 }
 
-// Main Dashboard
+// ─── Main Dashboard ────────────────────────────────────────────────────────
 
 export default function AdminDashboard({ user, stats, announcements: initialAnnouncements }: Props) {
     const firstName = user.name.split(' ')[0];
@@ -513,9 +641,7 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
         }
         function onUpdated(e: Event) {
             const updated = (e as CustomEvent<Announcement>).detail;
-            setAnnouncements(prev =>
-                prev.map(a => a.id === updated.id ? updated : a)
-            );
+            setAnnouncements(prev => prev.map(a => a.id === updated.id ? updated : a));
         }
 
         window.addEventListener('announcement:new', onNew);
@@ -571,23 +697,31 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <ScoreCard label="Total Employees"       value={stats.total}     icon={<Users className="h-6 w-6" />}          color="text-green-600" bg="bg-green-50" />
-                            <ScoreCard label="Permanent Employees"   value={stats.permanent} icon={<ShieldCheck className="h-6 w-6" />}    color="text-green-600" bg="bg-green-50" />
-                            <ScoreCard label="Job Order Employees"   value={stats.job_order} icon={<Briefcase className="h-6 w-6" />}      color="text-green-600" bg="bg-green-50" />
-                            <ScoreCard label="Contractual Employees" value={stats.cos}       icon={<SquareUserRound className="h-6 w-6" />} color="text-green-600" bg="bg-green-50" />
-                        </div>
+
+                        {/* Employment Type Scorecards */}
                         <div>
-                            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 ml-3">Quick Actions</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <QuickActionItem label="Manage Employees" href="/admin/employees" />
-                                <QuickActionItem label="Leave Requests"   href="/admin/leave" />
+                            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 ml-1">Employment Overview</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <ScoreCard label="Total Employees"       value={stats.total}     icon={<Users className="h-6 w-6" />}          color="text-green-600" bg="bg-green-50" />
+                                <ScoreCard label="Permanent Employees"   value={stats.permanent} icon={<ShieldCheck className="h-6 w-6" />}    color="text-green-600" bg="bg-green-50" />
+                                <ScoreCard label="Job Order Employees"   value={stats.job_order} icon={<Briefcase className="h-6 w-6" />}      color="text-green-600" bg="bg-green-50" />
+                                <ScoreCard label="Contractual Employees" value={stats.cos}       icon={<SquareUserRound className="h-6 w-6" />} color="text-green-600" bg="bg-green-50" />
                             </div>
                         </div>
+
+                        {/* Demographics Chart Card */}
+                        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Demographics</h2>
+
+                        <DemographicsCard
+                            male={stats.male}
+                            female={stats.female}
+                            age_18_30={stats.age_18_30}
+                            age_31_60={stats.age_31_60}
+                        />
                     </div>
 
                     <div className="lg:col-span-1" id="announcements-panel">
-                        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+                        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden mt-7">
                             <div className="px-5 py-4 border-b flex items-center justify-between bg-gray-50">
                                 <div className="flex items-center gap-2">
                                     <Megaphone className="h-4 w-4 text-green-700" />
