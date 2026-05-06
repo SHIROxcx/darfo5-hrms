@@ -24,17 +24,27 @@ class DashboardController extends Controller
         }
 
         if ($user->hasRole('admin')) {
+            // Base query: only users with the 'employee' role
+            $employeeUserIds = \App\Models\User::role('employee')->pluck('id');
+        
             $stats = [
-                'total'     => \App\Models\User::role('employee')->count(),
-                'permanent' => EmployeeProfile::where('employment_type', 'permanent')->count(),
-                'job_order' => EmployeeProfile::where('employment_type', 'jo')->count(),
-                'cos'       => EmployeeProfile::where('employment_type', 'cos')->count(),
-                'male'      => PdsPersonalInfo::where('sex', 'male')->count(),
-                'female'    => PdsPersonalInfo::where('sex', 'female')->count(),
-                'age_18_30' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 30')->count(),
-                'age_31_60' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 31 AND 60')->count(),
+                'total'     => $employeeUserIds->count(),
+                'permanent' => EmployeeProfile::where('employment_type', 'permanent')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'job_order' => EmployeeProfile::where('employment_type', 'jo')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'cos'       => EmployeeProfile::where('employment_type', 'cos')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'male'      => PdsPersonalInfo::where('sex', 'male')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'female'    => PdsPersonalInfo::where('sex', 'female')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'age_18_30' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 30')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
+                'age_31_60' => PdsPersonalInfo::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 31 AND 60')
+                                ->whereIn('user_id', $employeeUserIds)->count(),
             ];
-
+        
             return Inertia::render('Dashboards/AdminDashboard', [
                 'user'          => $user,
                 'stats'         => $stats,

@@ -251,15 +251,48 @@ class PdsController extends Controller
     private function saveEligibility(Request $request, int $userId)
     {
         $request->validate([
-            'eligibilities' => 'required|array',
+            'eligibilities'          => 'required|array',
+            'attachments'            => 'nullable|array',
+            'attachments.*'          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'existing_attachments'   => 'nullable|array',
+            'existing_attachments.*' => 'nullable|string',
         ]);
 
+        $oldPaths = PdsEligibility::where('user_id', $userId)
+            ->pluck('attachment')
+            ->filter()
+            ->values();
+
         PdsEligibility::where('user_id', $userId)->delete();
+
+        $keptPaths    = [];
+        
+        $allFiles     = $request->file('attachments') ?? [];
+        $allExisting  = $request->input('existing_attachments') ?? [];
+
         foreach ($request->eligibilities as $i => $item) {
-            PdsEligibility::create(array_merge($item, [
-                'user_id' => $userId,
+            $attachmentPath = null;
+
+            if (!empty($allFiles[$i])) {
+                $attachmentPath = $allFiles[$i]->store("pds/{$userId}/eligibilities", 'public');
+            } elseif (!empty($allExisting[$i])) {
+                $attachmentPath = $allExisting[$i];
+                $keptPaths[]    = $attachmentPath;
+            }
+
+            $rowData = collect($item)->except(['attachment'])->toArray();
+
+            PdsEligibility::create(array_merge($rowData, [
+                'user_id'    => $userId,
                 'sort_order' => $i,
+                'attachment' => $attachmentPath,
             ]));
+        }
+
+        foreach ($oldPaths as $oldPath) {
+            if (!in_array($oldPath, $keptPaths)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
         }
 
         return back()->with('success', 'Eligibilities saved.');

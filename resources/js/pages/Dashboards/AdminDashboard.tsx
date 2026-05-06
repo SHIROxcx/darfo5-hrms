@@ -167,7 +167,7 @@ function DemographicsCard({ male, female, age_18_30, age_31_60 }: {
                     {/* 18–30 */}
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600 font-medium">18 – 30</span>
+                            <span className="text-xs text-gray-600 font-semibold">18 – 30</span>
                             <span className="text-xs font-bold text-gray-800">{age_18_30.toLocaleString()}</span>
                         </div>
                         <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
@@ -176,13 +176,13 @@ function DemographicsCard({ male, female, age_18_30, age_31_60 }: {
                                 style={{ width: `${youngPct}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-gray-400">{youngPct}% of tracked age group</p>
+                        <p className="text-xs text-gray-400">{youngPct}% of tracked age group</p>
                     </div>
 
                     {/* 31–60 */}
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600 font-medium">31 – 60</span>
+                            <span className="text-xs text-gray-600 font-semibold">31 – 60</span>
                             <span className="text-xs font-bold text-gray-800">{age_31_60.toLocaleString()}</span>
                         </div>
                         <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
@@ -191,13 +191,13 @@ function DemographicsCard({ male, female, age_18_30, age_31_60 }: {
                                 style={{ width: `${seniorPct}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-gray-400">{seniorPct}% of tracked age group</p>
+                        <p className="text-xs text-gray-400">{seniorPct}% of tracked age group</p>
                     </div>
 
-                    {/* Mini summary */}
+                    {/*  summary */}
                     <div className="mt-1 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
-                        <p className="text-[10px] text-gray-400 leading-relaxed">
-                            <span className="font-semibold text-gray-600">{age_18_30 + age_31_60}</span> employees in tracked age groups out of <span className="font-semibold text-gray-600">{total}</span> total.
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                            <span className="font-semibold text-gray-600">{age_18_30 + age_31_60}</span> Employees in tracked age groups out of <span className="font-semibold text-gray-600">{total}</span> Total.
                         </p>
                     </div>
                 </div>

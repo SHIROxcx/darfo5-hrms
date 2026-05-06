@@ -113,6 +113,7 @@ return new class extends Migration {
             $table->string('place_of_examination')->nullable();
             $table->string('license_number')->nullable();
             $table->date('license_validity')->nullable();
+            $table->string('attachment')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
@@ -130,6 +131,7 @@ return new class extends Migration {
             $table->string('salary_grade')->nullable();
             $table->string('status_of_appointment')->nullable();
             $table->boolean('is_government_service')->default(false);
+            $table->string('attachment')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
@@ -158,6 +160,7 @@ return new class extends Migration {
             $table->integer('number_of_hours')->nullable();
             $table->string('type_of_ld')->nullable();
             $table->string('conducted_by')->nullable();
+            $table->string('attachment')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });

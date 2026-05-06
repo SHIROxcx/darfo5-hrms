@@ -5,6 +5,7 @@ import {
     ChevronRight, Edit2, Ban, FileText, AlertCircle,
     ArrowBigRight,
     ArrowRight,
+    Download,
 } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
@@ -445,11 +446,18 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                         </h1>
                         <p className="text-sm text-gray-500 mt-0.5">Manage your leave requests and track your credits</p>
                     </div>
-                    <button onClick={openCreate}
-                        className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm cursor-pointer">
-                        <Plus className="h-4 w-4" />
-                        Apply for Leave
-                    </button>
+                    <div className='flex gap-2'>
+                        <button onClick={openCreate}
+                            className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm cursor-pointer">
+                            <Plus className="h-4 w-4" />
+                            Apply for Leave
+                        </button>
+                        <button
+                            className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm cursor-pointer">
+                            <Download className="h-4 w-4" />
+                            Download Leave History
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

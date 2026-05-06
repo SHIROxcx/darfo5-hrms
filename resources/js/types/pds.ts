@@ -86,6 +86,7 @@ export interface PdsEligibility {
     place_of_examination?: string;
     license_number?: string;
     license_validity?: string;
+    attachment?: string;
 }
 
 export interface PdsWorkExperience {
