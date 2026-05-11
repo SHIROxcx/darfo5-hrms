@@ -94,13 +94,6 @@ class PdsPdfController extends Controller
         return view('pds.pdf', compact('user', 'ep', 'pds'))->render();
     }
 
-    /**
-     * 8.5 × 13 in Legal-size PDF via headless Chromium.
-     *
-     * Adjust setNodeBinary / setNpmBinary to match `which node` / `which npm`.
-     * On Linux servers add ->noSandbox() if Chromium won't launch.
-     * On Windows use full paths: C:\Program Files\nodejs\node.exe
-     */
     private function buildBrowsershot(string $html): Browsershot
     {
         return Browsershot::html($html)
@@ -110,10 +103,5 @@ class PdsPdfController extends Controller
             ->waitUntilNetworkIdle()
             ->deviceScaleFactor(2)
             ->timeout(60);
-            // Uncomment and set paths if needed:
-            // ->setNodeBinary('/usr/bin/node')
-            // ->setNpmBinary('/usr/bin/npm')
-            // ->setChromePath('/usr/bin/chromium-browser')
-            // ->noSandbox()
     }
 }

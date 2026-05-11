@@ -37,7 +37,41 @@ const EMPTY: PdsEligibility = {
     attachment: '',
 };
 
-type RowErrors = Partial<Record<keyof PdsEligibility, string>>;
+type RowErrors = Partial<Record<keyof PdsEligibility | 'attachment_file', string>>;
+type FormErrors = RowErrors[];
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
+const REQUIRED_FIELDS: Array<keyof PdsEligibility> = [
+    'career_service',
+    'rating',
+    'place_of_examination',
+    'license_number',
+];
+
+function validate(rows: PdsEligibility[], rowFiles: RowFile[]): FormErrors {
+    return rows.map((row, i) => {
+        const errs: RowErrors = {};
+        for (const key of REQUIRED_FIELDS) {
+            const val = row[key];
+            if (!val || String(val).trim() === '') {
+                errs[key] = 'Required. Write N/A if not applicable.';
+            }
+        }
+        // Attachment required: must have a new file OR an existing attachment
+        const rf = rowFiles[i];
+        if (!rf?.file && !rf?.existing) {
+            errs['attachment_file'] = 'Please attach a supporting document.';
+        }
+        return errs;
+    });
+}
+
+function hasErrors(errors: FormErrors): boolean {
+    return errors.some(e => Object.keys(e).length > 0);
+}
+
+// ── Other helpers ─────────────────────────────────────────────────────────────
 
 const toDateOnly = (val?: string | null) => val ? val.slice(0, 10) : '';
 const normalizeRow = (row: PdsEligibility): PdsEligibility => ({
@@ -158,8 +192,8 @@ function EligibilityCombobox({ value, onChange, error }: ComboboxProps) {
             <button ref={triggerRef} type="button"
                 onClick={() => open ? (setOpen(false), setQuery('')) : openDropdown()}
                 className={[
-                    'w-full flex items-center justify-between border rounded-lg px-2 py-1.5 text-xs bg-white text-left transition-colors focus:outline-none focus:ring-1',
-                    error ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-green-500',
+                    'w-full flex items-center justify-between border rounded-lg px-2 py-2 text-xs bg-white text-left transition-colors focus:outline-none focus:ring-1',
+                    error ? 'border-red-400 focus:ring-red-400 bg-red-50' : 'border-gray-200 focus:ring-green-500',
                 ].join(' ')}>
                 <span className={value ? 'text-gray-800 truncate' : 'text-gray-400'}>
                     {loading ? 'Loading…' : (value || 'Select eligibility')}
@@ -174,7 +208,7 @@ function EligibilityCombobox({ value, onChange, error }: ComboboxProps) {
                 </span>
             </button>
             {dropdown}
-            {error && <p className="mt-0.5 text-[10px] text-red-500">{error}</p>}
+            {error && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{error}</p>}
         </div>
     );
 }
@@ -185,9 +219,10 @@ interface AttachmentCellProps {
     rowFile: RowFile;
     onChange: (rf: RowFile) => void;
     storageBase?: string;
+    error?: string;
 }
 
-function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: AttachmentCellProps) {
+function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: AttachmentCellProps) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -207,13 +242,11 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
         if (!f) return;
-        if (f.size > MAX_BYTES) { setSizeError('File must be under 4 MB.'); return; }
+        if (f.size > MAX_BYTES) { setSizeError('File must be under 5 MB.'); return; }
         setSizeError('');
-        const preview = isImage(f.name) ? URL.createObjectURL(f) : null;
-        // Revoke old preview to avoid memory leaks
+        const preview = URL.createObjectURL(f);
         if (rowFile.preview) URL.revokeObjectURL(rowFile.preview);
         onChange({ file: f, existing: rowFile.existing, preview });
-        // Reset input so the same file can be re-selected after clearing
         e.target.value = '';
     };
 
@@ -223,15 +256,12 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
         setSizeError('');
     };
 
-    // viewUrl: best URL to open the file (object URL for new picks, storage URL for saved files)
     const existingUrl = hasExisting ? `${storageBase}/${rowFile.existing}` : null;
     const viewUrl     = rowFile.preview ?? existingUrl;
-    // previewSrc: only set for images (to show a thumbnail)
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
     return (
         <div className="flex flex-col gap-1 min-w-30">
-            {/* Hidden file input */}
             <input
                 ref={fileRef}
                 type="file"
@@ -241,8 +271,9 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
             />
 
             {hasAny ? (
-                <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1 bg-gray-50 group">
-                    {/* Thumbnail for images, PDF icon for PDFs, generic icon otherwise */}
+                <div className={`flex items-center gap-1 border rounded-lg px-2 py-1 bg-gray-50 group ${
+                    error ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                }`}>
                     {previewSrc ? (
                         <a href={viewUrl!} target="_blank" rel="noopener noreferrer" className="shrink-0" title="View image">
                             <img src={previewSrc} alt="preview" className="w-7 h-7 rounded object-cover border border-gray-200 hover:opacity-80 transition-opacity" />
@@ -257,7 +288,6 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
                         <ImageIcon className="w-4 h-4 text-gray-400 shrink-0" />
                     )}
 
-                    {/* Filename — clickable link */}
                     <a
                         href={viewUrl ?? '#'}
                         target={viewUrl ? '_blank' : undefined}
@@ -268,9 +298,7 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
                         {label}
                     </a>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-0.5 ml-auto shrink-0">
-                        {/* Replace */}
+                    <div className="flex items-center gap-0.5 ml-auto shrink-0 min-h-7 max-h-5">
                         <button
                             type="button"
                             title="Replace file"
@@ -278,7 +306,6 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
                             className="text-gray-400 hover:text-green-600 p-0.5 rounded transition-colors cursor-pointer">
                             <Paperclip className="w-3 h-3" />
                         </button>
-                        {/* Remove */}
                         <button
                             type="button"
                             title="Remove attachment"
@@ -292,14 +319,19 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: Attachm
                 <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex items-center gap-1 border border-dashed border-gray-300 rounded-lg px-2 py-1.5 text-[11px] text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50 transition-colors cursor-pointer w-full">
+                    className={`flex items-center gap-1 border border-dashed rounded-lg px-2 py-1.5 text-[11px] transition-colors cursor-pointer min-h-8 w-full ${
+                        error
+                            ? 'border-red-400 text-red-400 bg-red-50 hover:border-red-500 hover:text-red-600'
+                            : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50'
+                    }`}>
                     <Paperclip className="w-3 h-3 shrink-0" />
-                    <span>Attach file</span>
+                    <span className='text-xs'>Attach File</span>
                 </button>
             )}
 
-            {sizeError && <p className="text-[10px] text-red-500">{sizeError}</p>}
-            <p className="text-[9px] text-gray-400 leading-tight">JPG, PNG or PDF · max 4 MB</p>
+            {(sizeError || error) && (
+                <p className="text-[10px] text-red-500 leading-tight">{sizeError || error}</p>
+            )}
         </div>
     );
 }
@@ -312,9 +344,9 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
             ? pdsData.eligibilities.map(normalizeRow)
             : [{ ...EMPTY }]
     );
-    const [errors, setErrors] = useState<RowErrors[]>([]);
+    const [errors, setErrors] = useState<FormErrors>([{}]);
+    const [submitted, setSubmitted] = useState(false);
 
-    // Per-row file state — parallel array to rows
     const [rowFiles, setRowFiles] = useState<RowFile[]>(
         (pdsData.eligibilities?.length
             ? pdsData.eligibilities
@@ -326,36 +358,41 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
         }))
     );
 
-    // After Inertia reloads pdsData (post-save), sync rows + rowFiles from fresh server data
+    // Sync from server after save
     useEffect(() => {
         const fresh = pdsData.eligibilities?.length ? pdsData.eligibilities : [{ ...EMPTY }];
         setRows(fresh.map(normalizeRow));
-        setErrors([]);
+        setErrors(fresh.map(() => ({})));
+        setSubmitted(false);
         setRowFiles(prev => fresh.map((row, i) => {
-            // Revoke any stale object URL for this slot
             if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview!);
             return { file: null, existing: row.attachment ?? null, preview: null };
         }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pdsData.eligibilities]);
 
     // Cleanup object URLs on unmount
     useEffect(() => {
         return () => { rowFiles.forEach(rf => { if (rf.preview) URL.revokeObjectURL(rf.preview); }); };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const inputCls = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 bg-white";
-    const errCls   = "w-full border border-red-400 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-red-400 bg-red-50";
-    const cls      = (i: number, k: keyof PdsEligibility) => errors[i]?.[k] ? errCls : inputCls;
+    const baseInput = "w-full border rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-1 bg-white transition-colors";
+    const inputCls  = `${baseInput} border-gray-200 focus:ring-green-500`;
+    const errCls    = `${baseInput} border-red-400 focus:ring-red-400 bg-red-50`;
+    const cls       = (i: number, k: keyof PdsEligibility) => errors[i]?.[k] ? errCls : inputCls;
 
     const setRow = (i: number, k: keyof PdsEligibility, v: string) => {
         setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
-        setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: undefined } : e));
+        if (submitted) {
+            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: undefined } : e));
+        }
     };
 
     const setRowFile = (i: number, rf: RowFile) => {
         setRowFiles(prev => prev.map((r, idx) => idx === i ? rf : r));
+        // Clear attachment error live once a file is picked
+        if (submitted && (rf.file || rf.existing)) {
+            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, attachment_file: undefined } : e));
+        }
     };
 
     const addRow = () => {
@@ -365,7 +402,6 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
     };
 
     const removeRow = (i: number) => {
-        // Revoke preview URL for removed row
         if (rowFiles[i]?.preview) URL.revokeObjectURL(rowFiles[i].preview!);
         setRows(p => p.filter((_, idx) => idx !== i));
         setErrors(p => p.filter((_, idx) => idx !== i));
@@ -374,24 +410,36 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitted(true);
+
+        const errs = validate(rows, rowFiles);
+        if (hasErrors(errs)) {
+            setErrors(errs);
+            // Scroll to first error
+            const firstRowIdx = errs.findIndex(e => Object.keys(e).length > 0);
+            if (firstRowIdx >= 0) {
+                const firstKey = Object.keys(errs[firstRowIdx])[0];
+                document.getElementById(`elig-${firstRowIdx}-${firstKey}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
+        setErrors(rows.map(() => ({})));
 
         const fd = new FormData();
-
         rows.forEach((row, i) => {
-            // Append each row field individually so Laravel can read eligibilities[i][field]
-            fd.append(`eligibilities[${i}][career_service]`,     row.career_service     ?? '');
-            fd.append(`eligibilities[${i}][rating]`,             row.rating             ?? '');
-            fd.append(`eligibilities[${i}][date_of_examination]`, row.date_of_examination ?? '');
+            fd.append(`eligibilities[${i}][career_service]`,      row.career_service      ?? '');
+            fd.append(`eligibilities[${i}][rating]`,              row.rating              ?? '');
+            fd.append(`eligibilities[${i}][date_of_examination]`,  row.date_of_examination ?? '');
             fd.append(`eligibilities[${i}][place_of_examination]`, row.place_of_examination ?? '');
-            fd.append(`eligibilities[${i}][license_number]`,     row.license_number     ?? '');
-            fd.append(`eligibilities[${i}][license_validity]`,   row.license_validity   ?? '');
+            fd.append(`eligibilities[${i}][license_number]`,      row.license_number      ?? '');
+            fd.append(`eligibilities[${i}][license_validity]`,    row.license_validity    ?? '');
 
             const rf = rowFiles[i];
             if (rf?.file) {
-                // New upload
                 fd.append(`attachments[${i}]`, rf.file);
             } else if (rf?.existing) {
-                // Preserve existing path
                 fd.append(`existing_attachments[${i}]`, rf.existing);
             }
         });
@@ -400,7 +448,7 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="flex items-start justify-between">
                 <div>
                     <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">IV. Civil Service Eligibility</h2>
@@ -419,65 +467,115 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                 <table className="w-full text-xs">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-200 uppercase">
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-50">License / Eligibility</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">Rating</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-50">
+                                License / Eligibility <span className="text-red-500">*</span>
+                            </th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-24">
+                                Rating <span className="text-red-500">*</span>
+                            </th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Date of Exam</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-35">Place of Examination</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">License No.</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-35">
+                                Place of Examination <span className="text-red-500">*</span>
+                            </th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">
+                                License No. <span className="text-red-500">*</span>
+                            </th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">Validity</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">Attachment</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">
+                                Attachment <span className="text-red-500">*</span>
+                            </th>
                             <th className="w-2"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {rows.map((row, i) => {
                             const rowErr = errors[i] ?? {};
+                            const rowHasError = Object.keys(rowErr).length > 0;
                             return (
-                                <tr key={i} className="border-b border-gray-100 last:border-0 align-top">
+                                <tr key={i} className={`border-b border-gray-100 last:border-0 align-top ${
+                                    rowHasError ? 'bg-red-50/30' : ''
+                                }`}>
                                     <td className="px-2 py-1.5">
                                         <EligibilityCombobox
-                                            value={row.career_service ?? ''}
+                                            value={row.career_service ?? 'N/A'}
                                             onChange={val => setRow(i, 'career_service', val)}
                                             error={rowErr.career_service}
                                         />
                                     </td>
                                     <td className="px-1 py-1.5">
-                                        <input type="text" value={row.rating ?? ''}
+                                        <input
+                                            id={`elig-${i}-rating`}
+                                            type="text"
+                                            value={row.rating ?? 'N/A'}
                                             onChange={e => setRow(i, 'rating', e.target.value)}
-                                            placeholder="e.g. 85.50" className={cls(i, 'rating')} />
-                                        {rowErr.rating && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.rating}</p>}
+                                            placeholder="e.g. 85.50"
+                                            className={cls(i, 'rating')}
+                                        />
+                                        {rowErr.rating && (
+                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">
+                                                Write N/A if not applicable.
+                                            </p>
+                                        )}
                                     </td>
                                     <td className="px-1 py-1.5">
-                                        <input type="date" value={row.date_of_examination ?? ''}
+                                        <input
+                                            type="date"
+                                            value={row.date_of_examination ?? ''}
                                             onChange={e => setRow(i, 'date_of_examination', e.target.value)}
-                                            className={cls(i, 'date_of_examination')} />
-                                        {rowErr.date_of_examination && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.date_of_examination}</p>}
+                                            className={cls(i, 'date_of_examination')}
+                                        />
                                     </td>
                                     <td className="px-1 py-1.5">
-                                        <input type="text" value={row.place_of_examination ?? ''}
+                                        <input
+                                            id={`elig-${i}-place_of_examination`}
+                                            type="text"
+                                            value={row.place_of_examination ?? 'N/A'}
                                             onChange={e => setRow(i, 'place_of_examination', e.target.value)}
-                                            placeholder="City, Province" className={cls(i, 'place_of_examination')} />
-                                        {rowErr.place_of_examination && <p className="mt-0.5 text-[10px] text-red-500">{rowErr.place_of_examination}</p>}
+                                            placeholder="City, Province"
+                                            className={cls(i, 'place_of_examination')}
+                                        />
+                                        {rowErr.place_of_examination && (
+                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">
+                                                Write N/A if not applicable.
+                                            </p>
+                                        )}
                                     </td>
                                     <td className="px-1 py-1.5">
-                                        <input type="text" value={row.license_number ?? ''}
+                                        <input
+                                            id={`elig-${i}-license_number`}
+                                            type="text"
+                                            value={row.license_number ?? 'N/A'}
                                             onChange={e => setRow(i, 'license_number', e.target.value)}
-                                            placeholder="License No." className={inputCls} />
+                                            placeholder="License No."
+                                            className={cls(i, 'license_number')}
+                                        />
+                                        {rowErr.license_number && (
+                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">
+                                                Write N/A if not applicable.
+                                            </p>
+                                        )}
                                     </td>
                                     <td className="px-1 py-1.5">
-                                        <input type="date" value={row.license_validity ?? ''}
+                                        <input
+                                            type="date"
+                                            value={row.license_validity ?? ''}
                                             onChange={e => setRow(i, 'license_validity', e.target.value)}
-                                            className={inputCls} />
+                                            className={inputCls}
+                                        />
                                     </td>
                                     <td className="px-1 py-1.5">
                                         <AttachmentCell
                                             rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
                                             onChange={rf => setRowFile(i, rf)}
+                                            error={rowErr.attachment_file}
                                         />
                                     </td>
-                                    <td className="px-1 py-1.5">
+                                    <td className="px-1 py-4">
                                         {rows.length > 1 && (
-                                            <button type="button" onClick={() => removeRow(i)}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeRow(i)}
+                                                title="Remove"
                                                 className="text-red-400 hover:text-red-600 cursor-pointer">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>

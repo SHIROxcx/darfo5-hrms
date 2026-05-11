@@ -100,6 +100,7 @@ export interface PdsWorkExperience {
     salary_grade?: string;
     status_of_appointment?: string;
     is_government_service?: boolean;
+    attachment?: string;
 }
 
 export interface PdsVoluntaryWork {
@@ -120,6 +121,7 @@ export interface PdsTraining {
     number_of_hours?: number | string;
     type_of_ld?: string;
     conducted_by?: string;
+    attachment?: string;
 }
 
 export interface PdsOtherInfo {
@@ -173,7 +175,7 @@ export interface PdsGovernmentId {
     date_accomplished?: string | null;
 }
 
-export type PdsSaveCallback = (section: string, data: Record<string, unknown>) => Promise<void>;
+export type PdsSaveCallback = (section: string, data: FormData | Record<string, unknown>) => void;
 
 export interface PdsData {
     personal?: PdsPersonalInfo | null;

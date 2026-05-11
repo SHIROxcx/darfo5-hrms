@@ -250,12 +250,28 @@ class PdsController extends Controller
 
     private function saveEligibility(Request $request, int $userId)
     {
+        $data = $request->all();
+            foreach ($data['eligibilities'] ?? [] as $i => $item) {
+                foreach (['date_of_examination', 'license_validity'] as $dateField) {
+                    if (isset($item[$dateField]) && $item[$dateField] === '') {
+                        $data['eligibilities'][$i][$dateField] = null;
+                    }
+                }
+            }
+        $request->replace($data);
+
         $request->validate([
-            'eligibilities'          => 'required|array',
-            'attachments'            => 'nullable|array',
-            'attachments.*'          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'existing_attachments'   => 'nullable|array',
-            'existing_attachments.*' => 'nullable|string',
+            'eligibilities'                          => 'required|array|min:1',
+            'eligibilities.*.career_service'         => 'required|string|max:255',
+            'eligibilities.*.rating'                 => 'required|string|max:50',
+            'eligibilities.*.date_of_examination'    => 'nullable|date_format:Y-m-d',
+            'eligibilities.*.place_of_examination'   => 'required|string|max:255',
+            'eligibilities.*.license_number'         => 'required|string|max:100',
+            'eligibilities.*.license_validity'       => 'nullable|date_format:Y-m-d',
+            'attachments'                            => 'nullable|array',
+            'attachments.*'                          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'existing_attachments'                   => 'nullable|array',
+            'existing_attachments.*'                 => 'nullable|string',
         ]);
 
         $oldPaths = PdsEligibility::where('user_id', $userId)
@@ -266,7 +282,7 @@ class PdsController extends Controller
         PdsEligibility::where('user_id', $userId)->delete();
 
         $keptPaths    = [];
-        
+
         $allFiles     = $request->file('attachments') ?? [];
         $allExisting  = $request->input('existing_attachments') ?? [];
 
@@ -301,15 +317,52 @@ class PdsController extends Controller
     private function saveWorkExperience(Request $request, int $userId)
     {
         $request->validate([
-            'work_experience' => 'required|array',
+            'work_experience'                         => 'required|array',
+            'work_experience.*.is_present'            => 'nullable|in:0,1,true,false',
+            'work_experience.*.is_government_service' => 'nullable|in:0,1,true,false',
+            'attachments'                             => 'nullable|array',
+            'attachments.*'                           => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'existing_attachments'                    => 'nullable|array',
+            'existing_attachments.*'                  => 'nullable|string',
         ]);
 
+        $oldPaths = PdsWorkExperience::where('user_id', $userId)
+            ->pluck('attachment')->filter()->values();
+
         PdsWorkExperience::where('user_id', $userId)->delete();
+
+        $allFiles    = $request->file('attachments') ?? [];
+        $allExisting = $request->input('existing_attachments') ?? [];
+        $keptPaths   = [];
+
         foreach ($request->work_experience as $i => $item) {
-            PdsWorkExperience::create(array_merge($item, [
-                'user_id' => $userId,
+            $attachmentPath = null;
+
+            if (!empty($allFiles[$i])) {
+                $attachmentPath = $allFiles[$i]->store("pds/{$userId}/work_experience", 'public');
+            } elseif (!empty($allExisting[$i])) {
+                $attachmentPath = $allExisting[$i];
+                $keptPaths[]    = $attachmentPath;
+            }
+
+            $rowData = collect($item)
+                ->except(['attachment'])
+                ->map(fn($val, $key) => in_array($key, ['is_present', 'is_government_service'])
+                    ? filter_var($val, FILTER_VALIDATE_BOOLEAN)
+                    : $val)
+                ->toArray();
+
+            PdsWorkExperience::create(array_merge($rowData, [
+                'user_id'    => $userId,
                 'sort_order' => $i,
+                'attachment' => $attachmentPath,
             ]));
+        }
+
+        foreach ($oldPaths as $oldPath) {
+            if (!in_array($oldPath, $keptPaths)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
         }
 
         return back()->with('success', 'Work experience saved.');
