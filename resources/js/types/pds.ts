@@ -17,7 +17,7 @@ export interface PdsPersonalInfo {
     height?: number | string;
     weight?: number | string;
     blood_type?: string;
-    agency_employee_no?: string; // read-only for employees
+    agency_employee_no?: string; 
     res_house_no?: string;
     res_street?: string;
     res_subdivision?: string;

@@ -11,6 +11,31 @@ interface RowFile {
     preview:  string | null;
 }
 
+// ── Validation ────────────────────────────────────────────────────────────────
+
+type RowErrors = Partial<Record<keyof PdsTraining | 'attachment_file', string>>;
+type FormErrors = RowErrors[];
+
+function validate(rows: PdsTraining[], rowFiles: RowFile[]): FormErrors {
+    return rows.map((row, i) => {
+        const errs: RowErrors = {};
+
+        if (!row.title?.trim())           errs.title           = 'Required.';
+        if (!String(row.number_of_hours ?? '').trim()) errs.number_of_hours = 'Required.';
+        if (!row.type_of_ld?.trim())      errs.type_of_ld      = 'Required.';
+        if (!row.conducted_by?.trim())    errs.conducted_by    = 'Required.';
+
+        const rf = rowFiles[i];
+        if (!rf?.file && !rf?.existing)   errs.attachment_file = 'Please attach a supporting document.';
+
+        return errs;
+    });
+}
+
+function hasErrors(errors: FormErrors): boolean {
+    return errors.some(e => Object.keys(e).length > 0);
+}
+
 const EMPTY: PdsTraining = { title: '', date_from: '', date_to: '', number_of_hours: '', type_of_ld: '', conducted_by: '' };
 const LD_TYPES = ['Managerial', 'Supervisory', 'Technical', 'Etc.'];
 
@@ -19,7 +44,10 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const isImage = (name: string) => /\.(jpe?g|png)$/i.test(name);
 const isPdf   = (name: string) => /\.pdf$/i.test(name);
 
-function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: { rowFile: RowFile; onChange: (rf: RowFile) => void; storageBase?: string }) {
+// ── Attachment Cell ───────────────────────────────────────────────────────────
+
+function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
+    { rowFile: RowFile; onChange: (rf: RowFile) => void; storageBase?: string; error?: string; }) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -51,7 +79,9 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: { rowFi
         <div className="flex flex-col gap-1 min-w-30">
             <input ref={fileRef} type="file" accept={ACCEPTED} className="hidden" onChange={handleChange} />
             {hasAny ? (
-                <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1 bg-gray-50">
+                <div className={`flex items-center gap-1 border rounded-lg px-2 py-1 bg-gray-50 group ${
+                    error ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                }`}>
                     {previewSrc ? (
                         <a href={viewUrl!} target="_blank" rel="noopener noreferrer" className="shrink-0" title="View image">
                             <img src={previewSrc} alt="preview" className="w-7 h-7 rounded object-cover border border-gray-200 hover:opacity-80 transition-opacity" />
@@ -82,24 +112,33 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage' }: { rowFi
                 </div>
             ) : (
                 <button type="button" onClick={() => fileRef.current?.click()}
-                    className="flex items-center gap-1 border border-dashed border-gray-300 rounded-lg px-2 py-1.5 text-[11px] text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50 transition-colors cursor-pointer min-h-8 w-full">
-                    <Paperclip className="w-3 h-3 shrink-0" /><span>Attach File</span>
+                    className={`flex items-center gap-1 border border-dashed rounded-lg px-2 py-1.5 text-[11px] transition-colors cursor-pointer min-h-8 w-full ${
+                        error
+                            ? 'border-red-400 text-red-400 bg-red-50 hover:border-red-500 hover:text-red-600'
+                            : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50'
+                    }`}>
+                    <Paperclip className="w-3 h-3 shrink-0" /><span className="text-xs">Attach File</span>
                 </button>
             )}
-            {sizeError && <p className="text-[10px] text-red-500">{sizeError}</p>}
+            {(sizeError || error) && <p className="text-[10px] text-red-500 leading-tight">{sizeError || error}</p>}
+            <p className='text-[9px] text-gray-600'>PNG, JPEG, or PDF Max 5MB</p>
         </div>
     );
 }
-
 export default function TrainingSection({ pdsData, onSave, saving }: Props) {
     const [rows, setRows] = useState<PdsTraining[]>(
         pdsData.trainings?.length ? pdsData.trainings : [{ ...EMPTY }]
     );
+    const [errors,    setErrors]    = useState<FormErrors>(
+        (pdsData.trainings?.length ? pdsData.trainings : [EMPTY]).map(() => ({}))
+    );
+    const [submitted, setSubmitted] = useState(false);
+
     const [rowFiles, setRowFiles] = useState<RowFile[]>(
         (pdsData.trainings?.length ? pdsData.trainings : [EMPTY]).map(row => ({
-            file: null,
+            file:     null,
             existing: (row as PdsTraining & { attachment?: string }).attachment ?? null,
-            preview: null,
+            preview:  null,
         }))
     );
 
@@ -111,6 +150,8 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
         if (!isMounted.current) { isMounted.current = true; return; }
         const fresh = pdsData.trainings?.length ? pdsData.trainings : [{ ...EMPTY }];
         setRows(fresh);
+        setErrors(fresh.map(() => ({})));
+        setSubmitted(false);
         setRowFiles(prev => fresh.map((row: PdsTraining & { attachment?: string }, i: number) => {
             if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview!);
             return { file: null, existing: row.attachment ?? null, preview: null };
@@ -123,27 +164,54 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const inputClass = "w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 bg-white";
+    const baseInput = "w-full border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 bg-white transition-colors";
+    const inputCls  = `${baseInput} border-gray-200 focus:ring-green-500`;
+    const errCls    = `${baseInput} border-red-400 focus:ring-red-400 bg-red-50`;
+    const cls       = (i: number, k: keyof PdsTraining) => errors[i]?.[k] ? errCls : inputCls;
 
-    const setRow = (i: number, key: keyof PdsTraining, val: string) =>
+    const setRow = (i: number, key: keyof PdsTraining, val: string) => {
         setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
+        if (submitted) setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, [key]: undefined } : e));
+    };
 
-    const setRowFile = (i: number, rf: RowFile) =>
+    const setRowFile = (i: number, rf: RowFile) => {
         setRowFiles(prev => prev.map((r, idx) => idx === i ? rf : r));
+        if (submitted && (rf.file || rf.existing)) {
+            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, attachment_file: undefined } : e));
+        }
+    };
 
     const addRow = () => {
         setRows(p => [...p, { ...EMPTY }]);
+        setErrors(p => [...p, {}]);
         setRowFiles(p => [...p, { file: null, existing: null, preview: null }]);
     };
 
     const removeRow = (i: number) => {
         if (rowFiles[i]?.preview) URL.revokeObjectURL(rowFiles[i].preview!);
         setRows(p => p.filter((_, idx) => idx !== i));
+        setErrors(p => p.filter((_, idx) => idx !== i));
         setRowFiles(p => p.filter((_, idx) => idx !== i));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitted(true);
+
+        const errs = validate(rows, rowFiles);
+        if (hasErrors(errs)) {
+            setErrors(errs);
+            const firstRowIdx = errs.findIndex(e => Object.keys(e).length > 0);
+            if (firstRowIdx >= 0) {
+                const firstKey = Object.keys(errs[firstRowIdx])[0];
+                document.getElementById(`training-${firstRowIdx}-${firstKey}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
+        setErrors(rows.map(() => ({})));
+
         const fd = new FormData();
         rows.forEach((row, i) => {
             fd.append(`trainings[${i}][title]`,           row.title           ?? '');
@@ -153,9 +221,10 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
             fd.append(`trainings[${i}][type_of_ld]`,      row.type_of_ld      ?? '');
             fd.append(`trainings[${i}][conducted_by]`,    row.conducted_by    ?? '');
             const rf = rowFiles[i];
-            if (rf?.file)     fd.append(`attachments[${i}]`,          rf.file);
+            if (rf?.file)          fd.append(`attachments[${i}]`,          rf.file);
             else if (rf?.existing) fd.append(`existing_attachments[${i}]`, rf.existing);
         });
+
         onSave('trainings', fd);
     };
 
@@ -175,46 +244,67 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
                 <table className="w-full text-xs">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-200 uppercase">
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Title of Training</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Title of Training <span className="text-red-500">*</span></th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Date From</th>
                             <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Date To</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">Hours</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Type of L&D</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Conducted/Sponsored By</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">Attachment</th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">Hours <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-28">Type of L&D <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600">Conducted/Sponsored By <span className="text-red-500">*</span></th>
+                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">Attachment <span className="text-red-500">*</span></th>
                             <th className="w-8"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row, i) => (
-                            <tr key={i} className="border-b border-gray-100 last:border-0 align-top">
-                                <td className="px-2 py-1.5"><input type="text" value={row.title ?? ''} onChange={e => setRow(i, 'title', e.target.value)} className={inputClass} /></td>
-                                <td className="px-2 py-1.5"><input type="date" value={row.date_from ?? ''} onChange={e => setRow(i, 'date_from', e.target.value)} className={inputClass} /></td>
-                                <td className="px-2 py-1.5"><input type="date" value={row.date_to ?? ''} onChange={e => setRow(i, 'date_to', e.target.value)} className={inputClass} /></td>
-                                <td className="px-2 py-1.5"><input type="number" value={row.number_of_hours as string ?? ''} onChange={e => setRow(i, 'number_of_hours', e.target.value)} className={inputClass} /></td>
-                                <td className="px-2 py-1.5">
-                                    <select value={row.type_of_ld ?? ''} onChange={e => setRow(i, 'type_of_ld', e.target.value)} className={inputClass}>
-                                        <option value="">Select</option>
-                                        {LD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                </td>
-                                <td className="px-2 py-1.5"><input type="text" value={row.conducted_by ?? ''} onChange={e => setRow(i, 'conducted_by', e.target.value)} className={inputClass} /></td>
-                                <td className="px-1 py-1.5">
-                                    <AttachmentCell
-                                        rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
-                                        onChange={rf => setRowFile(i, rf)}
-                                    />
-                                </td>
-                                <td className="px-2 py-4">
-                                    {rows.length > 1 && (
-                                        <button type="button" onClick={() => removeRow(i)} title="Remove"
-                                            className="text-red-400 hover:text-red-600 cursor-pointer">
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                        {rows.map((row, i) => {
+                            const rowErr      = errors[i] ?? {};
+                            const rowHasError = Object.keys(rowErr).length > 0;
+                            return (
+                                <tr key={i} className={`border-b border-gray-100 last:border-0 align-top ${rowHasError ? 'bg-red-50/30' : ''}`}>
+                                    <td className="px-2 py-1.5" id={`training-${i}-title`}>
+                                        <input type="text" value={row.title ?? ''} onChange={e => setRow(i, 'title', e.target.value)} className={cls(i, 'title')} />
+                                        {rowErr.title && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.title}</p>}
+                                    </td>
+                                    <td className="px-2 py-1.5" id={`training-${i}-date_from`}>
+                                        <input type="date" value={row.date_from ?? ''} onChange={e => setRow(i, 'date_from', e.target.value)} className={cls(i, 'date_from')} />
+                                        {rowErr.date_from && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.date_from}</p>}
+                                    </td>
+                                    <td className="px-2 py-1.5" id={`training-${i}-date_to`}>
+                                        <input type="date" value={row.date_to ?? ''} onChange={e => setRow(i, 'date_to', e.target.value)} className={cls(i, 'date_to')} />
+                                        {rowErr.date_to && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.date_to}</p>}
+                                    </td>
+                                    <td className="px-2 py-1.5" id={`training-${i}-number_of_hours`}>
+                                        <input type="number" value={row.number_of_hours as string ?? ''} onChange={e => setRow(i, 'number_of_hours', e.target.value)} className={cls(i, 'number_of_hours')} />
+                                        {rowErr.number_of_hours && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.number_of_hours}</p>}
+                                    </td>
+                                    <td className="px-2 py-1.5" id={`training-${i}-type_of_ld`}>
+                                        <select value={row.type_of_ld ?? ''} onChange={e => setRow(i, 'type_of_ld', e.target.value)} className={cls(i, 'type_of_ld')}>
+                                            <option value="">Select</option>
+                                            {LD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                        {rowErr.type_of_ld && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.type_of_ld}</p>}
+                                    </td>
+                                    <td className="px-2 py-1.5" id={`training-${i}-conducted_by`}>
+                                        <input type="text" value={row.conducted_by ?? ''} onChange={e => setRow(i, 'conducted_by', e.target.value)} className={cls(i, 'conducted_by')} />
+                                        {rowErr.conducted_by && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.conducted_by}</p>}
+                                    </td>
+                                    <td className="px-1 py-1.5">
+                                        <AttachmentCell
+                                            rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
+                                            onChange={rf => setRowFile(i, rf)}
+                                            error={rowErr.attachment_file}
+                                        />
+                                    </td>
+                                    <td className="px-2 py-4">
+                                        {rows.length > 1 && (
+                                            <button type="button" onClick={() => removeRow(i)} title="Remove"
+                                                className="text-red-400 hover:text-red-600 cursor-pointer">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

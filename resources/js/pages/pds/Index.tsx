@@ -146,7 +146,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
         setSaving(true);
 
         try {
-            // If the section already built a FormData (e.g. EligibilitySection), use it directly
             const payload = data instanceof FormData
                 ? data
                 : (() => {
@@ -184,14 +183,19 @@ export default function PdsIndex({ user, pdsData }: Props) {
         } catch (e: any) {
             // Log the actual Laravel validation errors
             if (e.response?.status === 422) {
-                console.error('Validation errors:', e.response.data?.errors);
+                const errors = e.response.data?.errors ?? {};
+
+                // Flatten all error messages, stripping field keys like "attachments.4"
+                const firstError = (Object.values(errors).flat() as string[])[0];
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: firstError ?? 'Failed to save. Please try again.',
+                    confirmButtonColor: '#dc2626',
+                });
+                return;
             }
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: e.response?.data?.message ?? 'Failed to save. Please try again.',
-                confirmButtonColor: '#dc2626',
-            });
             throw e;
         } finally {
             setSaving(false);
@@ -227,7 +231,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
             <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
 
-                {/* ── Header ──────────────────────────────────────────────────── */}
+                {/*  Header */}
                 <div className="shrink-0 bg-white border-b border-gray-200 p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">

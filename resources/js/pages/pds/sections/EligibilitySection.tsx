@@ -242,6 +242,7 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
         if (!f) return;
+    
         if (f.size > MAX_BYTES) { setSizeError('File must be under 5 MB.'); return; }
         setSizeError('');
         const preview = URL.createObjectURL(f);
@@ -332,6 +333,9 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
             {(sizeError || error) && (
                 <p className="text-[10px] text-red-500 leading-tight">{sizeError || error}</p>
             )}
+
+            <p className='text-[9px] text-gray-600'>PNG, JPEG, or PDF Max 5MB</p>
+
         </div>
     );
 }

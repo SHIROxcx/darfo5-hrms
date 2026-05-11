@@ -264,7 +264,7 @@ class PdsController extends Controller
             'eligibilities'                          => 'required|array|min:1',
             'eligibilities.*.career_service'         => 'required|string|max:255',
             'eligibilities.*.rating'                 => 'required|string|max:50',
-            'eligibilities.*.date_of_examination'    => 'nullable|date_format:Y-m-d',
+            'eligibilities.*.date_of_examination'    => 'required|date_format:Y-m-d',
             'eligibilities.*.place_of_examination'   => 'required|string|max:255',
             'eligibilities.*.license_number'         => 'required|string|max:100',
             'eligibilities.*.license_validity'       => 'nullable|date_format:Y-m-d',
@@ -272,6 +272,10 @@ class PdsController extends Controller
             'attachments.*'                          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'existing_attachments'                   => 'nullable|array',
             'existing_attachments.*'                 => 'nullable|string',
+        ], [
+            'attachments.*.mimes' => 'The attachment field must be a file of type jpeg, jpg, png, or pdf.',
+            'attachments.*.max'   => 'The attachment must not exceed 5 MB.',
+            'attachments.*.file'  => 'The attachment must be a valid file.',
         ]);
 
         $oldPaths = PdsEligibility::where('user_id', $userId)
@@ -281,37 +285,45 @@ class PdsController extends Controller
 
         PdsEligibility::where('user_id', $userId)->delete();
 
-        $keptPaths    = [];
+        $keptPaths   = [];
+            $allFiles    = $request->file('attachments') ?? [];
+            $allExisting = $request->input('existing_attachments') ?? [];
 
-        $allFiles     = $request->file('attachments') ?? [];
-        $allExisting  = $request->input('existing_attachments') ?? [];
+            foreach ($request->eligibilities as $i => $item) {
+                $attachmentPath = null;
 
-        foreach ($request->eligibilities as $i => $item) {
-            $attachmentPath = null;
+                if (!empty($allFiles[$i]) && $allFiles[$i]->isValid()) {
+                    $file      = $allFiles[$i];
+                    $extension = strtolower($file->getClientOriginalExtension());
+                    $baseName  = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeName  = substr(preg_replace('/[^a-zA-Z0-9_\-]/', '_', $baseName), 0, 100);
 
-            if (!empty($allFiles[$i])) {
-                $attachmentPath = $allFiles[$i]->store("pds/{$userId}/eligibilities", 'public');
-            } elseif (!empty($allExisting[$i])) {
-                $attachmentPath = $allExisting[$i];
-                $keptPaths[]    = $attachmentPath;
+                    $attachmentPath = $file->storeAs(
+                        "pds/{$userId}/eligibilities",
+                        $safeName . '_' . uniqid() . '.' . $extension,
+                        'public'
+                    );
+                } elseif (!empty($allExisting[$i])) {
+                    $attachmentPath = $allExisting[$i];
+                    $keptPaths[]    = $attachmentPath;
+                }
+
+                $rowData = collect($item)->except(['attachment'])->toArray();
+
+                PdsEligibility::create(array_merge($rowData, [
+                    'user_id'    => $userId,
+                    'sort_order' => $i,
+                    'attachment' => $attachmentPath,
+                ]));
             }
 
-            $rowData = collect($item)->except(['attachment'])->toArray();
-
-            PdsEligibility::create(array_merge($rowData, [
-                'user_id'    => $userId,
-                'sort_order' => $i,
-                'attachment' => $attachmentPath,
-            ]));
-        }
-
-        foreach ($oldPaths as $oldPath) {
-            if (!in_array($oldPath, $keptPaths)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            foreach ($oldPaths as $oldPath) {
+                if (!in_array($oldPath, $keptPaths)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+                }
             }
-        }
 
-        return back()->with('success', 'Eligibilities saved.');
+            return back()->with('success', 'Eligibilities saved.');
     }
 
     private function saveWorkExperience(Request $request, int $userId)
@@ -321,9 +333,19 @@ class PdsController extends Controller
             'work_experience.*.is_present'            => 'nullable|in:0,1,true,false',
             'work_experience.*.is_government_service' => 'nullable|in:0,1,true,false',
             'attachments'                             => 'nullable|array',
-            'attachments.*'                           => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'attachments.*'                           => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'existing_attachments'                    => 'nullable|array',
             'existing_attachments.*'                  => 'nullable|string',
+        ], [
+            'work_experience.*.position_title.required'        => 'Position title is required.',
+            'work_experience.*.department.required'            => 'Department / Agency / Company is required.',
+            'work_experience.*.date_from.required'             => 'Date from is required.',
+            'work_experience.*.date_from.date_format'          => 'Date from must be a valid date.',
+            'work_experience.*.date_to.date_format'            => 'Date to must be a valid date.',
+            'work_experience.*.status_of_appointment.required' => 'Status of appointment is required.',
+            'attachments.*.mimes'                              => 'The attachment must be a jpeg, jpg, png, or pdf file.',
+            'attachments.*.max'                                => 'The attachment must not exceed 5 MB.',
+            'attachments.*.file'                               => 'The attachment must be a valid file.',
         ]);
 
         $oldPaths = PdsWorkExperience::where('user_id', $userId)
@@ -387,16 +409,86 @@ class PdsController extends Controller
 
     private function saveTrainings(Request $request, int $userId)
     {
+        $data = $request->all();
+        foreach ($data['trainings'] ?? [] as $i => $item) {
+            foreach (['date_from', 'date_to'] as $dateField) {
+                if (isset($item[$dateField]) && $item[$dateField] === '') {
+                    $data['trainings'][$i][$dateField] = null;
+                }
+            }
+        }
+        $request->replace($data);
+
         $request->validate([
-            'trainings' => 'required|array',
+            'trainings'                        => 'required|array|min:1',
+            'trainings.*.title'                => 'required|string|max:255',
+            'trainings.*.date_from'            => 'nullable|date_format:Y-m-d',
+            'trainings.*.date_to'              => 'nullable|date_format:Y-m-d',
+            'trainings.*.number_of_hours'      => 'required|numeric|min:1',
+            'trainings.*.type_of_ld'           => 'required|string|in:Managerial,Supervisory,Technical,Etc.',
+            'trainings.*.conducted_by'         => 'required|string|max:255',
+            'attachments'                      => 'nullable|array',
+            'attachments.*'                    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'existing_attachments'             => 'nullable|array',
+            'existing_attachments.*'           => 'nullable|string',
+        ], [
+            'trainings.*.title.required'           => 'Training title is required.',
+            'trainings.*.number_of_hours.required' => 'Number of hours is required.',
+            'trainings.*.number_of_hours.numeric'  => 'Number of hours must be a number.',
+            'trainings.*.type_of_ld.required'      => 'Type of L&D is required.',
+            'trainings.*.type_of_ld.in'            => 'Invalid L&D type selected.',
+            'trainings.*.conducted_by.required'    => 'Conducted/Sponsored by is required.',
+            'attachments.*.mimes'                  => 'The attachment must be a jpeg, jpg, png, or pdf file.',
+            'attachments.*.max'                    => 'The attachment must not exceed 5 MB.',
         ]);
 
+        $oldPaths = PdsTraining::where('user_id', $userId)
+            ->pluck('attachment')->filter()->values();
+
         PdsTraining::where('user_id', $userId)->delete();
+
+        $allFiles    = $request->file('attachments') ?? [];
+        $allExisting = $request->input('existing_attachments') ?? [];
+        $keptPaths   = [];
+
         foreach ($request->trainings as $i => $item) {
-            PdsTraining::create(array_merge($item, [
-                'user_id' => $userId,
+            $attachmentPath = null;
+
+            if (!empty($allFiles[$i]) && $allFiles[$i]->isValid()) {
+                $file      = $allFiles[$i];
+                $extension = strtolower($file->getClientOriginalExtension());
+                $baseName  = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeName  = substr(preg_replace('/[^a-zA-Z0-9_\-]/', '_', $baseName), 0, 100);
+
+                $attachmentPath = $file->storeAs(
+                    "pds/{$userId}/trainings",
+                    $safeName . '_' . uniqid() . '.' . $extension,
+                    'public'
+                );
+            } elseif (!empty($allExisting[$i])) {
+                $normalizedPath = ltrim($allExisting[$i], '/');
+                if (!str_starts_with($normalizedPath, "pds/{$userId}/")) {
+                    return back()->withErrors([
+                        "existing_attachments.{$i}" => "Invalid attachment path.",
+                    ]);
+                }
+                $attachmentPath = $normalizedPath;
+                $keptPaths[]    = $attachmentPath;
+            }
+
+            $rowData = collect($item)->except(['attachment'])->toArray();
+
+            PdsTraining::create(array_merge($rowData, [
+                'user_id'    => $userId,
                 'sort_order' => $i,
+                'attachment' => $attachmentPath,
             ]));
+        }
+
+        foreach ($oldPaths as $oldPath) {
+            if (!in_array($oldPath, $keptPaths)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
         }
 
         return back()->with('success', 'Trainings saved.');
