@@ -259,7 +259,7 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
                             const rowErr      = errors[i] ?? {};
                             const rowHasError = Object.keys(rowErr).length > 0;
                             return (
-                                <tr key={i} className={`border-b border-gray-100 last:border-0 align-top ${rowHasError ? 'bg-red-50/30' : ''}`}>
+                                <tr key={i} className={`align-top ${rowHasError ? 'bg-red-50/30' : ''}`}>
                                     <td className="px-2 py-1.5" id={`training-${i}-title`}>
                                         <input type="text" value={row.title ?? ''} onChange={e => setRow(i, 'title', e.target.value)} className={cls(i, 'title')} />
                                         {rowErr.title && <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.title}</p>}

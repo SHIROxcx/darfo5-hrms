@@ -427,7 +427,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                             const rowErr = errors[i] ?? {};
                             const rowHasError = Object.keys(rowErr).length > 0;
                             return (
-                                <tr key={i} className={`border-b border-gray-100 last:border-0 align-top ${
+                                <tr key={i} className={`align-top ${
                                     rowHasError ? 'bg-red-50/30' : ''
                                 }`}>
                                     {/* Position Title */}

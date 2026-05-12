@@ -185,7 +185,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
             if (e.response?.status === 422) {
                 const errors = e.response.data?.errors ?? {};
 
-                // Flatten all error messages, stripping field keys like "attachments.4"
                 const firstError = (Object.values(errors).flat() as string[])[0];
 
                 Swal.fire({
@@ -233,21 +232,21 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                 {/*  Header */}
                 <div className="shrink-0 bg-white border-b border-gray-200 p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="block sm:flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center">
+                            <div className="hidden w-12 h-12 rounded-lg bg-green-600 lg:flex items-center justify-center">
                                 <FileText className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
-                                <p className="text-sm text-gray-500">
+                                <h1 className="text-sm sm:text-md md:text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
+                                <p className="text-xs md:text-sm text-gray-500">
                                     {user.last_name}, {user.first_name} {user.middle_name}
                                     <Dot className="inline text-gray-700" />
                                     {pdsData.personal?.agency_employee_no ?? 'No employee number'}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-end gap-4">
                             {progressPct < 100 && (
                                 <div className="text-right">
                                     <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
@@ -276,8 +275,8 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <div className="flex flex-1 overflow-hidden">
 
                     {/* ── Sidebar ─────────────────────────────────────────────
-                        < lg  → icon-only strip (w-14), title tooltip on hover
-                        ≥ lg  → full label sidebar (w-68)
+                        < lg  - icon-only strip (w-14), title tooltip on hover
+                        ≥ lg  - full label sidebar (w-68)
                     ──────────────────────────────────────────────────────── */}
                     <aside className="w-14 lg:w-68 shrink-0 bg-gray-50 border-r border-gray-200 overflow-y-auto">
                         <nav className="p-2 lg:p-3 space-y-0.5">
@@ -339,7 +338,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
                         <main className="flex-1 overflow-y-auto">
-                            <div className="max-w-full lg:max-w-8xl mx-auto px-6 py-6">
+                            <div className="max-w-full lg:max-w-8xl mx-auto p-4 md:p-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
                                     {renderSection()}
                                 </div>
