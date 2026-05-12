@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, ChevronDown, X, Paperclip, FileText, Image as ImageIcon, Pencil, Award, AlertCircle, ExternalLink, Ellipsis } from 'lucide-react';
+import { Save, Plus, Trash2, ChevronDown, X, Paperclip, FileText, Image as ImageIcon, Pencil, Award, ExternalLink, Ellipsis } from 'lucide-react';
 import type { User, PdsData, PdsEligibility } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
@@ -305,7 +305,7 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
 
             {(sizeError || error) && (
                 <p className="text-xs text-red-500 leading-tight flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 shrink-0" />{sizeError || error}
+                   {sizeError || error}
                 </p>
             )}
             <p className="text-[10px] text-gray-400">PNG, JPEG, or PDF · Max 5 MB</p>
@@ -389,10 +389,10 @@ function EligibilityModal({
                                 Rating <span className="text-red-500">*</span>
                             </label>
                             <input
-                                type="text"
+                                type="number"
                                 value={row.rating ?? ''}
                                 onChange={e => onFieldChange('rating', e.target.value)}
-                                placeholder="e.g. 85.50 or N/A"
+                                placeholder="e.g. 85.5"
                                 className={cls('rating')}
                             />
                             {errors.rating && <p className="mt-1 text-xs text-red-500">{errors.rating}</p>}
@@ -787,6 +787,9 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
             <div className="flex items-start justify-between mb-2">
                 <div>
                     <h2 className="text-base font-semibold text-green-800 uppercase">IV. Licenses & Eligibilities</h2>
+                    <p className="hidden sm:block text-xs text-gray-500 mt-0.5">Include CES / CSEE / Career Service / RA 1080 (BOARD / BAR).{' '}
+                    <span className="font-medium text-green-700">Write N/A if not applicable.</span>
+                </p>
                 </div>
                 <button
                     type="button"
