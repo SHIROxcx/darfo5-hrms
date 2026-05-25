@@ -261,7 +261,7 @@ class PdsController extends Controller
         $request->replace($data);
 
         $request->validate([
-            'eligibilities'                          => 'required|array|min:1',
+            'eligibilities'                          => 'nullable|array',
             'eligibilities.*.career_service'         => 'required|string|max:255',
             'eligibilities.*.rating'                 => 'required|string|max:50',
             'eligibilities.*.date_of_examination'    => 'required|date_format:Y-m-d',
@@ -329,7 +329,7 @@ class PdsController extends Controller
     private function saveWorkExperience(Request $request, int $userId)
     {
         $request->validate([
-            'work_experience'                         => 'required|array',
+            'work_experience'                         => 'nullable|array',
             'work_experience.*.is_present'            => 'nullable|in:0,1,true,false',
             'work_experience.*.is_government_service' => 'nullable|in:0,1,true,false',
             'attachments'                             => 'nullable|array',
@@ -393,7 +393,7 @@ class PdsController extends Controller
     private function saveVoluntaryWork(Request $request, int $userId)
     {
         $request->validate([
-            'voluntary_work' => 'required|array',
+            'voluntary_work' => 'nullable|array',
         ]);
 
         PdsVoluntaryWork::where('user_id', $userId)->delete();
@@ -410,7 +410,12 @@ class PdsController extends Controller
     private function saveTrainings(Request $request, int $userId)
     {
         $data = $request->all();
-        foreach ($data['trainings'] ?? [] as $i => $item) {
+
+        $data['trainings'] = array_values(
+            array_filter($data['trainings'] ?? [], fn($t) => is_array($t) && !empty($t['title']))
+        );
+
+        foreach ($data['trainings'] as $i => $item) {   
             foreach (['date_from', 'date_to'] as $dateField) {
                 if (isset($item[$dateField]) && $item[$dateField] === '') {
                     $data['trainings'][$i][$dateField] = null;
@@ -420,7 +425,7 @@ class PdsController extends Controller
         $request->replace($data);
 
         $request->validate([
-            'trainings'                        => 'required|array|min:1',
+            'trainings'                        => 'nullable|array',
             'trainings.*.title'                => 'required|string|max:255',
             'trainings.*.date_from'            => 'nullable|date_format:Y-m-d',
             'trainings.*.date_to'              => 'nullable|date_format:Y-m-d',
@@ -451,7 +456,8 @@ class PdsController extends Controller
         $allExisting = $request->input('existing_attachments') ?? [];
         $keptPaths   = [];
 
-        foreach ($request->trainings as $i => $item) {
+        $trainings = array_filter($request->trainings ?? [], fn($t) => is_array($t));
+        foreach ($trainings as $i => $item) {
             $attachmentPath = null;
 
             if (!empty($allFiles[$i]) && $allFiles[$i]->isValid()) {

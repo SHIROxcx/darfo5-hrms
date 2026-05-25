@@ -10,7 +10,8 @@ import {
     CheckCircle2, Circle, ChevronRight, FileText,
     ChevronLeft, Dot, X,
     GraduationCap,
-    HeartHandshake
+    HeartHandshake,
+    BriefcaseBusiness
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -32,16 +33,16 @@ interface Props {
 }
 
 const SECTIONS = [
-    { id: 'personal',        label: 'I. Personal Information',      icon: UserIcon,       page: 1 },
-    { id: 'family',          label: 'II. Family Background',         icon: Users,          page: 1 },
-    { id: 'education',       label: 'III. Education',                icon: GraduationCap,  page: 1 },
-    { id: 'eligibility',     label: 'IV. Licenses & Eligibilities',  icon: Award,          page: 2 },
-    { id: 'work_experience', label: 'V. Work Experience',            icon: Briefcase,      page: 2 },
-    { id: 'voluntary_work',  label: 'VI. Voluntary Work',            icon: HeartHandshake, page: 3 },
-    { id: 'trainings',       label: 'VII. L&D Interventions',        icon: BookMarked,     page: 3 },
-    { id: 'other_info',      label: 'VIII. Other Information',       icon: Info,           page: 3 },
-    { id: 'questions',       label: 'IX. Legal Declarations',        icon: HelpCircle,     page: 4 },
-    { id: 'references',      label: "X. References & ID",            icon: UserCheck,      page: 4 },
+    { id: 'personal',        label: 'I. Personal Information',       icon: UserIcon,            page: 1 },
+    { id: 'family',          label: 'II. Family Background',         icon: Users,               page: 1 },
+    { id: 'education',       label: 'III. Education',                icon: GraduationCap,       page: 1 },
+    { id: 'eligibility',     label: 'IV. Licenses & Eligibilities',  icon: Award,               page: 2 },
+    { id: 'work_experience', label: 'V. Work Experience',            icon: BriefcaseBusiness,   page: 2 },
+    { id: 'voluntary_work',  label: 'VI. Voluntary Work',            icon: HeartHandshake,      page: 3 },
+    { id: 'trainings',       label: 'VII. L&D Interventions',        icon: BookMarked,          page: 3 },
+    { id: 'other_info',      label: 'VIII. Other Information',       icon: Info,                page: 3 },
+    { id: 'questions',       label: 'IX. Legal Declarations',        icon: HelpCircle,          page: 4 },
+    { id: 'references',      label: "X. References & ID",            icon: UserCheck,           page: 4 },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -171,12 +172,16 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
             Swal.fire({
                 icon: 'success',
-                title: 'Saved!',
-                text: 'Your information has been saved successfully.',
-                confirmButtonColor: '#16a34a',
-                timer: 1500,
-                timerProgressBar: true,
+                // title: 'Saved!',
+                text: 'Your information has been saved successfully!',
+                toast: true,
+                position: 'top-end',
                 showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: '!rounded-xl !shadow-lg !text-sm',
+                },
             });
 
             router.reload({ only: ['pdsData'] });
@@ -247,7 +252,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </div>
                         <div className="flex items-center justify-end gap-4">
-                            {progressPct < 100 && (
+                            {/* {progressPct < 100 && ( */}
                                 <div className="text-right">
                                     <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
                                     <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
@@ -257,16 +262,16 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                         />
                                     </div>
                                 </div>
-                            )}
-                            {progressPct === 100 && (
+                            {/* )} */}
+                            {/* {progressPct === 100 && ( */}
                                 <button
                                     onClick={() => setShowPreview(true)}
                                     title="Generate PDS"
                                     className="flex items-center gap-2 p-3 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
                                 >
-                                    <Download className="w-3.5 h-3.5" /> Generate PDS
+                                    <FileText className="w-3.5 h-3.5" /> Generate PDS
                                 </button>
-                            )}
+                            {/* )} */}
                         </div>
                     </div>
                 </div>

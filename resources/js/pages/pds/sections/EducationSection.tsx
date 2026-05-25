@@ -14,7 +14,7 @@ const LEVELS: PdsEducation['level'][] = ['Elementary', 'Secondary', 'Vocational'
 
 const LEVEL_META: Record<string, { label: string; description: string }> = {
     'Elementary':        { label: 'Elementary',         description: 'Elementary Education' },
-    'Secondary':         { label: 'Secondary',          description: 'High School / Secondary Education' },
+    'Secondary':         { label: 'Secondary',          description: 'Secondary Education' },
     'Vocational':        { label: 'Vocational / Trade', description: 'Technical-Vocational Education' },
     'College':           { label: 'College',            description: "Bachelor's Degree" },
     'Graduate Studies':  { label: 'Graduate Studies',   description: "Master's / Doctorate" },
@@ -118,7 +118,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             Degree / Course <span className="text-red-500">*</span>
                         </label>
                         <input type="text" value={draft.course ?? ''} className={ic('course')}
-                            placeholder="e.g. Bachelor of Science in Information Technology or N/A"
+                            placeholder="e.g. Bachelor of Science in Agriculture or N/A"
                             onChange={e => onChange('course', e.target.value)} />
                         {errors.course && <p className="mt-1 text-xs text-red-500">{errors.course}</p>}
                     </div>
@@ -130,7 +130,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                                 From (Year) <span className="text-red-500">*</span>
                             </label>
                             <input type="text" value={draft.period_from ?? ''} className={ic('period_from')}
-                                placeholder="e.g. 2010 or N/A"
+                                placeholder="e.g. 2018 or N/A"
                                 onChange={e => onChange('period_from', e.target.value)} />
                             {errors.period_from && <p className="mt-1 text-xs text-red-500">{errors.period_from}</p>}
                         </div>
@@ -139,7 +139,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                                 To (Year) <span className="text-red-500">*</span>
                             </label>
                             <input type="text" value={draft.period_to ?? ''} className={ic('period_to')}
-                                placeholder="e.g. 2014 or N/A"
+                                placeholder="e.g. 2022 or N/A"
                                 onChange={e => onChange('period_to', e.target.value)} />
                             {errors.period_to && <p className="mt-1 text-xs text-red-500">{errors.period_to}</p>}
                         </div>
@@ -152,7 +152,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                                 Highest Level / Units Earned <span className="text-red-500">*</span>
                             </label>
                             <input type="text" value={draft.highest_level ?? ''} className={ic('highest_level')}
-                                placeholder="e.g. Graduated or N/A"
+                                placeholder="e.g. Graduate or N/A"
                                 onChange={e => onChange('highest_level', e.target.value)} />
                             {errors.highest_level && <p className="mt-1 text-xs text-red-500">{errors.highest_level}</p>}
                         </div>
@@ -161,7 +161,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                                 Year Graduated <span className="text-red-500">*</span>
                             </label>
                             <input type="text" value={draft.year_graduated ?? ''} className={ic('year_graduated')}
-                                placeholder="e.g. 2014 or N/A"
+                                placeholder="e.g. 2022 or N/A"
                                 onChange={e => onChange('year_graduated', e.target.value)} />
                             {errors.year_graduated && <p className="mt-1 text-xs text-red-500">{errors.year_graduated}</p>}
                         </div>
@@ -240,13 +240,15 @@ function EducationCard({ row, onEdit }: CardProps) {
                             {(row.period_from || row.period_to) && row.period_from !== 'N/A' && (
                                 <span>{row.period_from} – {row.period_to}</span>
                             )}
-                            {row.year_graduated && row.year_graduated !== 'N/A' && (
+                            {/* {row.year_graduated && row.year_graduated !== 'N/A' && (
                                 <span>Graduated {row.year_graduated}</span>
-                            )}
+                            )} */}
+                        </div>
+                        <p className='text-xs'>
                             {row.honors_received && row.honors_received !== 'N/A' && (
                                 <span className="text-green-600 font-medium">{row.honors_received}</span>
                             )}
-                        </div>
+                        </p>
                     </>
                 ) : (
                     <p className="text-xs text-gray-400 mt-0.5 italic">{meta.description} — not yet filled</p>

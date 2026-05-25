@@ -805,8 +805,8 @@ export default function EligibilitySection({ pdsData, onSave, saving }: Props) {
                     onClick={openAdd}
                     className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-green-300 hover:text-green-500 hover:bg-green-50/50 transition-colors cursor-pointer">
                     <Award className="w-8 h-8" />
-                    <p className="text-sm font-medium">Add your civil service eligibility</p>
-                    <p className="text-xs">Click to get started</p>
+                    <p className="text-sm font-medium text-center">Add your Career Service Eligibility and or License</p>
+                    <p className="text-xs">Click here to add</p>
                 </div>
             ) : (
                 <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">

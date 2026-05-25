@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, Briefcase, AlertCircle, Award, BriefcaseBusiness, ExternalLink } from 'lucide-react';
 import type { User, PdsData, PdsWorkExperience } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
+import Swal from 'sweetalert2';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Props { user: User; pdsData: PdsData; onSave: (section: string, data: FormData) => void; saving: boolean; }
 
@@ -10,8 +14,6 @@ interface PositionOption {
     title: string;
     salary_grade: number;
 }
-
-// ── RowFile ───────────────────────────────────────────────────────────────────
 
 interface RowFile {
     file:     File | null;
@@ -22,7 +24,8 @@ interface RowFile {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const EMPTY: PdsWorkExperience = {
-    date_from: '', date_to: '', is_present: false, position_title: '', department: '', status_of_appointment: '', is_government_service: false,
+    date_from: '', date_to: '', is_present: false, position_title: '', department: '',
+    status_of_appointment: '', is_government_service: false,
 };
 
 const ACCEPTED  = '.jpg,.jpeg,.png,.pdf';
@@ -31,38 +34,48 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const isImage = (name: string) => /\.(jpe?g|png)$/i.test(name);
 const isPdf   = (name: string) => /\.pdf$/i.test(name);
 
+const APPOINTMENT_STATUSES = [
+    'Permanent', 'Temporary', 'Casual', 'Coterminous',
+    'Contractual', 'Substitute', 'Job Order', 'Contract of Service',
+];
+
 // ── Validation ────────────────────────────────────────────────────────────────
 
 type RowErrors = Partial<Record<keyof PdsWorkExperience | 'attachment_file', string>>;
-type FormErrors = RowErrors[];
 
-function validate(rows: PdsWorkExperience[], rowFiles: RowFile[]): FormErrors {
-    return rows.map((row, i) => {
-        const errs: RowErrors = {};
+function validateRow(row: PdsWorkExperience, rowFile: RowFile): RowErrors {
+    const errs: RowErrors = {};
+    if (!row.position_title?.trim())       errs.position_title = 'Required.';
+    if (!row.department?.trim())           errs.department = 'Required.';
+    if (!row.date_from?.trim())            errs.date_from = 'Required.';
+    if (!row.is_present && !row.date_to?.trim()) errs.date_to = 'Required, or check Present.';
+    if (!row.status_of_appointment?.trim()) errs.status_of_appointment = 'Required.';
+    if (!rowFile?.file && !rowFile?.existing) errs.attachment_file = 'Please attach a supporting document.';
+    return errs;
+}
 
-        if (!row.position_title?.trim())
-            errs.position_title = 'Required.';
-        if (!row.department?.trim())
-            errs.department = 'Required.';
-        if (!row.date_from?.trim())
-            errs.date_from = 'Required.';
-        // date_to required only when is_present is unchecked
-        if (!row.is_present && !row.date_to?.trim())
-            errs.date_to = 'Required, or check Present.';
-        if (!row.status_of_appointment?.trim())
-            errs.status_of_appointment = 'Required.';
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-        const rf = rowFiles[i];
-        if (!rf?.file && !rf?.existing)
-            errs.attachment_file = 'Please attach a supporting document.';
+const formatDate = (val?: string | null) =>
+    val ? new Date(val).toLocaleDateString('en-PH', { year: 'numeric', month: 'short' }) : null;
 
-        return errs;
+const buildFormData = (rows: PdsWorkExperience[], files: RowFile[]) => {
+    const fd = new FormData();
+    rows.forEach((row, i) => {
+        fd.append(`work_experience[${i}][date_from]`,             row.date_from             ?? '');
+        fd.append(`work_experience[${i}][date_to]`,               row.date_to               ?? '');
+        fd.append(`work_experience[${i}][is_present]`,            row.is_present ? '1' : '0');
+        fd.append(`work_experience[${i}][position_title]`,        row.position_title        ?? '');
+        fd.append(`work_experience[${i}][department]`,            row.department            ?? '');
+        fd.append(`work_experience[${i}][salary_grade]`,          (row as PdsWorkExperience & { salary_grade?: string }).salary_grade ?? '');
+        fd.append(`work_experience[${i}][status_of_appointment]`, row.status_of_appointment ?? '');
+        fd.append(`work_experience[${i}][is_government_service]`, row.is_government_service ? '1' : '0');
+        const rf = files[i];
+        if (rf?.file)          fd.append(`attachments[${i}]`,          rf.file);
+        else if (rf?.existing) fd.append(`existing_attachments[${i}]`, rf.existing);
     });
-}
-
-function hasErrors(errors: FormErrors): boolean {
-    return errors.some(e => Object.keys(e).length > 0);
-}
+    return fd;
+};
 
 // ── Searchable Position Input ─────────────────────────────────────────────────
 
@@ -71,16 +84,18 @@ interface PositionInputProps {
     positions: PositionOption[];
     loading: boolean;
     onChange: (title: string, salaryGrade?: string) => void;
-    inputClass: string;
-    errorClass: string;
     hasError: boolean;
 }
 
-function PositionInput({ value, positions, loading, onChange, inputClass, errorClass, hasError }: PositionInputProps) {
+function PositionInput({ value, positions, loading, onChange, hasError }: PositionInputProps) {
     const [search, setSearch] = useState(value);
     const [open,   setOpen]   = useState(false);
     const [style,  setStyle]  = useState<React.CSSProperties>({});
     const inputRef            = useRef<HTMLInputElement>(null);
+
+    const base = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors";
+    const ok   = `${base} border-gray-200 focus:ring-green-500`;
+    const err  = `${base} border-red-400 focus:ring-red-400 bg-red-50`;
 
     useEffect(() => { setSearch(value); }, [value]);
 
@@ -112,8 +127,8 @@ function PositionInput({ value, positions, loading, onChange, inputClass, errorC
     return (
         <div className="relative">
             {loading && (
-                <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                    <svg className="h-3 w-3 animate-spin text-green-500" viewBox="0 0 24 24" fill="none">
+                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg className="h-3.5 w-3.5 animate-spin text-green-500" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
@@ -125,22 +140,22 @@ function PositionInput({ value, positions, loading, onChange, inputClass, errorC
                 onChange={handleChange}
                 onFocus={openDropdown}
                 disabled={loading}
-                placeholder={loading ? 'Loading...' : 'Search or type position'}
+                placeholder={loading ? 'Loading positions…' : 'Search or type position'}
                 autoComplete="off"
-                className={`${hasError ? errorClass : inputClass} ${loading ? 'text-gray-400' : ''} pr-6`}
+                className={`${hasError ? err : ok} ${loading ? 'text-gray-400' : ''} pr-8`}
             />
             {open && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setOpen(false)} />}
             {open && (
-                <ul style={style} className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl text-xs">
+                <ul style={style} className="max-h-56 overflow-auto rounded-xl border border-gray-200 bg-white shadow-xl text-sm">
                     {filtered.length > 0
                         ? filtered.map(p => (
                             <li key={p.id} onMouseDown={() => select(p)}
-                                className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-green-50">
-                                <span className="text-gray-800">{p.title}</span>
-                                <span className="ml-3 shrink-0 text-gray-400">SG {p.salary_grade}</span>
+                                className="flex cursor-pointer items-center justify-between px-3 py-2.5 hover:bg-green-50 transition-colors">
+                                <span className="text-gray-800 text-xs">{p.title}</span>
+                                <span className="ml-3 shrink-0 text-gray-400 text-xs">SG {p.salary_grade}</span>
                             </li>
                         ))
-                        : <li className="px-3 py-2 text-gray-400 italic">No match — will be saved as typed.</li>
+                        : <li className="px-3 py-2.5 text-gray-400 italic text-xs">No match — will be saved as typed.</li>
                     }
                 </ul>
             )}
@@ -148,16 +163,16 @@ function PositionInput({ value, positions, loading, onChange, inputClass, errorC
     );
 }
 
-// ── Attachment Cell ───────────────────────────────────────────────────────────
+// ── Attachment Field ──────────────────────────────────────────────────────────
 
-interface AttachmentCellProps {
+interface AttachmentFieldProps {
     rowFile:      RowFile;
     onChange:     (rf: RowFile) => void;
     storageBase?: string;
     error?:       string;
 }
 
-function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: AttachmentCellProps) {
+function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }: AttachmentFieldProps) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -193,76 +208,339 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
     return (
-        <div className="flex flex-col gap-1 min-w-30">
+        <div className="flex flex-col gap-1">
             <input ref={fileRef} type="file" accept={ACCEPTED} className="hidden" onChange={handleChange} />
 
             {hasAny ? (
-                <div className={`flex items-center gap-1 border rounded-lg px-2 py-1 bg-gray-50 group ${
+                <div className={`flex items-center gap-2 border rounded-lg px-3 py-2 bg-gray-50 ${
                     error ? 'border-red-400 bg-red-50' : 'border-gray-200'
                 }`}>
                     {previewSrc ? (
-                        <a href={viewUrl!} target="_blank" rel="noopener noreferrer" className="shrink-0" title="View image">
-                            <img src={previewSrc} alt="preview" className="w-7 h-7 rounded object-cover border border-gray-200 hover:opacity-80 transition-opacity" />
+                        <a href={viewUrl!} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                            <img src={previewSrc} alt="preview" className="w-8 h-8 rounded object-cover border border-gray-200 hover:opacity-80 transition-opacity" />
                         </a>
                     ) : viewUrl ? (
                         <a href={viewUrl} target="_blank" rel="noopener noreferrer"
-                            className={`shrink-0 transition-colors ${label && isPdf(label) ? 'text-red-500 hover:text-red-700' : 'text-gray-400 hover:text-green-600'}`}
-                            title="Open attachment">
-                            <FileText className="w-4 h-4" />
+                            className={`shrink-0 transition-colors ${label && isPdf(label) ? 'text-red-500 hover:text-red-700' : 'text-gray-400 hover:text-green-600'}`}>
+                            <FileText className="w-5 h-5" />
                         </a>
                     ) : (
-                        <ImageIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                        <ImageIcon className="w-5 h-5 text-gray-400 shrink-0" />
                     )}
-
                     <a href={viewUrl ?? '#'} target={viewUrl ? '_blank' : undefined} rel="noopener noreferrer"
-                        className="text-[10px] text-gray-600 truncate max-w-20 hover:text-green-700 hover:underline transition-colors"
+                        className="text-xs text-gray-600 truncate flex-1 hover:text-green-700 hover:underline transition-colors"
                         title={label ?? ''}>
                         {label}
                     </a>
-
-                    <div className="flex items-center gap-0.5 ml-auto shrink-0 min-h-7 max-h-5">
-                        <button type="button" title="Replace file"
-                            onClick={() => fileRef.current?.click()}
-                            className="text-gray-400 hover:text-green-600 p-0.5 rounded transition-colors cursor-pointer">
-                            <Paperclip className="w-3 h-3" />
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" title="Replace file" onClick={() => fileRef.current?.click()}
+                            className="text-gray-400 hover:text-green-600 p-1 rounded transition-colors cursor-pointer">
+                            <Paperclip className="w-3.5 h-3.5" />
                         </button>
-                        <button type="button" title="Remove attachment"
-                            onClick={handleClear}
-                            className="text-gray-400 hover:text-red-500 p-0.5 rounded transition-colors cursor-pointer">
-                            <X className="w-3 h-3" />
+                        <button type="button" title="Remove attachment" onClick={handleClear}
+                            className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors cursor-pointer">
+                            <X className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
             ) : (
                 <button type="button" onClick={() => fileRef.current?.click()}
-                    className={`flex items-center gap-1 border border-dashed rounded-lg px-2 py-1.5 text-[11px] transition-colors cursor-pointer min-h-8 w-full ${
+                    className={`flex items-center gap-2 border border-dashed rounded-lg px-3 py-3 text-sm transition-colors cursor-pointer w-full ${
                         error
-                            ? 'border-red-400 text-red-400 bg-red-50 hover:border-red-500 hover:text-red-600'
+                            ? 'border-red-400 text-red-400 bg-red-50 hover:border-red-500'
                             : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50'
                     }`}>
-                    <Paperclip className="w-3 h-3 shrink-0" />
-                    <span className="text-xs">Attach File</span>
+                    <Paperclip className="w-4 h-4 shrink-0" />
+                    <span>Attach supporting document</span>
                 </button>
             )}
 
             {(sizeError || error) && (
-                <p className="text-[10px] text-red-500 leading-tight">{sizeError || error}</p>
+                <p className="text-xs text-red-500 leading-tight flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />{sizeError || error}
+                </p>
             )}
-            <p className='text-[9px] text-gray-600'>PNG, JPEG, or PDF Max 5MB</p>
+            <p className="text-[10px] text-gray-400">PNG, JPEG, or PDF · Max 5 MB</p>
+        </div>
+    );
+}
+
+// ── Work Experience Modal ─────────────────────────────────────────────────────
+
+interface ModalProps {
+    open: boolean;
+    onClose: () => void;
+    title: string;
+    draft: PdsWorkExperience;
+    draftFile: RowFile;
+    errors: RowErrors;
+    submitted: boolean;
+    positions: PositionOption[];
+    loadingPos: boolean;
+    onFieldChange: (k: keyof PdsWorkExperience, v: string | boolean) => void;
+    onPositionChange: (title: string, sg?: string) => void;
+    onFileChange: (rf: RowFile) => void;
+    onSubmit: () => void;
+    saving: boolean;
+}
+
+function WorkExperienceModal({
+    open, onClose, title,
+    draft, draftFile, errors, submitted,
+    positions, loadingPos,
+    onFieldChange, onPositionChange, onFileChange,
+    onSubmit, saving,
+}: ModalProps) {
+    useEffect(() => {
+        if (open) document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, [open]);
+
+    if (!open) return null;
+
+    const base = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors";
+    const ok   = `${base} border-gray-200 focus:ring-green-500`;
+    const err  = `${base} border-red-400 focus:ring-red-400 bg-red-50`;
+    const ic   = (k: keyof PdsWorkExperience) => errors[k] ? err : ok;
+
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+            <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+                    <h3 className="text-base font-semibold text-gray-800">{title}</h3>
+                    <button type="button" onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+
+                    {/* Position Title */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Position Title <span className="text-red-500">*</span>
+                        </label>
+                        <PositionInput
+                            value={draft.position_title ?? ''}
+                            positions={positions}
+                            loading={loadingPos}
+                            onChange={onPositionChange}
+                            hasError={!!errors.position_title}
+                        />
+                        {errors.position_title && <p className="mt-1 text-xs text-red-500">{errors.position_title}</p>}
+                    </div>
+
+                    {/* Department */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Department / Agency / Company <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text" value={draft.department ?? ''} className={ic('department')}
+                            placeholder="Agency or Company name"
+                            onChange={e => onFieldChange('department', e.target.value)} />
+                        {errors.department && <p className="mt-1 text-xs text-red-500">{errors.department}</p>}
+                    </div>
+
+                    {/* Date From & Date To */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Date From <span className="text-red-500">*</span>
+                            </label>
+                            <input type="date" value={draft.date_from ?? ''} className={ic('date_from')}
+                                onChange={e => onFieldChange('date_from', e.target.value)} />
+                            {errors.date_from && <p className="mt-1 text-xs text-red-500">{errors.date_from}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Date To <span className="text-red-500">*</span>
+                            </label>
+                            <input type="date" value={draft.date_to ?? ''} className={ic('date_to')}
+                                disabled={!!draft.is_present}
+                                onChange={e => onFieldChange('date_to', e.target.value)} />
+                            <label className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500 cursor-pointer select-none">
+                                <input type="checkbox" checked={!!draft.is_present}
+                                    onChange={e => onFieldChange('is_present', e.target.checked)}
+                                    className="accent-green-600" />
+                                Present / Ongoing
+                            </label>
+                            {errors.date_to && <p className="mt-1 text-xs text-red-500">{errors.date_to}</p>}
+                        </div>
+                    </div>
+
+                    {/* Status of Appointment */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Status of Appointment <span className="text-red-500">*</span>
+                        </label>
+                        <select value={draft.status_of_appointment ?? ''} className={ic('status_of_appointment')}
+                            onChange={e => onFieldChange('status_of_appointment', e.target.value)}>
+                            <option value="">Select status</option>
+                            {APPOINTMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {errors.status_of_appointment && <p className="mt-1 text-xs text-red-500">{errors.status_of_appointment}</p>}
+                    </div>
+
+                    {/* Government Service */}
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                        <input type="checkbox" checked={!!draft.is_government_service}
+                            onChange={e => onFieldChange('is_government_service', e.target.checked)}
+                            className="accent-green-600 w-4 h-4" />
+                        <span className="text-sm text-gray-700">Government Service</span>
+                    </label>
+
+                    {/* Attachment */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Attachment <span className="text-red-500">*</span>
+                        </label>
+                        <AttachmentField
+                            rowFile={draftFile}
+                            onChange={onFileChange}
+                            error={errors.attachment_file}
+                        />
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-5 py-4 border-t border-gray-100 shrink-0 flex justify-end gap-2">
+                    <button type="button" onClick={onClose}
+                        className="px-4 py-2 text-sm text-gray-600 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" onClick={onSubmit} disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
+                        {saving ? <><Spinner />Saving…</> : <><Save className="w-4 h-4" />Save</>}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
+// ── Work Experience Card ──────────────────────────────────────────────────────
+
+interface CardProps {
+    row: PdsWorkExperience & { attachment?: string };
+    rowFile: RowFile;
+    onEdit: () => void;
+    onDelete: () => void;
+    storageBase?: string;
+}
+
+function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage' }: CardProps) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const hasFile     = !!rowFile.file;
+    const hasExisting = !!rowFile.existing;
+    const label = hasFile
+        ? rowFile.file!.name
+        : hasExisting
+            ? rowFile.existing!.split('/').pop() ?? 'Attachment'
+            : null;
+    const viewUrl = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
+    const fileIsPdf   = label ? isPdf(label) : false;
+    const fileIsImage = label ? isImage(label) : false;
+
+    const dateRange = row.is_present
+        ? `${formatDate(row.date_from)} – Present`
+        : `${formatDate(row.date_from)} – ${formatDate(row.date_to)}`;
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node))
+                setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
+    return (
+        <div className="flex items-stretch gap-3 p-4 transition-colors overflow-hidden">
+            <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white">
+                <BriefcaseBusiness className="h-5 w-5" />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 leading-snug">
+                    {row.position_title || <span className="text-gray-400 italic">No position title</span>}
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">{row.department}</p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">
+                    {row.status_of_appointment && (
+                        <span className="text-gray-500">
+                            {row.status_of_appointment}
+                        </span>
+                    )}
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">
+                    {(row.date_from || row.is_present) && <span>{dateRange}</span>}
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">
+                    {row.is_government_service && (
+                        <span className="text-green-600 font-medium">Government Service</span>
+                    )}
+                </p>
+
+                {label && viewUrl && (
+                    <a
+                        href={viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs text-green-700 font-medium border border-green-200 hover:bg-green-50 hover:border-green-300 px-2.5 py-1 rounded-lg transition-colors">
+                        Show Credentials <ExternalLink className='w-3 h-3' />
+                    </a>
+                )}
+            </div>
+
+            {/* Ellipsis menu */}
+            <div className="relative shrink-0">
+                <button ref={btnRef} type="button" onClick={() => setMenuOpen(prev => !prev)}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        menuOpen ? 'bg-green-50 text-green-700' : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                    }`}>
+                    <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <circle cx="4" cy="10" r="1.5" />
+                        <circle cx="10" cy="10" r="1.5" />
+                        <circle cx="16" cy="10" r="1.5" />
+                    </svg>
+                </button>
+
+                {menuOpen && (
+                    <div ref={menuRef} className="absolute right-0 top-5 mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-20">
+                        <button type="button" onClick={() => { setMenuOpen(false); onEdit(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-green-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <Pencil className="w-3.5 h-3.5" />Edit
+                        </button>
+                        <button type="button" onClick={() => { setMenuOpen(false); onDelete(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-500 hover:bg-gray-50 hover:text-red-700 transition-colors cursor-pointer">
+                            <Trash2 className="w-3.5 h-3.5" />Delete
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
+type ModalMode = { type: 'add' } | { type: 'edit'; index: number };
+
 export default function WorkExperienceSection({ pdsData, onSave, saving }: Props) {
-    // ── Derive initial rows ───────────────────────────────────────────────────
-    const initialRows = pdsData.work_experience?.length ? pdsData.work_experience : [{ ...EMPTY }];
+    const initialRows = pdsData.work_experience?.length ? pdsData.work_experience : [];
 
-    const [rows,      setRows]      = useState<PdsWorkExperience[]>(initialRows);
-    const [errors,    setErrors]    = useState<FormErrors>(initialRows.map(() => ({}))); // ← fixed: one entry per row
-    const [submitted, setSubmitted] = useState(false);
-
+    const [rows,     setRows]     = useState<PdsWorkExperience[]>(initialRows);
     const [rowFiles, setRowFiles] = useState<RowFile[]>(
         initialRows.map(row => ({
             file:     null,
@@ -281,16 +559,15 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
             .catch(() => setLoadingPos(false));
     }, []);
 
+    // Sync from server
     const workKey = JSON.stringify(
         (pdsData.work_experience ?? []).map((e: PdsWorkExperience & { id?: number; attachment?: string }) => ({ id: e.id, attachment: e.attachment }))
     );
     const isMounted = useRef(false);
     useEffect(() => {
         if (!isMounted.current) { isMounted.current = true; return; }
-        const fresh = pdsData.work_experience?.length ? pdsData.work_experience : [{ ...EMPTY }];
+        const fresh = pdsData.work_experience?.length ? pdsData.work_experience : [];
         setRows(fresh);
-        setErrors(fresh.map(() => ({})));
-        setSubmitted(false);
         setRowFiles(prev => fresh.map((row: PdsWorkExperience & { attachment?: string }, i: number) => {
             if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview!);
             return { file: null, existing: row.attachment ?? null, preview: null };
@@ -303,273 +580,162 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const baseInput = "w-full border rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-1 bg-white transition-colors";
-    const inputCls  = `${baseInput} border-gray-200 focus:ring-green-500`;
-    const errCls    = `${baseInput} border-red-400 focus:ring-red-400 bg-red-50`;
-    const cls       = (i: number, k: keyof PdsWorkExperience) => errors[i]?.[k] ? errCls : inputCls;
+    // ── Modal state ───────────────────────────────────────────────────────────
 
-    const setRow = (i: number, key: keyof PdsWorkExperience, val: string | boolean) => {
-        setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
-        if (submitted) {
-            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, [key]: undefined } : e));
-        }
+    const [modal,       setModal]       = useState<ModalMode | null>(null);
+    const [draft,       setDraft]       = useState<PdsWorkExperience>({ ...EMPTY });
+    const [draftFile,   setDraftFile]   = useState<RowFile>({ file: null, existing: null, preview: null });
+    const [draftErrors, setDraftErrors] = useState<RowErrors>({});
+    const [submitted,   setSubmitted]   = useState(false);
+
+    const openAdd = () => {
+        setDraft({ ...EMPTY });
+        setDraftFile({ file: null, existing: null, preview: null });
+        setDraftErrors({});
+        setSubmitted(false);
+        setModal({ type: 'add' });
     };
 
-    const setRowFile = (i: number, rf: RowFile) => {
-        setRowFiles(prev => prev.map((r, idx) => idx === i ? rf : r));
-        // Clear attachment error live once a file is picked
-        if (submitted && (rf.file || rf.existing)) {
-            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, attachment_file: undefined } : e));
-        }
+    const openEdit = (index: number) => {
+        setDraft({ ...rows[index] });
+        setDraftFile({ ...rowFiles[index] });
+        setDraftErrors({});
+        setSubmitted(false);
+        setModal({ type: 'edit', index });
     };
 
-    const setPosition = (i: number, title: string, salaryGrade?: string) => {
-        setRows(prev => prev.map((r, idx) => {
-            if (idx !== i) return r;
-            return { ...r, position_title: title, ...(salaryGrade !== undefined ? { salary_grade: salaryGrade } : {}) };
-        }));
-        if (submitted) {
-            setErrors(prev => prev.map((e, idx) => idx === i ? { ...e, position_title: undefined } : e));
-        }
+    const closeModal = () => { setModal(null); setDraftErrors({}); setSubmitted(false); };
+
+    const handleFieldChange = (k: keyof PdsWorkExperience, v: string | boolean) => {
+        setDraft(prev => ({ ...prev, [k]: v }));
+        if (submitted) setDraftErrors(prev => ({ ...prev, [k]: undefined }));
     };
 
-    const addRow = () => {
-        setRows(p => [...p, { ...EMPTY }]);
-        setErrors(p => [...p, {}]);
-        setRowFiles(p => [...p, { file: null, existing: null, preview: null }]);
+    const handlePositionChange = (title: string, sg?: string) => {
+        setDraft(prev => ({ ...prev, position_title: title, ...(sg !== undefined ? { salary_grade: sg } : {}) }));
+        if (submitted) setDraftErrors(prev => ({ ...prev, position_title: undefined }));
     };
 
-    const removeRow = (i: number) => {
-        if (rowFiles[i]?.preview) URL.revokeObjectURL(rowFiles[i].preview!);
-        setRows(p => p.filter((_, idx) => idx !== i));
-        setErrors(p => p.filter((_, idx) => idx !== i));
-        setRowFiles(p => p.filter((_, idx) => idx !== i));
+    const handleFileChange = (rf: RowFile) => {
+        setDraftFile(rf);
+        if (submitted && (rf.file || rf.existing))
+            setDraftErrors(prev => ({ ...prev, attachment_file: undefined }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleModalSubmit = () => {
         setSubmitted(true);
+        const errs = validateRow(draft, draftFile);
+        if (Object.keys(errs).length > 0) { setDraftErrors(errs); return; }
 
-        const errs = validate(rows, rowFiles);
-        if (hasErrors(errs)) {
-            setErrors(errs);
-            const firstRowIdx = errs.findIndex(e => Object.keys(e).length > 0);
-            if (firstRowIdx >= 0) {
-                const firstKey = Object.keys(errs[firstRowIdx])[0];
-                document.getElementById(`work-${firstRowIdx}-${firstKey}`)
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return;
-        }
+        let nextRows: PdsWorkExperience[];
+        let nextFiles: RowFile[];
 
-        setErrors(rows.map(() => ({})));
+        if (modal?.type === 'add') {
+            nextRows  = [...rows, draft];
+            nextFiles = [...rowFiles, draftFile];
+        } else if (modal?.type === 'edit') {
+            const idx = modal.index;
+            if (rowFiles[idx]?.preview && rowFiles[idx].preview !== draftFile.preview)
+                URL.revokeObjectURL(rowFiles[idx].preview!);
+            nextRows  = rows.map((r, i) => i === idx ? draft : r);
+            nextFiles = rowFiles.map((f, i) => i === idx ? draftFile : f);
+        } else { return; }
 
-        const fd = new FormData();
-        rows.forEach((row, i) => {
-            fd.append(`work_experience[${i}][date_from]`,             row.date_from             ?? '');
-            fd.append(`work_experience[${i}][date_to]`,               row.date_to               ?? '');
-            fd.append(`work_experience[${i}][is_present]`,            row.is_present ? '1' : '0');
-            fd.append(`work_experience[${i}][position_title]`,        row.position_title        ?? '');
-            fd.append(`work_experience[${i}][department]`,            row.department            ?? '');
-            fd.append(`work_experience[${i}][salary_grade]`,          (row as PdsWorkExperience & { salary_grade?: string }).salary_grade ?? '');
-            fd.append(`work_experience[${i}][status_of_appointment]`, row.status_of_appointment ?? '');
-            fd.append(`work_experience[${i}][is_government_service]`, row.is_government_service ? '1' : '0');
+        setRows(nextRows);
+        setRowFiles(nextFiles);
+        closeModal();
+        onSave('work_experience', buildFormData(nextRows, nextFiles));
+    };
 
-            const rf = rowFiles[i];
-            if (rf?.file)          fd.append(`attachments[${i}]`,          rf.file);
-            else if (rf?.existing) fd.append(`existing_attachments[${i}]`, rf.existing);
+    const handleDelete = async (index: number) => {
+        const label = rows[index]?.position_title?.trim() || 'this work experience';
+
+        const result = await Swal.fire({
+            title: 'Delete Work Experience?',
+            html: `<span class="text-sm text-gray-600">This will permanently remove <strong>${label}</strong> from your record.</span>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup: '!rounded-2xl !shadow-xl',
+                title: '!text-base !font-semibold !text-gray-800',
+                confirmButton: '!rounded-lg !text-sm !font-medium !px-4 !py-2',
+                cancelButton: '!rounded-lg !text-sm !font-medium !px-4 !py-2',
+            },
         });
 
-        onSave('work_experience', fd);
+        if (!result.isConfirmed) return;
+
+        if (rowFiles[index]?.preview) URL.revokeObjectURL(rowFiles[index].preview!);
+        const nextRows  = rows.filter((_, i) => i !== index);
+        const nextFiles = rowFiles.filter((_, i) => i !== index);
+        setRows(nextRows);
+        setRowFiles(nextFiles);
+        onSave('work_experience', buildFormData(nextRows, nextFiles));
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div className="flex items-start justify-between">
+        <div className="space-y-1">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
                 <div>
-                    <h2 className="text-base font-semibold text-green-800 mb-1 uppercase">V. Work Experience</h2>
-                    <p className="text-xs text-gray-500">Include private employment. Start from your most recent work.</p>
+                    <h2 className="text-base font-semibold text-green-800 uppercase">V. Work Experience</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        Include private employment. Start from your most recent work.
+                    </p>
                 </div>
-                <button type="button" onClick={addRow}
-                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1 cursor-pointer shrink-0 ml-3">
-                    <Plus className="w-3.5 h-3.5" /> Add Row
+                <button
+                    type="button"
+                    onClick={openAdd}
+                    className="flex items-center gap-1.5 text-xs font-medium text-green-600 hover:text-green-800 px-2 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ml-3">
+                    <Plus className="w-3.5 h-3.5" /> Add
                 </button>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-                <table className="w-full text-xs">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200 uppercase">
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-36">
-                                Position Title <span className="text-red-500">*</span>
-                            </th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 lg:min-w-36">
-                                Department / Agency / Company <span className="text-red-500">*</span>
-                            </th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">
-                                Date From <span className="text-red-500">*</span>
-                            </th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-32">
-                                Date To <span className="text-red-500">*</span>
-                            </th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">
-                                Status of Appointment <span className="text-red-500">*</span>
-                            </th>
-                            <th className="px-3 py-2.5 text-center font-medium text-gray-600 w-20">Gov't Service</th>
-                            <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-36">
-                                Attachment <span className="text-red-500">*</span>
-                            </th>
-                            <th className="w-2"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row, i) => {
-                            const rowErr = errors[i] ?? {};
-                            const rowHasError = Object.keys(rowErr).length > 0;
-                            return (
-                                <tr key={i} className={`align-top ${
-                                    rowHasError ? 'bg-red-50/30' : ''
-                                }`}>
-                                    {/* Position Title */}
-                                    <td className="px-1 py-1.5" id={`work-${i}-position_title`}>
-                                        <PositionInput
-                                            value={row.position_title ?? ''}
-                                            positions={positions}
-                                            loading={loadingPos}
-                                            onChange={(title, sg) => setPosition(i, title, sg)}
-                                            inputClass={inputCls}
-                                            errorClass={errCls}
-                                            hasError={!!rowErr.position_title}
-                                        />
-                                        {rowErr.position_title && (
-                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.position_title}</p>
-                                        )}
-                                    </td>
+            {/* List */}
+            {rows.length === 0 ? (
+                <div onClick={openAdd}
+                    className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-green-300 hover:text-green-500 hover:bg-green-50/50 transition-colors cursor-pointer">
+                    <BriefcaseBusiness className="w-8 h-8" />
+                    <p className="text-sm font-medium">Add your Work Experience</p>
+                    <p className="text-xs">Click to get started</p>
+                </div>
+            ) : (
+                <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
+                    {rows.map((row, i) => (
+                        <WorkExperienceCard
+                            key={i}
+                            row={row as PdsWorkExperience & { attachment?: string }}
+                            rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
+                            onEdit={() => openEdit(i)}
+                            onDelete={() => handleDelete(i)}
+                        />
+                    ))}
+                </div>
+            )}
 
-                                    {/* Department */}
-                                    <td className="px-1 py-1.5">
-                                        <input
-                                            id={`work-${i}-department`}
-                                            type="text"
-                                            value={row.department ?? ''}
-                                            onChange={e => setRow(i, 'department', e.target.value)}
-                                            placeholder="Agency / Company"
-                                            className={cls(i, 'department')}
-                                        />
-                                        {rowErr.department && (
-                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.department}</p>
-                                        )}
-                                    </td>
-
-                                    {/* Date From */}
-                                    <td className="px-1 py-1.5">
-                                        <input
-                                            id={`work-${i}-date_from`}
-                                            type="date"
-                                            value={row.date_from ?? ''}
-                                            onChange={e => setRow(i, 'date_from', e.target.value)}
-                                            className={cls(i, 'date_from')}
-                                        />
-                                        {rowErr.date_from && (
-                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.date_from}</p>
-                                        )}
-                                    </td>
-
-                                    {/* Date To + Present checkbox */}
-                                    <td className="px-1 py-1.5">
-                                        <input
-                                            id={`work-${i}-date_to`}
-                                            type="date"
-                                            value={row.date_to ?? ''}
-                                            onChange={e => setRow(i, 'date_to', e.target.value)}
-                                            disabled={!!row.is_present}
-                                            className={cls(i, 'date_to')}
-                                        />
-                                        <label className="flex items-center gap-1 mt-1 text-[11px] text-gray-500 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={!!row.is_present}
-                                                onChange={e => {
-                                                    setRow(i, 'is_present', e.target.checked);
-                                                    if (e.target.checked && submitted) {
-                                                        setErrors(prev => prev.map((er, idx) =>
-                                                            idx === i ? { ...er, date_to: undefined } : er
-                                                        ));
-                                                    }
-                                                }}
-                                                className="accent-green-600"
-                                            />
-                                            Present
-                                        </label>
-                                        {rowErr.date_to && (
-                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.date_to}</p>
-                                        )}
-                                    </td>
-
-                                    {/* Status of Appointment */}
-                                    <td className="px-1 py-1.5">
-                                        <select
-                                            id={`work-${i}-status_of_appointment`}
-                                            value={row.status_of_appointment ?? ''}
-                                            onChange={e => setRow(i, 'status_of_appointment', e.target.value)}
-                                            className={cls(i, 'status_of_appointment')}
-                                        >
-                                            <option value="">Select</option>
-                                            {[
-                                                'Permanent', 'Temporary', 'Casual', 'Coterminous',
-                                                'Contractual', 'Substitute', 'Job Order', 'Contract of Service',
-                                            ].map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        {rowErr.status_of_appointment && (
-                                            <p className="mt-0.5 text-[10px] text-red-500 leading-tight">{rowErr.status_of_appointment}</p>
-                                        )}
-                                    </td>
-
-                                    {/* Government Service */}
-                                    <td className="px-1 py-1.5 text-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={!!row.is_government_service}
-                                            onChange={e => setRow(i, 'is_government_service', e.target.checked)}
-                                            className="accent-green-600 mt-2"
-                                        />
-                                    </td>
-
-                                    {/* Attachment */}
-                                    <td className="px-1 py-1.5">
-                                        <AttachmentCell
-                                            rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
-                                            onChange={rf => setRowFile(i, rf)}
-                                            error={rowErr.attachment_file}
-                                        />
-                                    </td>
-
-                                    {/* Remove */}
-                                    <td className="px-1 py-4">
-                                        {rows.length > 1 && (
-                                            <button type="button" onClick={() => removeRow(i)}
-                                                title="Remove"
-                                                className="text-red-400 hover:text-red-600 cursor-pointer">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="flex justify-end">
-                <button type="submit" disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
-                    {saving
-                        ? <><Spinner />Saving Work Experience</>
-                        : <><Save className="w-4 h-4" />Save Work Experience</>
-                    }
-                </button>
-            </div>
-        </form>
+            {/* Modal */}
+            <WorkExperienceModal
+                open={modal !== null}
+                onClose={closeModal}
+                title={modal?.type === 'edit' ? 'Edit Work Experience' : 'Add Work Experience'}
+                draft={draft}
+                draftFile={draftFile}
+                errors={draftErrors}
+                submitted={submitted}
+                positions={positions}
+                loadingPos={loadingPos}
+                onFieldChange={handleFieldChange}
+                onPositionChange={handlePositionChange}
+                onFileChange={handleFileChange}
+                onSubmit={handleModalSubmit}
+                saving={saving}
+            />
+        </div>
     );
 }
