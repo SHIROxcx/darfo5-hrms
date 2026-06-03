@@ -18,7 +18,7 @@ import Swal from 'sweetalert2';
 // Section components
 import PersonalInfoSection from '@/pages/pds/sections/PersonalInfoSection';
 import FamilyBackgroundSection from '@/pages/pds/sections/FamilyBackgroundSection';
-import EducationSection from '@/pages/pds/sections/EducationSection';
+import EducationSection, { isEducationComplete } from '@/pages/pds/sections/EducationSection';
 import EligibilitySection from '@/pages/pds/sections/EligibilitySection';
 import WorkExperienceSection from '@/pages/pds/sections/WorkExperienceSection';
 import VoluntaryWorkSection from '@/pages/pds/sections/VoluntaryWorkSection';
@@ -51,7 +51,7 @@ function getSectionCompletion(sectionId: SectionId, pdsData: PdsData): boolean {
     switch (sectionId) {
         case 'personal':        return !!pdsData.personal?.date_of_birth;
         case 'family':          return !!pdsData.family?.father_surname;
-        case 'education':       return (pdsData.education?.length ?? 0) > 0;
+        case 'education':       return isEducationComplete(pdsData.education);
         case 'eligibility':     return (pdsData.eligibilities?.length ?? 0) > 0;
         case 'work_experience': return (pdsData.work_experience?.length ?? 0) > 0;
         case 'voluntary_work':  return (pdsData.voluntary_work?.length ?? 0) > 0;
@@ -244,34 +244,26 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                             <div>
                                 <h1 className="text-sm sm:text-md md:text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
-                                <p className="text-xs md:text-sm text-gray-500">
-                                    {user.last_name}, {user.first_name} {user.middle_name}
-                                    <Dot className="inline text-gray-700" />
-                                    {pdsData.personal?.agency_employee_no ?? 'No employee number'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-end gap-4">
-                            {/* {progressPct < 100 && ( */}
-                                <div className="text-right">
-                                    <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
-                                    <div className="w-32 h-1.5 bg-gray-200 rounded-full mt-1">
+                                <div className="text-right flex items-center gap-2">
+                                    <div className="w-32 h-2
+                                     bg-gray-200 rounded-full mt-1">
                                         <div
                                             className="h-full bg-green-600 rounded-full transition-all duration-500"
                                             style={{ width: `${progressPct}%` }}
                                         />
                                     </div>
-                                </div>
-                            {/* )} */}
-                            {/* {progressPct === 100 && ( */}
-                                <button
-                                    onClick={() => setShowPreview(true)}
-                                    title="Generate PDS"
-                                    className="flex items-center gap-2 p-3 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
-                                >
-                                    <FileText className="w-3.5 h-3.5" /> Generate PDS
-                                </button>
-                            {/* )} */}
+                                    <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
+                            </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-4">
+                            <button
+                                onClick={() => setShowPreview(true)}
+                                title="Generate PDS"
+                                className="flex items-center gap-2 p-3 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
+                            >
+                                <FileText className="w-3.5 h-3.5" /> Generate PDS
+                            </button>
                         </div>
                     </div>
                 </div>

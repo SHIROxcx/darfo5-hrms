@@ -13,11 +13,11 @@ interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving:
 const LEVELS: PdsEducation['level'][] = ['Elementary', 'Secondary', 'Vocational', 'College', 'Graduate Studies'];
 
 const LEVEL_META: Record<string, { label: string; description: string }> = {
-    'Elementary':        { label: 'Elementary',         description: 'Elementary Education' },
-    'Secondary':         { label: 'Secondary',          description: 'Secondary Education' },
-    'Vocational':        { label: 'Vocational / Trade', description: 'Technical-Vocational Education' },
-    'College':           { label: 'College',            description: "Bachelor's Degree" },
-    'Graduate Studies':  { label: 'Graduate Studies',   description: "Master's / Doctorate" },
+    'Elementary':        { label: 'Elementary',                 description: 'Elementary Education' },
+    'Secondary':         { label: 'Secondary',                  description: 'Secondary Education' },
+    'Vocational':        { label: 'Vocational / Trade Course',  description: 'Technical-Vocational Education' },
+    'College':           { label: 'College',                    description: "Bachelor's Degree" },
+    'Graduate Studies':  { label: 'Graduate Studies',           description: "Master's / Doctorate" },
 };
 
 const DEFAULT_EDU = (level: PdsEducation['level']): PdsEducation => ({
@@ -47,6 +47,14 @@ function isFilled(row: PdsEducation): boolean {
     return REQUIRED_COLS.every(k => {
         const v = row[k];
         return v && String(v).trim() !== '';
+    });
+}
+
+export function isEducationComplete(education: PdsEducation[] | undefined): boolean {
+    const LEVELS: PdsEducation['level'][] = ['Elementary', 'Secondary', 'Vocational', 'College', 'Graduate Studies'];
+    return LEVELS.every(level => {
+        const row = education?.find(e => e.level === level);
+        return row ? isFilled(row) : false;
     });
 }
 
@@ -177,10 +185,6 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             onChange={e => onChange('honors_received', e.target.value)} />
                         {errors.honors_received && <p className="mt-1 text-xs text-red-500">{errors.honors_received}</p>}
                     </div>
-
-                    <p className="text-[11px] text-gray-400 italic">
-                        Write school names and degree/course in full. Do not abbreviate. Write <strong>N/A</strong> if not applicable.
-                    </p>
                 </div>
 
                 {/* Footer */}
