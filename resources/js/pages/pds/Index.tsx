@@ -11,7 +11,8 @@ import {
     ChevronLeft, Dot, X,
     GraduationCap,
     HeartHandshake,
-    BriefcaseBusiness
+    BriefcaseBusiness,
+    ClipboardList,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -26,6 +27,9 @@ import TrainingSection from '@/pages/pds/sections/TrainingSection';
 import OtherInfoSection from '@/pages/pds/sections/OtherInfoSection';
 import QuestionsSection from '@/pages/pds/sections/QuestionsSection';
 import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
+
+// NEW: Work Experience Sheet modal
+import WorkExperienceSheetModal from '@/pages/pds/WorkExperienceSheetModal';
 
 interface Props {
     user: User;
@@ -139,6 +143,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const [activeSection, setActiveSection] = useState<SectionId>('personal');
     const [saving, setSaving]               = useState(false);
     const [showPreview, setShowPreview]     = useState(false);
+    const [showWes,     setShowWes]         = useState(false);   // ← NEW
 
     const completedCount = SECTIONS.filter(s => getSectionCompletion(s.id, pdsData)).length;
     const progressPct    = Math.round((completedCount / SECTIONS.length) * 100);
@@ -172,7 +177,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
             Swal.fire({
                 icon: 'success',
-                // title: 'Saved!',
                 text: 'Your information has been saved successfully!',
                 toast: true,
                 position: 'top-end',
@@ -186,12 +190,9 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
             router.reload({ only: ['pdsData'] });
         } catch (e: any) {
-            // Log the actual Laravel validation errors
             if (e.response?.status === 422) {
                 const errors = e.response.data?.errors ?? {};
-
                 const firstError = (Object.values(errors).flat() as string[])[0];
-
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -233,9 +234,17 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <PdfPreviewModal userId={user.id!} onClose={() => setShowPreview(false)} />
             )}
 
+            {/* NEW: Work Experience Sheet modal */}
+            <WorkExperienceSheetModal
+                open={showWes}
+                onClose={() => setShowWes(false)}
+                user={user}
+                pdsData={pdsData}
+            />
+
             <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
 
-                {/*  Header */}
+                {/* Header */}
                 <div className="shrink-0 bg-white border-b border-gray-200 p-4">
                     <div className="block sm:flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -245,18 +254,31 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             <div>
                                 <h1 className="text-sm sm:text-md md:text-lg font-semibold text-green-800">CS Form No. 212 — Personal Data Sheet</h1>
                                 <div className="text-right flex items-center gap-2">
-                                    <div className="w-32 h-2
-                                     bg-gray-200 rounded-full mt-1">
+                                    <div className="w-32 h-2 bg-gray-200 rounded-full mt-1">
                                         <div
                                             className="h-full bg-green-600 rounded-full transition-all duration-500"
                                             style={{ width: `${progressPct}%` }}
                                         />
                                     </div>
                                     <div className="text-xs font-semibold text-green-700">{progressPct}% Complete</div>
-                            </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center justify-end gap-4">
+
+                        {/* ── Action buttons ── */}
+                        <div className="flex items-center justify-end gap-2 mt-3 sm:mt-0">
+                            {/* Generate Work Experience Sheet — NEW */}
+                            <button
+                                onClick={() => setShowWes(true)}
+                                title="Generate Work Experience Sheet"
+                                className="flex items-center gap-2 p-3 bg-white border border-green-600 hover:bg-green-50 text-green-700 text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0 cursor-pointer"
+                            >
+                                <ClipboardList className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Work Experience Sheet</span>
+                                <span className="sm:hidden">WES</span>
+                            </button>
+
+                            {/* Generate PDS — existing */}
                             <button
                                 onClick={() => setShowPreview(true)}
                                 title="Generate PDS"
@@ -271,10 +293,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 {/* ── Body ────────────────────────────────────────────────────── */}
                 <div className="flex flex-1 overflow-hidden">
 
-                    {/* ── Sidebar ─────────────────────────────────────────────
-                        < lg  - icon-only strip (w-14), title tooltip on hover
-                        ≥ lg  - full label sidebar (w-68)
-                    ──────────────────────────────────────────────────────── */}
+                    {/* ── Sidebar ─────────────────────────────────────────────── */}
                     <aside className="w-14 lg:w-68 shrink-0 bg-gray-50 border-r border-gray-200 overflow-y-auto">
                         <nav className="p-2 lg:p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
@@ -298,15 +317,10 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                             }
                                         `}
                                     >
-                                        {/* Icon — always visible */}
                                         <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-green-100' : 'text-gray-400 group-hover:text-gray-500'}`} />
-
-                                        {/* Label — desktop only */}
                                         <span className="hidden lg:block flex-1 truncate font-medium">
                                             {section.label}
                                         </span>
-
-                                        {/* Completion — desktop: icon; mobile: dot badge */}
                                         {isDone ? (
                                             <>
                                                 <CheckCircle2 className={`hidden lg:block w-3.5 h-3.5 shrink-0 ${isActive ? 'text-green-200' : 'text-green-500'}`} />
@@ -320,7 +334,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             })}
                         </nav>
 
-                        {/* Footer — desktop only */}
                         <div className="hidden lg:block p-3 border-t border-gray-200 mt-2">
                             <div className="bg-green-50 rounded-lg p-3">
                                 <p className="text-xs text-green-700 font-medium mb-1">
@@ -333,7 +346,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
                     {/* ── Content ───────────────────────────────────────────── */}
                     <div className="flex-1 flex flex-col overflow-hidden bg-white">
-
                         <main className="flex-1 overflow-y-auto">
                             <div className="max-w-full lg:max-w-8xl mx-auto p-4 md:p-6">
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">

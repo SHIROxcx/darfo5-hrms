@@ -112,10 +112,6 @@ function VoluntaryWorkModal({ open, onClose, title, draft, onChange, onSubmit, s
                             placeholder="e.g. Volunteer Coordinator"
                             onChange={e => onChange('position', e.target.value)} />
                     </div>
-
-                    <p className="text-[11px] text-gray-400 italic">
-                        Write <strong>N/A</strong> if not applicable.
-                    </p>
                 </div>
 
                 {/* Footer */}
@@ -163,7 +159,7 @@ function VoluntaryWorkCard({ row, onEdit, onDelete }: CardProps) {
         : null;
 
     return (
-        <div className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors">
+        <div className="flex items-start gap-3 p-4">
             {/* Icon */}
             <div className="hidden md:flex w-10 h-10 rounded-xl bg-green-600 items-center justify-center shrink-0 mt-0.5">
                 <HeartHandshake className="w-5 h-5 text-white/90" />
@@ -185,12 +181,13 @@ function VoluntaryWorkCard({ row, onEdit, onDelete }: CardProps) {
 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
                     {dateRange && <span>{dateRange}</span>}
-                    {row.number_of_hours && (
-                        <span className="text-gray-500">
-                            {row.number_of_hours} hrs
-                        </span>
-                    )}
                 </div>
+                
+                {row.number_of_hours && (
+                    <span className="text-gray-500 text-xs">
+                        {row.number_of_hours} hrs
+                    </span>
+                )}
             </div>
 
             {/* Ellipsis menu */}

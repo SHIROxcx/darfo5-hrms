@@ -15,8 +15,8 @@ class EligibilitySeeder extends Seeder
         $items = [
 
             // Civil Service Commission (CSC)
-            ['title' => 'Civil Service Professional',                                       'abbreviation' => 'CSP'],
-            ['title' => 'Civil Service Sub-Professional',                                   'abbreviation' => 'CSSP'],
+            ['title' => 'Career Service Professional',                                       'abbreviation' => 'CSP'],
+            ['title' => 'Career Service Sub-Professional',                                   'abbreviation' => 'CSSP'],
             ['title' => 'Career Service Executive Eligibility',                             'abbreviation' => 'CSEE'],
             ['title' => 'Career Service Executive Eligibility – Executive Leadership Program', 'abbreviation' => 'CSEE-ELP'],
             ['title' => 'Second Level Eligibility (R.A. 1080)',                             'abbreviation' => 'RA1080'],
@@ -152,9 +152,12 @@ class EligibilitySeeder extends Seeder
             'updated_at' => $now,
         ]), $items);
 
-        // Insert in chunks to avoid query length limits
         foreach (array_chunk($rows, 50) as $chunk) {
-            DB::table('eligibilities')->insertOrIgnore($chunk);
+            DB::table('eligibilities')->upsert(
+                $chunk,
+                ['abbreviation'],       
+                ['title', 'updated_at']
+            );
         }
     }
 }

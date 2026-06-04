@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, Briefcase, AlertCircle, Award, BriefcaseBusiness, ExternalLink } from 'lucide-react';
+import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, AlertCircle, BriefcaseBusiness, ExternalLink } from 'lucide-react';
 import type { User, PdsData, PdsWorkExperience } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
@@ -21,11 +21,22 @@ interface RowFile {
     preview:  string | null;
 }
 
+// Extended work experience with new fields
+interface WorkExperienceEntry extends PdsWorkExperience {
+    office?:            string;
+    supervisor?:        string;
+    location?:          string;
+    attachment?:        string;
+    accomplishments?:   string;
+    actual_duties?:     string;
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const EMPTY: PdsWorkExperience = {
-    date_from: '', date_to: '', is_present: false, position_title: '', department: '',
-    status_of_appointment: '', is_government_service: false,
+const EMPTY: WorkExperienceEntry = {
+    date_from: '', date_to: '', is_present: false, position_title: '', office: '', department: '',
+    supervisor: '', location: '', status_of_appointment: '', is_government_service: false,
+    accomplishments: '', actual_duties: '',
 };
 
 const ACCEPTED  = '.jpg,.jpeg,.png,.pdf';
@@ -36,21 +47,29 @@ const isPdf   = (name: string) => /\.pdf$/i.test(name);
 
 const APPOINTMENT_STATUSES = [
     'Permanent', 'Temporary', 'Casual', 'Coterminous',
-    'Contractual', 'Substitute', 'Job Order', 'Contract of Service',
+    'Contractual', 'Substitute', 'Job Order', 'Contract of Service', 'Pakyaw'
 ];
+
+const BULLET  = '• ';
+const BULLET_LEN = BULLET.length;
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-type RowErrors = Partial<Record<keyof PdsWorkExperience | 'attachment_file', string>>;
+type RowErrors = Partial<Record<keyof WorkExperienceEntry | 'attachment_file', string>>;
 
-function validateRow(row: PdsWorkExperience, rowFile: RowFile): RowErrors {
+function validateRow(row: WorkExperienceEntry, rowFile: RowFile): RowErrors {
     const errs: RowErrors = {};
-    if (!row.position_title?.trim())       errs.position_title = 'Required.';
-    if (!row.department?.trim())           errs.department = 'Required.';
-    if (!row.date_from?.trim())            errs.date_from = 'Required.';
-    if (!row.is_present && !row.date_to?.trim()) errs.date_to = 'Required, or check Present.';
-    if (!row.status_of_appointment?.trim()) errs.status_of_appointment = 'Required.';
-    if (!rowFile?.file && !rowFile?.existing) errs.attachment_file = 'Please attach a supporting document.';
+    if (!row.position_title?.trim())                errs.position_title = 'Required.';
+    if (!row.office?.trim())                        errs.office = 'Required.';
+    if (!row.department?.trim())                    errs.department = 'Required.';
+    if (!row.supervisor?.trim())                    errs.supervisor = 'Required.';
+    if (!row.location?.trim())                      errs.location = 'Required.';
+    if (!row.accomplishments?.trim())               errs.accomplishments = 'Required.';
+    if (!row.actual_duties?.trim())                 errs.actual_duties = 'Required.';
+    if (!row.date_from?.trim())                     errs.date_from = 'Required.';
+    if (!row.is_present && !row.date_to?.trim())    errs.date_to = 'Required, or check Present.';
+    if (!row.status_of_appointment?.trim())         errs.status_of_appointment = 'Required.';
+    if (!rowFile?.file && !rowFile?.existing)       errs.attachment_file = 'Please attach a supporting document.';
     return errs;
 }
 
@@ -59,17 +78,22 @@ function validateRow(row: PdsWorkExperience, rowFile: RowFile): RowErrors {
 const formatDate = (val?: string | null) =>
     val ? new Date(val).toLocaleDateString('en-PH', { year: 'numeric', month: 'short' }) : null;
 
-const buildFormData = (rows: PdsWorkExperience[], files: RowFile[]) => {
+const buildFormData = (rows: WorkExperienceEntry[], files: RowFile[]) => {
     const fd = new FormData();
     rows.forEach((row, i) => {
         fd.append(`work_experience[${i}][date_from]`,             row.date_from             ?? '');
         fd.append(`work_experience[${i}][date_to]`,               row.date_to               ?? '');
-        fd.append(`work_experience[${i}][is_present]`,            row.is_present ? '1' : '0');
+        fd.append(`work_experience[${i}][is_present]`,            row.is_present            ?  '1' : '0');
         fd.append(`work_experience[${i}][position_title]`,        row.position_title        ?? '');
+        fd.append(`work_experience[${i}][office]`,                row.office                ?? '');
         fd.append(`work_experience[${i}][department]`,            row.department            ?? '');
-        fd.append(`work_experience[${i}][salary_grade]`,          (row as PdsWorkExperience & { salary_grade?: string }).salary_grade ?? '');
+        fd.append(`work_experience[${i}][supervisor]`,            row.supervisor            ?? '');
+        fd.append(`work_experience[${i}][location]`,              row.location              ?? '');
+        fd.append(`work_experience[${i}][salary_grade]`,          (row as any).salary_grade ?? '');
         fd.append(`work_experience[${i}][status_of_appointment]`, row.status_of_appointment ?? '');
         fd.append(`work_experience[${i}][is_government_service]`, row.is_government_service ? '1' : '0');
+        fd.append(`work_experience[${i}][accomplishments]`,       row.accomplishments       ?? '');
+        fd.append(`work_experience[${i}][actual_duties]`,         row.actual_duties         ?? '');
         const rf = files[i];
         if (rf?.file)          fd.append(`attachments[${i}]`,          rf.file);
         else if (rf?.existing) fd.append(`existing_attachments[${i}]`, rf.existing);
@@ -265,19 +289,179 @@ function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }:
     );
 }
 
+// ── Bullet Textarea ─────────────────────────────────────────────────────────────────
+
+interface BulletTextareaProps {
+    /** Clean value (no bullets) — matches what you store in draft state */
+    value:       string;
+    onChange:    (clean: string) => void;
+    rows?:       number;
+    placeholder?: string;
+    className?:  string;
+    disabled?:   boolean;
+}
+
+/** Add a bullet to every non-empty line, preserve empty lines as-is */
+function addBullets(raw: string): string {
+    return raw
+        .split('\n')
+        .map(line => (line.length > 0 && !line.startsWith(BULLET) ? BULLET + line : line))
+        .join('\n');
+}
+ 
+/** Strip bullets from every line to get the clean stored value */
+function stripBullets(bulleted: string): string {
+    return bulleted
+        .split('\n')
+        .map(line => (line.startsWith(BULLET) ? line.slice(BULLET_LEN) : line))
+        .join('\n');
+}
+
+ 
+function BulletTextarea({
+    value,
+    onChange,
+    rows = 4,
+    placeholder,
+    className = '',
+    disabled  = false,
+}: BulletTextareaProps) {
+    const ref = useRef<HTMLTextAreaElement>(null);
+ 
+    // Convert clean value into bulleted display value
+    const displayValue = addBullets(value);
+ 
+    // Keep cursor position stable after React re-render
+    const cursorRef = useRef<number | null>(null);
+ 
+    useEffect(() => {
+        const el = ref.current;
+        if (el && cursorRef.current !== null) {
+            el.selectionStart = cursorRef.current;
+            el.selectionEnd   = cursorRef.current;
+            cursorRef.current = null;
+        }
+    });
+ 
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const raw = e.target.value;
+        const pos = e.target.selectionStart ?? 0;
+ 
+        // Split into lines at cursor position
+        const lines = raw.split('\n');
+        const bulleted = lines.map(line => {
+            if (line === '') return '';
+            if (line.startsWith(BULLET)) return line;
+            return BULLET + line;
+        }).join('\n');
+ 
+        // Adjust cursor: if we just added a bullet on this line, push cursor right
+        const beforeCursor = raw.slice(0, pos);
+        const linesBefore  = beforeCursor.split('\n');
+        const currentLine  = linesBefore[linesBefore.length - 1];
+ 
+        let newPos = pos;
+        if (currentLine.length > 0 && !currentLine.startsWith(BULLET)) {
+            newPos = pos + BULLET_LEN;
+        }
+ 
+        cursorRef.current = newPos;
+        onChange(stripBullets(bulleted));
+    }, [onChange]);
+ 
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const el = ref.current;
+        if (!el) return;
+ 
+        // Enter: insert newline + bullet
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const start = el.selectionStart;
+            const end   = el.selectionEnd;
+            const val   = el.value;
+ 
+            const newVal = val.slice(0, start) + '\n' + BULLET + val.slice(end);
+            const newPos = start + 1 + BULLET_LEN;
+ 
+            cursorRef.current = newPos;
+            onChange(stripBullets(newVal));
+            return;
+        }
+ 
+        // Backspace on an empty bulleted line: delete the bullet too
+        if (e.key === 'Backspace') {
+            const start = el.selectionStart;
+            const end   = el.selectionEnd;
+            if (start !== end) return; // has selection — let browser handle
+ 
+            const val  = el.value;
+            const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+            const lineContent = val.slice(lineStart, start);
+ 
+            // If caret is right after the bullet prefix on an otherwise empty line
+            if (lineContent === BULLET) {
+                e.preventDefault();
+                const newVal = val.slice(0, lineStart - 1) + val.slice(start); // remove \n + bullet
+                const newPos = lineStart - 1;
+                cursorRef.current = newPos;
+                onChange(stripBullets(newVal));
+            }
+        }
+    }, [onChange]);
+ 
+    // Paste: strip any existing bullets from pasted text so we don't double-bullet
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        e.preventDefault();
+        const el = ref.current;
+        if (!el) return;
+ 
+        const pasted = e.clipboardData.getData('text');
+        const clean  = pasted
+            .split('\n')
+            .map(l => l.replace(/^[•\-\*]\s?/, '').trim())
+            .join('\n');
+ 
+        const start  = el.selectionStart;
+        const end    = el.selectionEnd;
+        const before = el.value.slice(0, start);
+        const after  = el.value.slice(end);
+ 
+        const newVal = before + clean + after;
+        const newPos = start + clean.length;
+ 
+        cursorRef.current = newPos;
+        onChange(stripBullets(addBullets(newVal)));
+    }, [onChange]);
+ 
+    return (
+        <textarea
+            ref={ref}
+            rows={rows}
+            value={displayValue}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            disabled={disabled}
+            placeholder={placeholder ? `${BULLET}${placeholder}` : BULLET}
+            className={className}
+            spellCheck
+        />
+    );
+}
+
 // ── Work Experience Modal ─────────────────────────────────────────────────────
 
 interface ModalProps {
     open: boolean;
     onClose: () => void;
     title: string;
-    draft: PdsWorkExperience;
+    draft: WorkExperienceEntry;
     draftFile: RowFile;
     errors: RowErrors;
     submitted: boolean;
     positions: PositionOption[];
     loadingPos: boolean;
-    onFieldChange: (k: keyof PdsWorkExperience, v: string | boolean) => void;
+    onFieldChange: (k: keyof WorkExperienceEntry, v: string | boolean) => void;
     onPositionChange: (title: string, sg?: string) => void;
     onFileChange: (rf: RowFile) => void;
     onSubmit: () => void;
@@ -298,10 +482,13 @@ function WorkExperienceModal({
 
     if (!open) return null;
 
-    const base = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors";
+    const base = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors resize-none";
     const ok   = `${base} border-gray-200 focus:ring-green-500`;
     const err  = `${base} border-red-400 focus:ring-red-400 bg-red-50`;
-    const ic   = (k: keyof PdsWorkExperience) => errors[k] ? err : ok;
+    const ic   = (k: keyof WorkExperienceEntry) => errors[k] ? err : ok;
+
+    const taBase = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors resize-none";
+    const taOk   = `${taBase} border-gray-200 focus:ring-green-500`;
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -322,7 +509,7 @@ function WorkExperienceModal({
 
                     {/* Position Title */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Position Title <span className="text-red-500">*</span>
                         </label>
                         <PositionInput
@@ -337,7 +524,7 @@ function WorkExperienceModal({
 
                     {/* Department */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Department / Agency / Company <span className="text-red-500">*</span>
                         </label>
                         <input type="text" value={draft.department ?? ''} className={ic('department')}
@@ -346,10 +533,21 @@ function WorkExperienceModal({
                         {errors.department && <p className="mt-1 text-xs text-red-500">{errors.department}</p>}
                     </div>
 
+                    {/* Office */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                            Office / Section / Unit <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text" value={draft.office ?? ''} className={ic('office')}
+                            placeholder="Office or Unit"
+                            onChange={e => onFieldChange('office', e.target.value)} />
+                        {errors.office && <p className="mt-1 text-xs text-red-500">{errors.office}</p>}
+                    </div>
+
                     {/* Date From & Date To */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                                 Date From <span className="text-red-500">*</span>
                             </label>
                             <input type="date" value={draft.date_from ?? ''} className={ic('date_from')}
@@ -357,7 +555,7 @@ function WorkExperienceModal({
                             {errors.date_from && <p className="mt-1 text-xs text-red-500">{errors.date_from}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                                 Date To <span className="text-red-500">*</span>
                             </label>
                             <input type="date" value={draft.date_to ?? ''} className={ic('date_to')}
@@ -367,36 +565,106 @@ function WorkExperienceModal({
                                 <input type="checkbox" checked={!!draft.is_present}
                                     onChange={e => onFieldChange('is_present', e.target.checked)}
                                     className="accent-green-600" />
-                                Present / Ongoing
+                                Present
                             </label>
                             {errors.date_to && <p className="mt-1 text-xs text-red-500">{errors.date_to}</p>}
                         </div>
                     </div>
 
                     {/* Status of Appointment */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                            Status of Appointment <span className="text-red-500">*</span>
-                        </label>
-                        <select value={draft.status_of_appointment ?? ''} className={ic('status_of_appointment')}
-                            onChange={e => onFieldChange('status_of_appointment', e.target.value)}>
-                            <option value="">Select status</option>
-                            {APPOINTMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        {errors.status_of_appointment && <p className="mt-1 text-xs text-red-500">{errors.status_of_appointment}</p>}
+                    <div className='flex items-center gap-4'>
+                        <div className='grow'>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Status of Appointment <span className="text-red-500">*</span>
+                            </label>
+                            <select value={draft.status_of_appointment ?? ''} className={ic('status_of_appointment')}
+                                onChange={e => onFieldChange('status_of_appointment', e.target.value)}>
+                                <option value="">Select status</option>
+                                {APPOINTMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            {errors.status_of_appointment && <p className="mt-1 text-xs text-red-500">{errors.status_of_appointment}</p>}
+                        </div>
+                        <div className='mt-3'>
+                            {/* Government Service */}
+                            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" checked={!!draft.is_government_service}
+                                    onChange={e => onFieldChange('is_government_service', e.target.checked)}
+                                    className="accent-green-600 w-4 h-4" />
+                                <span className="text-sm text-gray-700">Government Service</span>
+                            </label>
+                        </div>
                     </div>
 
-                    {/* Government Service */}
-                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                        <input type="checkbox" checked={!!draft.is_government_service}
-                            onChange={e => onFieldChange('is_government_service', e.target.checked)}
-                            className="accent-green-600 w-4 h-4" />
-                        <span className="text-sm text-gray-700">Government Service</span>
-                    </label>
+                    {/* ── Work Experience Sheet ── */}
+                    <div className="border-t border-dashed border-gray-200 pt-4 space-y-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Work Experience Sheet Details</p>
+
+                        {/* Supervisor */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Immediate Supervisor <span className="text-red-500">*</span>
+                            </label>
+                            <input type="text" value={draft.supervisor ?? ''} className={ic('supervisor')}
+                                placeholder="Write full name"
+                                onChange={e => onFieldChange('supervisor', e.target.value)} />
+                            {errors.supervisor && <p className="mt-1 text-xs text-red-500">{errors.supervisor}</p>}
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Location of Agency <span className="text-red-500">*</span>
+                            </label>
+                            <input type="text" value={draft.location ?? ''} className={ic('location')}
+                                placeholder="e.g. Pili, Camarines Sur"
+                                onChange={e => onFieldChange('location', e.target.value)} />
+                            {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location}</p>}
+                        </div>
+
+                        {/* Accomplishments */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                List of Accomplishments and Contributions <span className="text-red-500">*</span>
+                            </label>
+                            <BulletTextarea
+                                rows={4}
+                                value={draft.accomplishments ?? ''}
+                                onChange={val => onFieldChange('accomplishments', val)}
+                                placeholder="Developed recruitment plan"
+                                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors resize-none ${
+                                    errors.accomplishments
+                                        ? 'border-red-400 focus:ring-red-400 bg-red-50'
+                                        : 'border-gray-200 focus:ring-green-500'
+                                }`}
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">Each line will appear as a bullet point in the Work Experience Sheet.</p>
+                            {errors.accomplishments && <p className="mt-1 text-xs text-red-500">{errors.accomplishments}</p>}
+                        </div>
+
+                        {/* Actual Duties */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Summary of Actual Duties <span className="text-red-500">*</span>
+                            </label>
+                            <BulletTextarea
+                                rows={4}
+                                value={draft.actual_duties ?? ''}
+                                onChange={val => onFieldChange('actual_duties', val)}
+                                placeholder="Responsible for management of recruitment and selection process"
+                                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors resize-none ${
+                                    errors.actual_duties
+                                        ? 'border-red-400 focus:ring-red-400 bg-red-50'
+                                        : 'border-gray-200 focus:ring-green-500'
+                                }`}
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">Each line will appear as a bullet point in the Work Experience Sheet.</p>
+                            {errors.actual_duties && <p className="mt-1 text-xs text-red-500">{errors.actual_duties}</p>}
+                        </div>
+                    </div>
 
                     {/* Attachment */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Attachment <span className="text-red-500">*</span>
                         </label>
                         <AttachmentField
@@ -427,7 +695,7 @@ function WorkExperienceModal({
 // ── Work Experience Card ──────────────────────────────────────────────────────
 
 interface CardProps {
-    row: PdsWorkExperience & { attachment?: string };
+    row: WorkExperienceEntry;
     rowFile: RowFile;
     onEdit: () => void;
     onDelete: () => void;
@@ -447,8 +715,6 @@ function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/st
             ? rowFile.existing!.split('/').pop() ?? 'Attachment'
             : null;
     const viewUrl = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
-    const fileIsPdf   = label ? isPdf(label) : false;
-    const fileIsImage = label ? isImage(label) : false;
 
     const dateRange = row.is_present
         ? `${formatDate(row.date_from)} – Present`
@@ -470,40 +736,25 @@ function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/st
                 <BriefcaseBusiness className="h-5 w-5" />
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-800 leading-snug">
                     {row.position_title || <span className="text-gray-400 italic">No position title</span>}
                 </p>
                 <p className="text-xs text-gray-600 mt-0.5 truncate">{row.department}</p>
-                <p className="text-xs text-gray-600 mt-0.5 truncate">
-                    {row.status_of_appointment && (
-                        <span className="text-gray-500">
-                            {row.status_of_appointment}
-                        </span>
-                    )}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5 truncate">
-                    {(row.date_from || row.is_present) && <span>{dateRange}</span>}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5 truncate">
-                    {row.is_government_service && (
-                        <span className="text-green-600 font-medium">Government Service</span>
-                    )}
-                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{row.status_of_appointment}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{(row.date_from || row.is_present) && dateRange}</p>
+                {row.is_government_service && (
+                    <p className="text-xs text-green-600 font-medium mt-0.5">Government Service</p>
+                )}
 
                 {label && viewUrl && (
-                    <a
-                        href={viewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <a href={viewUrl} target="_blank" rel="noopener noreferrer"
                         className="mt-2 inline-flex items-center gap-1.5 text-xs text-green-700 font-medium border border-green-200 hover:bg-green-50 hover:border-green-300 px-2.5 py-1 rounded-lg transition-colors">
                         Show Credentials <ExternalLink className='w-3 h-3' />
                     </a>
                 )}
             </div>
 
-            {/* Ellipsis menu */}
             <div className="relative shrink-0">
                 <button ref={btnRef} type="button" onClick={() => setMenuOpen(prev => !prev)}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -538,13 +789,13 @@ function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/st
 type ModalMode = { type: 'add' } | { type: 'edit'; index: number };
 
 export default function WorkExperienceSection({ pdsData, onSave, saving }: Props) {
-    const initialRows = pdsData.work_experience?.length ? pdsData.work_experience : [];
+    const initialRows = (pdsData.work_experience?.length ? pdsData.work_experience : []) as WorkExperienceEntry[];
 
-    const [rows,     setRows]     = useState<PdsWorkExperience[]>(initialRows);
+    const [rows,     setRows]     = useState<WorkExperienceEntry[]>(initialRows);
     const [rowFiles, setRowFiles] = useState<RowFile[]>(
         initialRows.map(row => ({
             file:     null,
-            existing: (row as PdsWorkExperience & { attachment?: string }).attachment ?? null,
+            existing: row.attachment ?? null,
             preview:  null,
         }))
     );
@@ -559,16 +810,15 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
             .catch(() => setLoadingPos(false));
     }, []);
 
-    // Sync from server
     const workKey = JSON.stringify(
-        (pdsData.work_experience ?? []).map((e: PdsWorkExperience & { id?: number; attachment?: string }) => ({ id: e.id, attachment: e.attachment }))
+        (pdsData.work_experience ?? []).map((e: any) => ({ id: e.id, attachment: e.attachment }))
     );
     const isMounted = useRef(false);
     useEffect(() => {
         if (!isMounted.current) { isMounted.current = true; return; }
-        const fresh = pdsData.work_experience?.length ? pdsData.work_experience : [];
+        const fresh = (pdsData.work_experience?.length ? pdsData.work_experience : []) as WorkExperienceEntry[];
         setRows(fresh);
-        setRowFiles(prev => fresh.map((row: PdsWorkExperience & { attachment?: string }, i: number) => {
+        setRowFiles(prev => fresh.map((row, i) => {
             if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview!);
             return { file: null, existing: row.attachment ?? null, preview: null };
         }));
@@ -580,10 +830,8 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── Modal state ───────────────────────────────────────────────────────────
-
     const [modal,       setModal]       = useState<ModalMode | null>(null);
-    const [draft,       setDraft]       = useState<PdsWorkExperience>({ ...EMPTY });
+    const [draft,       setDraft]       = useState<WorkExperienceEntry>({ ...EMPTY });
     const [draftFile,   setDraftFile]   = useState<RowFile>({ file: null, existing: null, preview: null });
     const [draftErrors, setDraftErrors] = useState<RowErrors>({});
     const [submitted,   setSubmitted]   = useState(false);
@@ -606,7 +854,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
 
     const closeModal = () => { setModal(null); setDraftErrors({}); setSubmitted(false); };
 
-    const handleFieldChange = (k: keyof PdsWorkExperience, v: string | boolean) => {
+    const handleFieldChange = (k: keyof WorkExperienceEntry, v: string | boolean) => {
         setDraft(prev => ({ ...prev, [k]: v }));
         if (submitted) setDraftErrors(prev => ({ ...prev, [k]: undefined }));
     };
@@ -627,7 +875,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
         const errs = validateRow(draft, draftFile);
         if (Object.keys(errs).length > 0) { setDraftErrors(errs); return; }
 
-        let nextRows: PdsWorkExperience[];
+        let nextRows: WorkExperienceEntry[];
         let nextFiles: RowFile[];
 
         if (modal?.type === 'add') {
@@ -649,7 +897,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
 
     const handleDelete = async (index: number) => {
         const label = rows[index]?.position_title?.trim() || 'this work experience';
-
         const result = await Swal.fire({
             title: 'Delete Work Experience?',
             html: `<span class="text-sm text-gray-600">This will permanently remove <strong>${label}</strong> from your record.</span>`,
@@ -668,7 +915,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                 cancelButton: '!rounded-lg !text-sm !font-medium !px-4 !py-2',
             },
         });
-
         if (!result.isConfirmed) return;
 
         if (rowFiles[index]?.preview) URL.revokeObjectURL(rowFiles[index].preview!);
@@ -681,7 +927,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
 
     return (
         <div className="space-y-1">
-            {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div>
                     <h2 className="text-base font-semibold text-green-800 uppercase">V. Work Experience</h2>
@@ -697,7 +942,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                 </button>
             </div>
 
-            {/* List */}
             {rows.length === 0 ? (
                 <div onClick={openAdd}
                     className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-green-300 hover:text-green-500 hover:bg-green-50/50 transition-colors cursor-pointer">
@@ -710,7 +954,7 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                     {rows.map((row, i) => (
                         <WorkExperienceCard
                             key={i}
-                            row={row as PdsWorkExperience & { attachment?: string }}
+                            row={row}
                             rowFile={rowFiles[i] ?? { file: null, existing: null, preview: null }}
                             onEdit={() => openEdit(i)}
                             onDelete={() => handleDelete(i)}
@@ -719,7 +963,6 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
                 </div>
             )}
 
-            {/* Modal */}
             <WorkExperienceModal
                 open={modal !== null}
                 onClose={closeModal}

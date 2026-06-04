@@ -95,8 +95,10 @@ export interface PdsWorkExperience {
     date_to?: string;
     is_present?: boolean;
     position_title?: string;
+    office?: string;
     department?: string;
-    monthly_salary?: number | string;
+    supervisor?: string;
+    location?: string;
     salary_grade?: string;
     status_of_appointment?: string;
     is_government_service?: boolean;

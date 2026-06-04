@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
@@ -10,8 +12,7 @@ use App\Http\Controllers\PdsController;
 use App\Http\Controllers\PdsPdfController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
-use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
-use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\WesController;
 use App\Models\Division;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -129,6 +130,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // PDF Download
     Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');
+
+    // PDS Work Experience Sheet Section
+    Route::get('/pds/wes/preview/{userId?}',  [WesController::class, 'preview'])->name('pds.wes.preview');
+    Route::get('/pds/wes/download/{userId?}', [WesController::class, 'download'])->name('pds.wes.download');
 
     // Location Routes
     Route::prefix('api/locations')->group(function () {

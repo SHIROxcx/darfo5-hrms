@@ -535,11 +535,14 @@ function EligibilityCard({ row, rowFile, onEdit, onDelete, storageBase = '/stora
                 </p>
 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
-                    {row.license_number && (
-                        <span>License No.: <span className="text-gray-700 font-medium">{row.license_number}</span></span>
-                    )}
                     {row.rating && (
                         <span>Rating: <span className="text-gray-700 font-medium">{row.rating}</span></span>
+                    )}
+                </div>
+
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                    {row.license_number && (
+                        <span>License No.: <span className="text-gray-700 font-medium">{row.license_number}</span></span>
                     )}
                 </div>
 
@@ -587,7 +590,7 @@ function EligibilityCard({ row, rowFile, onEdit, onDelete, storageBase = '/stora
                 {menuOpen && (
                     <div
                         ref={menuRef}
-                        className="absolute right-0 top-5 mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-20">
+                        className="absolute right-0 top-6 mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-20">
                         <button
                             type="button"
                             onClick={() => { setMenuOpen(false); onEdit(); }}

@@ -127,11 +127,15 @@ return new class extends Migration {
             $table->boolean('is_present')->default(false);
             $table->string('position_title')->nullable();
             $table->string('department')->nullable();
-            $table->decimal('monthly_salary', 10, 2)->nullable();
+            $table->string('office')->nullable();
+            $table->string('supervisor')->nullable();
+            $table->string('location')->nullable();
             $table->string('salary_grade')->nullable();
             $table->string('status_of_appointment')->nullable();
             $table->boolean('is_government_service')->default(false);
             $table->string('attachment')->nullable();
+            $table->text('accomplishments')->nullable();
+            $table->text('actual_duties')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
