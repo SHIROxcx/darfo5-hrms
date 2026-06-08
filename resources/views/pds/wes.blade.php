@@ -134,7 +134,7 @@
     );
     if (ltrim($fullName, ', ') === '') $fullName = strtoupper($user->name ?? 'N/A');
 
-    $today = now()->format('d F Y');
+    $date_accomplished = $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('d F Y') : now()->format('d F Y');
 
     function wesDate(?string $val): string {
         if (!$val) return '';
@@ -245,11 +245,21 @@
     {{-- Signature block --}}
     <div class="sig-block">
         <div class="sig-line">
-            <div class="sig-name">{{ $fullName }}</div>
+            <div class="sig-name">
+                {{-- Signature image --}}
+                @if(!empty($govId?->signature))
+                <div class="absolute left-50% z-50 flex items-center justify-center p-1 min-h-12 mb-1">
+                    <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-12">
+                </div>
+                @else
+                <div class="min-h-12 mb-1"></div>
+                @endif
+                <p class="relative">{{ $fullName }}</p>
+            </div>
             <div class="sig-label">(Signature over Printed Name</div>
             <div class="sig-label">of Employee/Applicant)</div>
             <div class="date-line">
-                Date: <span class="date-value">{{ $today }}</span>
+                Date: <span class="date-value">{{ $date_accomplished }}</span>
             </div>
         </div>
     </div>

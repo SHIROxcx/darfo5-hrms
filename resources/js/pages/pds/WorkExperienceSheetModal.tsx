@@ -104,7 +104,7 @@ function SelectionCard({
     );
 }
 
-// ── Stage 1: Entry Selection Screen ──────────────────────────────────────────
+// ── Entry Selection Screen ──────────────────────────────────────────
 
 function SelectionScreen({
     entries,
@@ -205,7 +205,7 @@ function SelectionScreen({
     );
 }
 
-// ── Stage 2: Full-Screen PDF Viewer (mirrors PdfPreviewModal exactly) ─────────
+// ── Full-Screen PDF Viewer ─────────
 
 function WesFullScreenViewer({
     userId,
