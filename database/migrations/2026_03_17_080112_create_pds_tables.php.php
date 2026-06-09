@@ -150,6 +150,7 @@ return new class extends Migration {
             $table->date('date_to')->nullable();
             $table->integer('number_of_hours')->nullable();
             $table->string('position')->nullable();
+            $table->string('attachment')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });

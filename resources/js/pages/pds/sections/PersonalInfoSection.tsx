@@ -5,12 +5,14 @@ import { Spinner } from '@/components/ui/spinner';
 import SearchableSelect from '@/components/searchable-select';
 import type { SelectOption } from '@/components/searchable-select';
 import { usePhLocations } from '@/hooks/usePhLocations';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 interface Props {
     user: User;
     pdsData: PdsData;
     onSave: PdsSaveCallback;
     saving: boolean;
+    onDirtyChange?: (dirty: boolean) => void;
 }
 
 interface PersonalForm extends PdsPersonalInfo {
@@ -67,7 +69,7 @@ function validate(form: PersonalForm): FormErrors {
     return errors;
 }
 
-export default function PersonalInfoSection({ user, pdsData, onSave, saving }: Props) {
+export default function PersonalInfoSection({ user, pdsData, onSave, saving, onDirtyChange }: Props) {
     const profile = user.employee_profile;
 
     const res  = usePhLocations();
@@ -135,6 +137,12 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
 
     const [submitted, setSubmitted] = useState(false);
     const [errors, setErrors]       = useState<FormErrors>({});
+
+    const { isDirty, markDirty, markClean } = useUnsavedChanges();
+
+    useEffect(() => {
+        onDirtyChange?.(isDirty);
+    }, [isDirty]);
     
     // RESIDENTIAL
     useEffect(() => {
@@ -221,6 +229,9 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     };
 
     const set = (key: keyof PersonalForm, value: string) => {
+
+        markDirty(); // mark dirty for unsaved changes
+
         setForm(prev => {
             const next: PersonalForm = { ...prev, [key]: value };
             if (sameAsResidential && key in RES_TO_PERM) {
@@ -232,6 +243,9 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     };
 
     const handleCitizenshipChange = (value: string) => {
+
+        markDirty(); // mark dirty for unsaved changes
+
         if (value === 'Filipino') {
             setForm(prev => ({
                 ...prev,
@@ -247,6 +261,9 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     // Location select handlers
 
     const handleResProvince = (opt: SelectOption | null) => {
+
+        markDirty(); // mark dirty for unsaved changes
+
         res.setProvinceId(opt ? Number(opt.value) : null);
         setForm(prev => ({
             ...prev,
@@ -268,6 +285,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     };
 
     const handleResCity = (opt: SelectOption | null) => {
+        
         res.setCityId(opt ? Number(opt.value) : null);
         const zip = opt ? res.getZipCode(opt.value) : '';
         setForm(prev => ({
@@ -301,6 +319,9 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
     };
 
     const handlePermProvince = (opt: SelectOption | null) => {
+
+        markDirty(); // mark dirty for unsaved changes
+
         perm.setProvinceId(opt ? Number(opt.value) : null);
         setForm(prev => ({
             ...prev,
@@ -391,6 +412,8 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving }: P
             ...payload
         } = form;
         onSave('personal', payload as unknown as Record<string, unknown>);
+
+        markClean(); // changes saved
     };
 
     // Styles

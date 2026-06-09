@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, BookOpen, AlertCircle, ExternalLink } from 'lucide-react';
+import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, BookOpen, AlertCircle, ExternalLink, Bookmark, BookMarked } from 'lucide-react';
 import type { User, PdsData, PdsTraining } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
@@ -332,7 +332,7 @@ function TrainingCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage'
         <div className="flex items-stretch gap-3 p-4 transition-colors overflow-hidden">
             {/* Icon */}
             <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white">
-                <BookOpen className="h-5 w-5" />
+                <BookMarked className="h-5 w-5" />
             </div>
 
             {/* Content */}

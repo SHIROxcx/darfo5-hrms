@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import type { User, PdsData, PdsFamilyBackground, PdsChild, PdsSaveCallback } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 interface Props {
     user: User;
     pdsData: PdsData;
     onSave: PdsSaveCallback;
     saving: boolean;
+    onDirtyChange?: (dirty: boolean) => void;
 }
 
 type FamilyForm = PdsFamilyBackground;
@@ -56,7 +58,7 @@ function validate(form: FamilyForm, children: PdsChild[]): { formErrors: FormErr
     return { formErrors, childErrors };
 }
 
-export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Props) {
+export default function FamilyBackgroundSection({ pdsData, onSave, saving, onDirtyChange  }: Props) {
     const [form, setForm] = useState<FamilyForm>({
         spouse_surname:          pdsData.family?.spouse_surname          ?? '',
         spouse_first_name:       pdsData.family?.spouse_first_name       ?? '',
@@ -74,6 +76,9 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
         mother_first_name:       pdsData.family?.mother_first_name        ?? '',
         mother_middle_name:      pdsData.family?.mother_middle_name       ?? '',
     });
+
+    const { isDirty, markDirty, markClean } = useUnsavedChanges();
+    useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
 
     const [children, setChildren] = useState<PdsChild[]>(
         pdsData.children?.length
@@ -108,6 +113,9 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
     // Field setters
 
     const setField = (key: keyof FamilyForm, value: string) => {
+
+        markDirty(); // mark unsaved changes
+
         setForm(prev => ({ ...prev, [key]: value }));
         if (submitted) setErrors(prev => ({ ...prev, [key]: undefined }));
     };
@@ -121,6 +129,9 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
     };
 
     const setChild = (i: number, key: keyof PdsChild, value: string) => {
+
+        markDirty(); // mark unsaved changes
+
         setChildren(prev => prev.map((c, idx) => idx === i ? { ...c, [key]: value } : c));
         if (submitted) {
             setChildErrors(prev => {
@@ -163,6 +174,8 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving }: Pro
         setErrors({});
         setChildErrors([]);
         onSave('family', { ...form, children } as Record<string, unknown>);
+
+        markClean(); // changes saved
     };
 
     return (

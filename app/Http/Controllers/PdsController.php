@@ -393,15 +393,45 @@ class PdsController extends Controller
     private function saveVoluntaryWork(Request $request, int $userId)
     {
         $request->validate([
-            'voluntary_work' => 'nullable|array',
+            'voluntary_work'         => 'nullable|array',
+            'attachments'            => 'nullable|array',
+            'attachments.*'          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'existing_attachments'   => 'nullable|array',
+            'existing_attachments.*' => 'nullable|string',
         ]);
 
+        $oldPaths = PdsVoluntaryWork::where('user_id', $userId)
+            ->pluck('attachment')->filter()->values();
+
         PdsVoluntaryWork::where('user_id', $userId)->delete();
-        foreach ($request->voluntary_work as $i => $item) {
-            PdsVoluntaryWork::create(array_merge($item, [
-                'user_id' => $userId,
+
+        $allFiles    = $request->file('attachments') ?? [];
+        $allExisting = $request->input('existing_attachments') ?? [];
+        $keptPaths   = [];
+
+        foreach ($request->voluntary_work ?? [] as $i => $item) {
+            $attachmentPath = null;
+
+            if (!empty($allFiles[$i])) {
+                $attachmentPath = $allFiles[$i]->store("pds/{$userId}/voluntary_work", 'public');
+            } elseif (!empty($allExisting[$i])) {
+                $attachmentPath = $allExisting[$i];
+                $keptPaths[]    = $attachmentPath;
+            }
+
+            $rowData = collect($item)->except(['attachment'])->toArray();
+
+            PdsVoluntaryWork::create(array_merge($rowData, [
+                'user_id'    => $userId,
                 'sort_order' => $i,
+                'attachment' => $attachmentPath,
             ]));
+        }
+
+        foreach ($oldPaths as $oldPath) {
+            if (!in_array($oldPath, $keptPaths)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
         }
 
         return back()->with('success', 'Voluntary work saved.');

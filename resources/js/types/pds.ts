@@ -113,6 +113,7 @@ export interface PdsVoluntaryWork {
     date_to?: string;
     number_of_hours?: number | string;
     position?: string;
+    attachment?: string;
 }
 
 export interface PdsTraining {

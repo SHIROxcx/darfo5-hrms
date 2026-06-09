@@ -28,7 +28,7 @@ import OtherInfoSection from '@/pages/pds/sections/OtherInfoSection';
 import QuestionsSection from '@/pages/pds/sections/QuestionsSection';
 import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
 
-// NEW: Work Experience Sheet modal
+// Work Experience Sheet modal
 import WorkExperienceSheetModal from '@/pages/pds/WorkExperienceSheetModal';
 
 interface Props {
@@ -143,7 +143,52 @@ export default function PdsIndex({ user, pdsData }: Props) {
     const [activeSection, setActiveSection] = useState<SectionId>('personal');
     const [saving, setSaving]               = useState(false);
     const [showPreview, setShowPreview]     = useState(false);
-    const [showWes,     setShowWes]         = useState(false);   // ← NEW
+    const [showWes, setShowWes]             = useState(false);
+
+    // ── Unsaved-changes guard ────────────────────────────────────────────────
+    // Sections report their dirty state upward via the onDirtyChange prop.
+    const [isDirty, setIsDirty] = useState(false);
+
+    /**
+     * Attempts to navigate to a different section.
+     * If the current section has unsaved changes, shows a SweetAlert2 confirm
+     * dialog. Navigation is cancelled if the user picks "Stay & Save".
+     */
+    const tryNavigate = async (targetId: SectionId) => {
+        if (targetId === activeSection) return;
+
+        if (isDirty) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'Unsaved Changes',
+                html: `
+                    <p class="text-sm text-gray-600">
+                        You have unsaved changes in this section.<br/>
+                        Leaving now will discard them.
+                    </p>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Leave without saving',
+                cancelButtonText: 'Stay & save',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#16a34a',
+                reverseButtons: true,
+                focusCancel: true,           // default focus on the safe action
+                customClass: {
+                    popup:         '!rounded-2xl !shadow-xl',
+                    title:         '!text-base !font-semibold',
+                    confirmButton: '!text-sm !rounded-lg !px-4',
+                    cancelButton:  '!text-sm !rounded-lg !px-4',
+                },
+            });
+
+            if (!result.isConfirmed) return;  // user chose to stay
+        }
+
+        // Reset dirty state before switching — the incoming section starts clean.
+        setIsDirty(false);
+        setActiveSection(targetId);
+    };
 
     const completedCount = SECTIONS.filter(s => getSectionCompletion(s.id, pdsData)).length;
     const progressPct    = Math.round((completedCount / SECTIONS.length) * 100);
@@ -208,7 +253,14 @@ export default function PdsIndex({ user, pdsData }: Props) {
     };
 
     const renderSection = () => {
-        const props = { user, pdsData, onSave: handleSave, saving };
+        // onDirtyChange lets each section report whether it has unsaved changes.
+        const props = {
+            user,
+            pdsData,
+            onSave: handleSave,
+            saving,
+            onDirtyChange: setIsDirty,
+        };
         switch (activeSection) {
             case 'personal':        return <PersonalInfoSection {...props} />;
             case 'family':          return <FamilyBackgroundSection {...props} />;
@@ -234,7 +286,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
                 <PdfPreviewModal userId={user.id!} onClose={() => setShowPreview(false)} />
             )}
 
-            {/* NEW: Work Experience Sheet modal */}
             <WorkExperienceSheetModal
                 open={showWes}
                 onClose={() => setShowWes(false)}
@@ -265,9 +316,8 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </div>
 
-                        {/* ── Action buttons ── */}
+                        {/* Action buttons */}
                         <div className="flex items-center justify-end gap-2 mt-3 sm:mt-0">
-                            {/* Generate Work Experience Sheet — NEW */}
                             <button
                                 onClick={() => setShowWes(true)}
                                 title="Generate Work Experience Sheet"
@@ -278,7 +328,6 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 <span className="sm:hidden">WES</span>
                             </button>
 
-                            {/* Generate PDS — existing */}
                             <button
                                 onClick={() => setShowPreview(true)}
                                 title="Generate PDS"
@@ -290,21 +339,21 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     </div>
                 </div>
 
-                {/* ── Body ────────────────────────────────────────────────────── */}
+                {/* ── Body ── */}
                 <div className="flex flex-1 overflow-hidden">
 
-                    {/* ── Sidebar ─────────────────────────────────────────────── */}
+                    {/* ── Sidebar ── */}
                     <aside className="w-14 lg:w-68 shrink-0 bg-gray-50 border-r border-gray-200 overflow-y-auto">
                         <nav className="p-2 lg:p-3 space-y-0.5">
                             {SECTIONS.map((section) => {
-                                const Icon    = section.icon;
+                                const Icon     = section.icon;
                                 const isActive = activeSection === section.id;
                                 const isDone   = getSectionCompletion(section.id, pdsData);
 
                                 return (
                                     <button
                                         key={section.id}
-                                        onClick={() => setActiveSection(section.id)}
+                                        onClick={() => tryNavigate(section.id)}
                                         title={section.label}
                                         className={`
                                             relative w-full flex items-center
@@ -344,7 +393,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                         </div>
                     </aside>
 
-                    {/* ── Content ───────────────────────────────────────────── */}
+                    {/* ── Content ── */}
                     <div className="flex-1 flex flex-col overflow-hidden bg-white">
                         <main className="flex-1 overflow-y-auto">
                             <div className="max-w-full lg:max-w-8xl mx-auto p-4 md:p-6">
@@ -354,10 +403,10 @@ export default function PdsIndex({ user, pdsData }: Props) {
                             </div>
                         </main>
 
-                        {/* Footer nav */}
+                        {/* Footer nav — uses tryNavigate so the guard applies here too */}
                         <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-white">
                             <button
-                                onClick={() => currentSectionIdx > 0 && setActiveSection(SECTIONS[currentSectionIdx - 1].id)}
+                                onClick={() => currentSectionIdx > 0 && tryNavigate(SECTIONS[currentSectionIdx - 1].id)}
                                 disabled={currentSectionIdx === 0}
                                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
@@ -367,7 +416,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 Section {currentSectionIdx + 1} of {SECTIONS.length}
                             </span>
                             <button
-                                onClick={() => currentSectionIdx < SECTIONS.length - 1 && setActiveSection(SECTIONS[currentSectionIdx + 1].id)}
+                                onClick={() => currentSectionIdx < SECTIONS.length - 1 && tryNavigate(SECTIONS[currentSectionIdx + 1].id)}
                                 disabled={currentSectionIdx === SECTIONS.length - 1}
                                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >

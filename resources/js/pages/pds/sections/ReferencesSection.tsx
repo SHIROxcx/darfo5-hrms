@@ -2,8 +2,15 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Save, Plus, Trash2, Upload, X, Camera, PenLine, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
 import type { User, PdsData, PdsReference, PdsGovernmentId, PdsSaveCallback } from '@/types/pds';
 import { Spinner } from '@/components/ui/spinner';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
-interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
+interface Props { 
+    user: User; 
+    pdsData: PdsData; 
+    onSave: PdsSaveCallback; 
+    saving: boolean; 
+    onDirtyChange?: (dirty: boolean) => void;
+}
 
 const GOV_IDS = [
     'Passport', 'GSIS e-Card', 'SSS Card', 'PRC ID', "Driver's License",
@@ -505,7 +512,7 @@ function PassportPhotoUploadBox({
 
 // Main
 
-export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
+export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChange }: Props) {
     const [refs, setRefs] = useState<PdsReference[]>(
         pdsData.references?.length ? pdsData.references : [
             { name: '', address: '', telephone: '' },
@@ -535,6 +542,9 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
     const [refErrors,   setRefErrors]   = useState<RefErrors>([]);
     const [photoErrors, setPhotoErrors] = useState<PhotoErrors>({});
 
+    const { isDirty, markDirty, markClean } = useUnsavedChanges();
+    useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
+
     // Styles
     const inputClass      = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white";
     const errorInputClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white";
@@ -547,11 +557,17 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
 
     // Setters
     const setGov = (k: keyof PdsGovernmentId, v: string) => {
+
+        markDirty(); // mark unsaved changes
+
         setGovId(p => ({ ...p, [k]: v }));
         if (submitted) setGovErrors(p => ({ ...p, [k]: undefined }));
     };
 
     const setRef = (i: number, k: keyof PdsReference, v: string) => {
+
+        markDirty(); // mark unsaved changes
+
         setRefs(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
         if (submitted) setRefErrors(p => p.map((e, idx) => idx === i ? { ...e, [k]: undefined } : e));
     };
@@ -624,6 +640,9 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             await onSave('references', payload);
         } catch (e) {
         }
+
+        markClean(); // changes saved
+
     };
 
     return (
@@ -783,7 +802,7 @@ export default function ReferencesSection({ pdsData, onSave, saving }: Props) {
             </div>
 
             {/* Save */}
-            <div className="flex justify-end">
+            <div className="sticky bottom-0 bg-white pt-3 pb-1 -mx-1 px-1 flex justify-end">
                 <button type="submit" disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                     {saving

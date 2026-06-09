@@ -589,7 +589,7 @@ function WorkExperienceModal({
                             <label className="flex items-center gap-2.5 cursor-pointer select-none">
                                 <input type="checkbox" checked={!!draft.is_government_service}
                                     onChange={e => onFieldChange('is_government_service', e.target.checked)}
-                                    className="accent-green-600 w-4 h-4" />
+                                    className="accent-green-600 w-4 h-4 cursor-pointer" />
                                 <span className="text-sm text-gray-700">Government Service</span>
                             </label>
                         </div>
