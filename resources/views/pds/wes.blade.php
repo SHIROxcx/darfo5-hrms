@@ -29,7 +29,7 @@
     .page {
         width: 8.5in;
         min-height: 13in;
-        padding: 0.3in 0.15in 0.3in 0.15in;
+        padding: 0;
         background: #fff;
         position: relative;
     }
@@ -42,7 +42,7 @@
         border: 1.5px solid #000;
         border-top: none;
         padding: 6px 10px 8px 10px;
-        font-size: 9pt;
+        font-size: 11pt;
         line-height: 1.5;
     }
 
@@ -80,7 +80,8 @@
     }
 
     .sig-block {
-        margin-top: 36px;
+        margin-top: 60px;
+        margin-bottom: 60px;
         text-align: right;
         padding-right: 50px;
     }
@@ -121,7 +122,7 @@
         padding-bottom: 1px;
     }
 
-    @page { size: 8.5in 13in; margin: 0; }
+    @page { size: 8.5in 13in;  margin: 0.3in 0.15in; }
 </style>
 </head>
 <body>
@@ -155,25 +156,27 @@
     <div class="title border border-black bg-neutral-400 text-center text-lg italic font-bold text-white py-0.5">WORK EXPERIENCE SHEET</div>
 
     {{-- Instructions --}}
-    <!-- <div class="instruction-box">
+    <div class="instruction-box">
         <table class="w-full border-0 border-collapse">
             <tr>
-                <td class="w-23.75 align-top font-bold text-[9pt] border-0 p-0">
-                    <em>Instructions:</em>
+                <td class="w-23.75 align-top font-bold border-0 p-0 italic">
+                    <span>Instructions:</span>
                 </td>
-                <td class="align-top border-0 p-0">
-                    <p class="mb-1">
-                        <strong>1.</strong>&nbsp; Include only the work experiences relevant to the position being applied to.
+                <td class="align-top border-0 p-0 italic">
+                    <p class="mb-1 indent-5">
+                        1. Include only the work experiences relevant to the position being applied to.
                     </p>
-                    <p class="italic">
-                        <strong>2.</strong>&nbsp; The duration should include start and finish dates, if known, month in abbreviated
-                        form, if known, and year in full. For the current position, use the word
-                        Present, e.g., 1998-Present. Work experience should be listed from most recent first.
-                    </p>
+                    <div class="italic indent-5">
+                        <p>2. The duration should include start and finish dates, if known, month in abbreviated
+                        form, if known,</p> 
+                        <p class="ml-3">and year in full. For the current position, use the word
+                        Present, e.g., 1998-Present. Work experience</p> 
+                        <p class="ml-3">should be listed from most recent first.</p>
+                    </div>
                 </td>
             </tr>
         </table>
-    </div> -->
+    </div>
 
     {{-- Work Experience Entries --}}
     @foreach ($workExperiences as $index => $we)

@@ -375,7 +375,7 @@ function SignatureUploadBox({
                 <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="mt-1 w-full text-xs font-medium text-green-600 hover:text-green-700 text-center cursor-pointer"
+                    className="mt-1 w-full text-sm font-semibold text-green-600 hover:text-green-700 text-center cursor-pointer"
                 >
                     Change
                 </button>
@@ -499,7 +499,7 @@ function PassportPhotoUploadBox({
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}
-                        className="mt-1 w-full text-xs font-medium text-green-600 hover:text-green-700 text-center cursor-pointer"
+                        className="mt-1 w-full text-sm font-semibold text-green-600 hover:text-green-700 text-center cursor-pointer"
                     >
                         Change
                     </button>

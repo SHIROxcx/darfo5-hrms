@@ -183,7 +183,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
 
                     {/* Footer */}
                     <div className="text-xs text-black/40 text-center mt-8">
-                        © Department of Agriculture RFO 5 - {new Date().getFullYear()}
+                        © DARFO 5 - ICT UNIT {new Date().getFullYear()}
                     </div>
                 </div>
             </div>

@@ -173,7 +173,9 @@ export default function VerifyEmail() {
                 <source media="(min-width: 640px)"  srcSet="/images/tablet-wallpaper.png" />
                 <img src="/images/mobile-wallpaper.png" alt="" className="w-full h-full object-cover object-center" />
             </picture>
-            <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50 z-10" />
+
+            {/* ── Gradient Overlay ── */}
+            <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50 opacity-50" />
 
             {/* Card */}
             <div className="relative z-20 w-full max-w-md bg-white border border-gray-200 rounded-md p-8 sm:p-10 shadow-2xl">
@@ -271,7 +273,7 @@ export default function VerifyEmail() {
                 </p>
 
                 <div className="text-xs text-black/40 text-center mt-8">
-                    © Department of Agriculture RFO 5 — {new Date().getFullYear()}
+                    © DARFO 5 - ICT UNIT {new Date().getFullYear()}
                 </div>
             </div>
         </div>

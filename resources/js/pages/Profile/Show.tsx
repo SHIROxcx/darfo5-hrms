@@ -976,7 +976,7 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Company Information</h2>
-                                    {isOwn && <EditBtn onClick={() => setModal('company')} />}
+                                    {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('company')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[

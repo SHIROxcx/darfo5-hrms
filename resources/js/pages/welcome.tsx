@@ -60,8 +60,8 @@ export default function Welcome({
                 {/* ── Centered Logo ── */}
                 <main className="relative z-20 flex flex-1 flex-col items-center justify-center gap-6 text-center">
                     <div className='mt-60 sm:mt-96'>
-                        <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow-lg sm:text-4xl">
-                            DA RFO 5 — HRMS
+                        <h1 className="text-4xl font-bold tracking-widest text-white drop-shadow-lg sm:text-5xl md:text-7xl">
+                            HRMS
                         </h1>
                         <p className="mt-2 text-sm font-medium text-white/80">
                             Human Resource Management System
@@ -70,8 +70,8 @@ export default function Welcome({
                 </main>
 
                 {/* ── Footer ── */}
-                <footer className="relative z-20 py-4 text-center text-xs text-white/40">
-                    © Department of Agriculture {new Date().getFullYear()}
+                <footer className="relative z-20 py-4 text-center text-xs text-white/50">
+                    © DARFO 5 - ICT UNIT {new Date().getFullYear()}
                 </footer>
             </div>
         </>

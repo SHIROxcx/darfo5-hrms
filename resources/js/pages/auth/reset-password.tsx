@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle, Eye, EyeOff } from 'lucide-react';
+import { LoaderCircle, Eye, EyeOff, Check } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { update } from '@/routes/password';
@@ -9,9 +9,38 @@ type Props = {
     email: string;
 };
 
+const PASSWORD_CHECKS = [
+    { label: 'At least 8 characters',       test: (p: string) => p.length >= 8 },
+    { label: 'At least 1 uppercase letter',  test: (p: string) => /[A-Z]/.test(p) },
+    { label: 'At least 1 lowercase letter',  test: (p: string) => /[a-z]/.test(p) },
+    { label: 'At least 1 number',            test: (p: string) => /[0-9]/.test(p) },
+    { label: 'At least 1 special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
+
+function PasswordChecklist({ password }: { password: string }) {
+    if (!password) return null;
+    const checks = PASSWORD_CHECKS.map(c => ({ ...c, pass: c.test(password) }));
+    const allPassed = checks.every(c => c.pass);
+    return (
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-1.5">
+            {checks.map(({ label, pass }) => (
+                <div key={label} className={`flex items-center gap-2 text-xs transition-colors duration-200 ${pass ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className={`flex items-center justify-center w-4 h-4 rounded-full shrink-0 border transition-all duration-200
+                        ${pass ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
+                        {pass && <Check className="h-2.5 w-2.5" />}
+                    </span>
+                    {label}
+                </div>
+            ))}
+            {allPassed && <p className="text-xs font-semibold text-green-600 pt-0.5">✓ Strong password</p>}
+        </div>
+    );
+}
+
 export default function ResetPassword({ token, email }: Props) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [password, setPassword] = useState('');
 
     return (
         <div className="min-h-screen flex relative justify-center items-center px-4">
@@ -29,7 +58,7 @@ export default function ResetPassword({ token, email }: Props) {
             </picture>
 
             {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50 z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-orange-500/60 opacity-50 z-10" />
 
             {/* Card */}
             <div className="relative z-20 w-full max-w-md bg-white border border-gray-200 rounded-md p-8 sm:p-10 shadow-2xl text-black/80">
@@ -55,6 +84,7 @@ export default function ResetPassword({ token, email }: Props) {
                     {...update.form()}
                     transform={(data) => ({ ...data, token, email })}
                     resetOnSuccess={['password', 'password_confirmation']}
+                    onSuccess={() => setPassword('')}
                     className="space-y-5"
                 >
                     {({ processing, errors }) => (
@@ -89,11 +119,13 @@ export default function ResetPassword({ token, email }: Props) {
                                         autoComplete="new-password"
                                         autoFocus
                                         placeholder="Enter new password"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
                                         className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
+                                        onClick={() => setShowPassword(v => !v)}
                                         className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition"
                                         tabIndex={-1}
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -102,6 +134,7 @@ export default function ResetPassword({ token, email }: Props) {
                                     </button>
                                 </div>
                                 <InputError message={errors.password} />
+                                <PasswordChecklist password={password} />
                             </div>
 
                             {/* Confirm Password */}
@@ -120,7 +153,7 @@ export default function ResetPassword({ token, email }: Props) {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowConfirmPassword((v) => !v)}
+                                        onClick={() => setShowConfirmPassword(v => !v)}
                                         className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition"
                                         tabIndex={-1}
                                         aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
@@ -147,7 +180,7 @@ export default function ResetPassword({ token, email }: Props) {
 
                 {/* Footer */}
                 <div className="text-xs text-black/40 text-center mt-10">
-                    © Department of Agriculture RFO 5 - {new Date().getFullYear()}
+                    © DARFO 5 - ICT UNIT {new Date().getFullYear()}
                 </div>
             </div>
         </div>

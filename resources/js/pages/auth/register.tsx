@@ -90,7 +90,6 @@ function PasswordInput({ id, value, onChange, placeholder, error, label, require
 function getPasswordStrength(password: string): { level: 'low' | 'medium' | 'high'; color: string; bars: number } {
     let score = 0;
     if (password.length >= 8)  score++;
-    if (password.length >= 12) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[a-z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
@@ -287,15 +286,14 @@ export default function Register() {
         if (!data.employment_type) e.employment_type = 'Employment type is required.';
         if (!data.email)           e.email           = 'Email address is required.';
         if (!data.mobile_number)   e.mobile_number   = 'Mobile number is required.';
-        if (!data.password)        e.password        = 'Password is required.';
+        if (!data.password)
+            e.password = 'Password is required.';
         else if (data.password.length < 8)
             e.password = 'Password must be at least 8 characters.';
-        else if (getPasswordStrength(data.password).level === 'low')
-            e.password = 'Password is too weak. Add uppercase letters, numbers, or symbols.';
-        if (!data.password_confirmation)
-            e.password_confirmation = 'Please confirm your password.';
-        else if (data.password !== data.password_confirmation)
-            e.password_confirmation = 'Passwords do not match.';
+        else if (!/[A-Z]/.test(data.password))
+            e.password = 'Password must contain at least 1 uppercase letter.';
+        else if (!/[^A-Za-z0-9]/.test(data.password))
+            e.password = 'Password must contain at least 1 special character.';
         setFormErrors(e);
         if (Object.keys(e).length > 0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
         setPasswordMismatch('');
@@ -549,6 +547,7 @@ export default function Register() {
                                             <option value="" disabled>Select Employment</option>
                                             <option value="JO">Job Order</option>
                                             <option value="COS">Contract of Service</option>
+                                            <option value="Pakyaw">Pakyaw</option>
                                             <option value="Permanent">Permanent</option>
                                         </select>
                                     </Field>
@@ -580,24 +579,33 @@ export default function Register() {
                                         placeholder="Re-enter password"
                                         error={formErrors.password_confirmation || passwordMismatch || errors.password_confirmation} />
 
-                                    {/* Password strength */}
-                                    {data.password && (() => {
-                                        const s = getPasswordStrength(data.password);
-                                        return (
-                                            <div className="mt-2 space-y-1.5">
-                                                <div className="flex gap-1.5">
-                                                    {[1,2,3].map(bar => (
-                                                        <div key={bar} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${bar <= s.bars ? s.color : 'bg-gray-200'}`} />
-                                                    ))}
+                                 {/* Password checklist — full width, directly below the inputs */}
+                                {data.password && (() => {
+                                    const checks = [
+                                        { label: 'At least 8 characters',        pass: data.password.length >= 8 },
+                                        { label: 'At least 1 uppercase letter',  pass: /[A-Z]/.test(data.password) },
+                                        { label: 'At least 1 lowercase letter',  pass: /[a-z]/.test(data.password) },
+                                        { label: 'At least 1 number',            pass: /[0-9]/.test(data.password) },
+                                        { label: 'At least 1 special character', pass: /[^A-Za-z0-9]/.test(data.password) },
+                                    ];
+                                    const allPassed = checks.every(c => c.pass);
+                                    return (
+                                        <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-1.5">
+                                            {checks.map(({ label, pass }) => (
+                                                <div key={label} className={`flex items-center gap-2 text-xs transition-colors duration-200 ${pass ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <span className={`flex items-center justify-center w-4 h-4 rounded-full shrink-0 border transition-all duration-200
+                                                        ${pass ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
+                                                        {pass && <Check className="h-2.5 w-2.5" />}
+                                                    </span>
+                                                    {label}
                                                 </div>
-                                                <p className={`text-xs font-medium ${s.level === 'low' ? 'text-red-500' : s.level === 'medium' ? 'text-yellow-500' : 'text-green-600'}`}>
-                                                    {s.level === 'low'    && 'Weak — add uppercase, numbers, or symbols'}
-                                                    {s.level === 'medium' && 'Fair — getting better, try adding symbols'}
-                                                    {s.level === 'high'   && 'Strong password'}
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
+                                            ))}
+                                            {allPassed && (
+                                                <p className="text-xs font-semibold text-green-600 pt-0.5">✓ Strong password</p>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                                 </div>
                             </form>
                         </div>

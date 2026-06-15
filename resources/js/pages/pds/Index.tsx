@@ -115,7 +115,7 @@ function PdfPreviewModal({ userId, onClose }: { userId: number; onClose: () => v
                 {!loaded && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-800">
                         <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-gray-300 text-sm">Generating PDF preview…</p>
+                        <p className="text-gray-300 text-sm">Generating Personal Data Sheet</p>
                     </div>
                 )}
                 <iframe
@@ -151,7 +151,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
 
     /**
      * Attempts to navigate to a different section.
-     * If the current section has unsaved changes, shows a SweetAlert2 confirm
+     * If the current section has unsaved changes, shows a notification confirm
      * dialog. Navigation is cancelled if the user picks "Stay & Save".
      */
     const tryNavigate = async (targetId: SectionId) => {

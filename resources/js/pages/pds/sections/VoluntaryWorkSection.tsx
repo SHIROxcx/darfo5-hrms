@@ -158,7 +158,7 @@ function AttachmentField({ rowFile, onChange, storageBase = '/storage', error, o
                             : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50'
                     }`}>
                     <Paperclip className="w-4 h-4 shrink-0" />
-                    <span>Attach supporting document{optional ? <span className="text-xs text-gray-400 ml-1">(optional)</span> : ''}</span>
+                    <span>Attach supporting document{optional ? <span className="text-xs text-gray-400 ml-1 upper">(optional)</span> : ''}</span>
                 </button>
             )}
 
