@@ -8,6 +8,7 @@ import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 
 type Props = {
     status?: string;
@@ -16,6 +17,9 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword, canRegister }: Props) {
+    const { props } = usePage();
+    const sessionError = (props.flash as any)?.error;
+
     const { data, setData } = useForm({
         email: '',
         password: '',
@@ -23,6 +27,12 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
     });
 
     const [showPassword, setShowPassword] = useState(false);
+
+    {sessionError && (
+        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            {sessionError}
+        </div>
+    )}
 
     return (
         // Full-screen layout with background image

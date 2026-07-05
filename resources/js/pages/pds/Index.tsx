@@ -31,6 +31,8 @@ import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
 // Work Experience Sheet modal
 import WorkExperienceSheetModal from '@/pages/pds/WorkExperienceSheetModal';
 
+import { getSectionCompletion } from '@/lib/pds-completion';
+
 interface Props {
     user: User;
     pdsData: PdsData;
@@ -50,22 +52,6 @@ const SECTIONS = [
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
-
-function getSectionCompletion(sectionId: SectionId, pdsData: PdsData): boolean {
-    switch (sectionId) {
-        case 'personal':        return !!pdsData.personal?.date_of_birth;
-        case 'family':          return !!pdsData.family?.father_surname;
-        case 'education':       return isEducationComplete(pdsData.education);
-        case 'eligibility':     return (pdsData.eligibilities?.length ?? 0) > 0;
-        case 'work_experience': return (pdsData.work_experience?.length ?? 0) > 0;
-        case 'voluntary_work':  return (pdsData.voluntary_work?.length ?? 0) > 0;
-        case 'trainings':       return (pdsData.trainings?.length ?? 0) > 0;
-        case 'other_info':      return (pdsData.other_info?.special_skills?.length ?? 0) > 0;
-        case 'questions':       return pdsData.questions?.q34_a !== undefined && pdsData.questions?.q34_a !== null;
-        case 'references':      return (pdsData.references?.length ?? 0) > 0;
-        default:                return false;
-    }
-}
 
 // ── PDF Preview Modal ──────────────────────────────────────────────────────────
 

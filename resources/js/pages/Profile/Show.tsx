@@ -14,6 +14,9 @@ import type { BreadcrumbItem } from '@/types';
 import { Spinner } from '@/components/ui/spinner';
 import { Separator } from '@/components/ui/separator';
 
+import type { PdsData } from '@/types/pds';
+import { calculatePdsCompletion } from '@/lib/pds-completion';
+
 // Types
 
 interface EmployeeProfile {
@@ -94,6 +97,7 @@ interface PageProps {
     auth: { user: { id: number; roles: string[] } };
     profileUser: ProfileUser;
     canEditCompany: boolean;
+    pdsData: PdsData; 
     divisionAbbreviations: Record<string, string>;
     sectionAbbreviations: Record<string, string>;
     [key: string]: unknown;
@@ -114,27 +118,6 @@ function fullName(u: ProfileUser) {
 function educationPeriod(from: string | null, to: string | null) {
     if (!from && !to) return null;
     return [from || '—', to || 'Present'].join(' – ');
-}
-
-function calcCompletion(user: ProfileUser): number {
-    const ep  = user.employee_profile;
-    const pi  = user.personal_info;
-    const checks = [
-        !!user.photo,
-        !!(user.first_name && user.last_name),
-        !!user.email,
-        !!pi?.mobile_number,
-        !!ep?.position,
-        !!ep?.place_assign,
-        !!ep?.division,
-        !!ep?.employment_type,
-        !!ep?.date_hired,
-        !!pi?.sex,
-        !!pi?.civil_status,
-        !!pi?.birth_place,
-        user.degrees.length > 0,
-    ];
-    return Math.round(checks.filter(Boolean).length / checks.length * 100);
 }
 
 // Photo Crop Modal
@@ -621,7 +604,7 @@ function EditGovernmentModal({ user, onClose }: { user: ProfileUser; onClose: ()
 
 // Completion Donut
 
-function CompletionDonut({ percent }: { percent: number }) {
+function CompletionDonut({ percent, isOwn }: { percent: number; isOwn: boolean }) {
     const r = 54, circ = 2 * Math.PI * r;
     return (
         <div className="flex flex-col items-center justify-center h-full">
@@ -636,9 +619,11 @@ function CompletionDonut({ percent }: { percent: number }) {
                     <span className="text-xs text-gray-400">Completed</span>
                 </div>
             </div>
-            <p className="mt-3 text-xs text-center text-gray-400 leading-snug px-2">
-                {percent === 100 ? '✓ Profile complete!' : 'Complete your profile via the PDS page'}
-            </p>
+            {isOwn && (
+                <p className="mt-3 text-xs text-center text-gray-400 leading-snug px-2">
+                    {percent === 100 ? '✓ Profile complete!' : 'Complete your profile via the PDS page'}
+                </p>
+            )}
         </div>
     );
 }
@@ -659,14 +644,14 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Profile', href: '/profile' }
 // Main Page
 
 export default function ProfileShow() {
-    const { auth, profileUser: user, canEditCompany } = usePage<PageProps>().props;
+    const { auth, profileUser: user, canEditCompany, pdsData } = usePage<PageProps>().props;
 
     const ep       = user.employee_profile;
     const pi       = user.personal_info;
     const isOwn    = auth.user.id === user.id;
     const name     = fullName(user);
     const avatar   = user.photo ? '/storage/' + user.photo : null;
-    const progress = calcCompletion(user);
+    const progress = calculatePdsCompletion(pdsData);
 
     const avatarRef = useRef<HTMLButtonElement>(null);
 
@@ -918,9 +903,16 @@ export default function ProfileShow() {
                                         <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
                                             <MessagesSquare className="w-4 h-4" /> Message
                                         </button>
-                                        <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
-                                            <Download className="w-4 h-4" /> Generate PDS
-                                        </button>
+                                        {canEditCompany ? (
+                                            <a href={`/pds/download/${user.id}`} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
+                                                <Download className="w-4 h-4" /> Download PDS
+                                            </a>
+                                        ) : (
+                                            <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
+                                                <Download className="w-4 h-4" /> Generate PDS
+                                            </button>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -948,7 +940,7 @@ export default function ProfileShow() {
                     {progress < 100 && (
                         <div className="hidden lg:block w-56 shrink-0 rounded-2xl bg-white shadow-sm py-6">
                             <p className="text-xs font-semibold text-green-800 text-center mb-4 uppercase tracking-wide">Profile Completion</p>
-                            <CompletionDonut percent={progress} />
+                            <CompletionDonut percent={progress} isOwn={isOwn} />
                         </div>
                     )}
 

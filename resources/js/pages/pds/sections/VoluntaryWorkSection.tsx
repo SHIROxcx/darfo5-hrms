@@ -43,6 +43,7 @@ function validateRow(row: VoluntaryWorkEntry, rowFile: RowFile): RowErrors {
     if (!row.organization_address?.trim()) errs.organization_address = 'Required.';
     if (!row.date_from?.trim())            errs.date_from            = 'Required.';
     if (!row.date_to?.trim())              errs.date_to              = 'Required.';
+    if (!row.number_of_hours)              errs.number_of_hours      = 'Required.';
     if (!row.position?.trim())             errs.position             = 'Required.';
     // attachment is optional — no check
     return errs;
@@ -261,10 +262,11 @@ function VoluntaryWorkModal({ open, onClose, title, draft, draftFile, errors, on
 
                     {/* Number of Hours */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">Number of Hours</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">Number of Hours <span className="text-red-500">*</span></label>
                         <input type="number" value={draft.number_of_hours as string ?? ''} className={ok}
                             placeholder="e.g. 40"
                             onChange={e => onFieldChange('number_of_hours', e.target.value)} />
+                        {errors.number_of_hours && <p className="mt-1 text-xs text-red-500">{errors.number_of_hours}</p>}
                     </div>
 
                     {/* Position / Nature of Work */}
