@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Events\AccountApproved;
+use App\Http\Controllers\Concerns\BuildsPdsData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,6 +11,8 @@ use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
+    use BuildsPdsData;
+
     public function index(Request $request)
     {
         $employees = User::role('employee')
@@ -56,6 +59,7 @@ class EmployeeController extends Controller
         return Inertia::render('Profile/Show', [
             'profileUser'    => $this->formatUser($user),
             'canEditCompany' => true,
+            'pdsData'        => $this->getPdsData($user->id),
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
             'bachelorsDegrees'  => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),

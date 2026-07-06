@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LocationController;
@@ -59,6 +60,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/leave/{leaveRequest}', [AdminLeaveController::class, 'show'])->name('leave.show');
         Route::post('/leave/{leaveRequest}/approve', [AdminLeaveController::class, 'approve'])->name('leave.approve');
         Route::post('/leave/{leaveRequest}/deny', [AdminLeaveController::class, 'deny'])->name('leave.deny');
+       
+        // ARTA ID Routes
+        Route::get('/arta-id/preview/{user}',  [ArtaIdController::class, 'preview'])->name('arta-id.preview');
+        Route::get('/arta-id/download/{user}', [ArtaIdController::class, 'download'])->name('arta-id.download');
     });
 
 // Authenticated Routes for verified users

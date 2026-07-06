@@ -13,6 +13,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Spinner } from '@/components/ui/spinner';
 import { Separator } from '@/components/ui/separator';
+import Swal from 'sweetalert2';
 
 import type { PdsData } from '@/types/pds';
 import { calculatePdsCompletion } from '@/lib/pds-completion';
@@ -349,6 +350,61 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
     );
 }
 
+// Arta ID Modal
+
+function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () => void }) {
+    const previewUrl  = `/admin/arta-id/preview/${userId}`;
+    const downloadUrl = `/admin/arta-id/download/${userId}`;
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handler);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    return (
+        <div className="fixed inset-0 z-200 flex flex-col bg-black/80" onClick={onClose}>
+            <div className="shrink-0 flex items-center justify-between px-5 py-3 bg-gray-900" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-3">
+                    <SquareUser className="w-5 h-5 text-green-400" />
+                    <span className="text-white font-semibold text-sm">ARTA ID Preview</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors">
+                        <Download className="w-3.5 h-3.5" /> Download ID
+                    </a>
+                    <button onClick={onClose}
+                        className="flex items-center justify-center h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition cursor-pointer">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+                {!loaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-800">
+                        <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-gray-300 text-sm">Generating ARTA ID preview</p>
+                    </div>
+                )}
+                <iframe
+                    src={previewUrl}
+                    className="w-full h-full border-0"
+                    style={{ display: loaded ? 'block' : 'none' }}
+                    onLoad={() => setLoaded(true)}
+                    title="ARTA ID Preview"
+                />
+            </div>
+        </div>
+    );
+}
+
 // Shared UI
 
 function EditBtn({ onClick }: { onClick: () => void }) {
@@ -660,6 +716,7 @@ export default function ProfileShow() {
     const [activeSection, setActiveSection] = useState<Section>('personal');
     const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const [showArtaPreview, setShowArtaPreview] = useState(false);
 
     // Photo crop state
     const [cropSrc,      setCropSrc]      = useState<string | null>(null);
@@ -695,6 +752,28 @@ export default function ProfileShow() {
             window.removeEventListener('resize', update);
         };
     }, [photoMenuOpen]);
+
+    function handleGenerateArtaId() {
+        if (progress < 100) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete PDS',
+                html: `<p class="text-sm text-gray-600">
+                        This employee's Personal Data Sheet is only <b>${progress}%</b> complete.<br/>
+                        The ARTA ID can only be generated once the PDS is 100% complete.
+                    </p>`,
+                confirmButtonText: 'Got it',
+                confirmButtonColor: '#16a34a',
+                customClass: {
+                    popup:         '!rounded-2xl !shadow-xl',
+                    title:         '!text-base !font-semibold',
+                    confirmButton: '!text-sm !rounded-lg !px-4',
+                },
+            });
+            return;
+        }
+        setShowArtaPreview(true);
+    }
 
     // file selected → open crop modal
     function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -816,6 +895,9 @@ export default function ProfileShow() {
             {modal === 'personal'   && <EditPersonalModal   user={user} isOwn={isOwn} onClose={() => setModal(null)} />}
             {modal === 'company'    && <EditCompanyModal    user={user} onClose={() => setModal(null)} />}
             {modal === 'government' && <EditGovernmentModal user={user} onClose={() => setModal(null)} />}
+            {showArtaPreview && (
+                <ArtaIdPreviewModal userId={user.id} onClose={() => setShowArtaPreview(false)} />
+            )}
 
             <div className="sm:px-6 sm:py-4 space-y-0 h-full">
 
@@ -904,10 +986,16 @@ export default function ProfileShow() {
                                             <MessagesSquare className="w-4 h-4" /> Message
                                         </button>
                                         {canEditCompany ? (
-                                            <a href={`/pds/download/${user.id}`} target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
-                                                <Download className="w-4 h-4" /> Download PDS
-                                            </a>
+                                            <>
+                                                <a href={`/pds/download/${user.id}`} target="_blank" rel="noopener noreferrer"
+                                                    className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
+                                                    <Download className="w-4 h-4" /> Download PDS
+                                                </a>
+                                                <button onClick={handleGenerateArtaId}
+                                                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-50 transition">
+                                                    <SquareUser className="h-4 w-4" /> Generate ARTA ID
+                                                </button>
+                                            </>
                                         ) : (
                                             <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
                                                 <Download className="w-4 h-4" /> Generate PDS
