@@ -35,13 +35,13 @@ export default function EmployeeId({ found, employee }: Props) {
                 <div className="absolute inset-0 bg-linear-to-r from-green-900/80 via-green-700/60 to-green-500/50 opacity-50" />
 
                 <main className="relative z-20 flex flex-1 items-center justify-center px-6">
-                    <div className="w-full max-w-sm rounded-xl border border-white/20 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-xl border border-white/20 bg-white p-8 text-center shadow-2xl backdrop-blur-sm">
 
                         <div className="mb-4 flex justify-center">
                             <img
                                 src="/images/da-masarig-logo.png"
                                 alt="DA RFO 5 Masarig Logo"
-                                className="h-16 w-16 object-contain"
+                                className="h-18 w-18 object-contain"
                             />
                         </div>
 
@@ -52,7 +52,7 @@ export default function EmployeeId({ found, employee }: Props) {
                                         <img
                                             src={employee.photo}
                                             alt={employee.name}
-                                            className="h-28 w-28 rounded-full border-4 border-green-600 object-cover shadow-md"
+                                            className="h-32 w-32 rounded-full border-4 border-green-600 object-cover shadow-md"
                                         />
                                     ) : (
                                         <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-green-600 bg-green-50 text-xs text-gray-400">
@@ -86,10 +86,10 @@ export default function EmployeeId({ found, employee }: Props) {
                                     className={`mt-4 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium ${
                                         employee.status
                                             ? 'bg-green-50 text-green-700'
-                                            : 'bg-red-50 text-red-600'
+                                            : 'bg-gray-50 text-gray-200'
                                     }`}
                                 >
-                                    {employee.status ? 'Active Employee' : 'Inactive / Separated'}
+                                    {employee.status ? 'Active' : 'Inactive'}
                                 </div>
                             </>
                         ) : (
@@ -106,7 +106,7 @@ export default function EmployeeId({ found, employee }: Props) {
                             </>
                         )}
 
-                        <p className="mt-6 text-xs text-gray-400">DA RFO 5 — Employee Verification</p>
+                        <p className="mt-6 text-xs text-gray-400">DARFO 5 HRMS — Employee Verification</p>
                     </div>
                 </main>
 

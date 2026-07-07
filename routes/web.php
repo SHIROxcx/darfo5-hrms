@@ -30,7 +30,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Employee QR details display
-Route::get('/id/{employeeNumber}', [PublicEmployeeController::class, 'show'])
+Route::get('/employee/{employeeNumber}', [PublicEmployeeController::class, 'show'])
     ->middleware('throttle:30,1')
     ->name('public.employee.show');
 

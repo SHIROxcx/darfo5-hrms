@@ -121,8 +121,8 @@
 
             @media print {
                 @page { 
-                    size: 6.8in 5.3in portrait; 
-                    margin: 0.5; 
+                    size: 6.8in 5.3in landscape; 
+                    margin: 0; 
                 }
                 .print-only-card { 
                     width: 3.4in !important; 
@@ -132,14 +132,19 @@
                     display: flex !important; 
                 }
                 body * { visibility: hidden !important; }
+
                 #id-card-wrapper, #id-card-wrapper * { 
                     visibility: 
                     visible !important; 
                 }
+
+                #id-card-wrapper, .id-card {
+                    box-sizing: border-box !important;
+                }
                 #id-card-wrapper { 
                     position: fixed !important; 
-                    top: 0 !important; 
-                    left: 0 !important; 
+                    top: 0.5in !important;
+                    left: 0.5in !important; 
                     width: 6.8in !important; 
                     height: 5.3in !important; 
                     display: flex !important; 

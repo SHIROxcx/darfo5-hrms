@@ -390,7 +390,7 @@ function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () =
                     </button>
                     <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                        <Download className="w-3.5 h-3.5" /> Download ID
+                        <Download className="w-3.5 h-3.5" /> Download
                     </a>
                     <button onClick={onClose}
                         className="flex items-center justify-center h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition cursor-pointer">

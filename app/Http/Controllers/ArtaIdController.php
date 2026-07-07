@@ -50,12 +50,6 @@ class ArtaIdController extends Controller
         ];
     }
 
-    /**
-     * Reads a local image file and returns it as a base64 data URI.
-     * Used so Browsershot never needs to make an HTTP request back to
-     * the dev server to fetch images — avoids a self-deadlock when the
-     * server is single-threaded (e.g. `php artisan serve`).
-     */
     private function fileToDataUri(string $absolutePath): ?string
     {
         if (!is_file($absolutePath)) {
@@ -110,7 +104,7 @@ class ArtaIdController extends Controller
 
         Browsershot::html($html)
             ->showBackground()
-            ->paperSize(6.8, 5.3, 'in')
+            ->format('A4') // Changes canvas size from custom inches to standard A4
             ->margins(0, 0, 0, 0)
             ->savePdf($tmpPath);
 
