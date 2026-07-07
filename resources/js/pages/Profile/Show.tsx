@@ -5,7 +5,8 @@ import {
     Dot, ZoomIn, ZoomOut, RotateCw, Check,
     SquareUser,
     Image,
-    Download,
+    Download, Printer,
+    EllipsisVertical
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -350,12 +351,13 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
     );
 }
 
-// Arta ID Modal
+// ARTA ID Preview
 
 function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () => void }) {
     const previewUrl  = `/admin/arta-id/preview/${userId}`;
     const downloadUrl = `/admin/arta-id/download/${userId}`;
     const [loaded, setLoaded] = useState(false);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -367,6 +369,10 @@ function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () =
         };
     }, [onClose]);
 
+    const handlePrint = () => {
+        iframeRef.current?.contentWindow?.print();
+    };
+
     return (
         <div className="fixed inset-0 z-200 flex flex-col bg-black/80" onClick={onClose}>
             <div className="shrink-0 flex items-center justify-between px-5 py-3 bg-gray-900" onClick={e => e.stopPropagation()}>
@@ -375,6 +381,13 @@ function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () =
                     <span className="text-white font-semibold text-sm">ARTA ID Preview</span>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={handlePrint}
+                        disabled={!loaded}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                    >
+                        <Printer className="w-3.5 h-3.5" /> Print
+                    </button>
                     <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors">
                         <Download className="w-3.5 h-3.5" /> Download ID
@@ -394,6 +407,7 @@ function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () =
                     </div>
                 )}
                 <iframe
+                    ref={iframeRef}
                     src={previewUrl}
                     className="w-full h-full border-0"
                     style={{ display: loaded ? 'block' : 'none' }}
@@ -718,6 +732,10 @@ export default function ProfileShow() {
     const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const [showArtaPreview, setShowArtaPreview] = useState(false);
 
+    const [docMenuOpen, setDocMenuOpen] = useState(false);
+    const [docMenuPos, setDocMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const docBtnRef = useRef<HTMLButtonElement>(null);
+
     // Photo crop state
     const [cropSrc,      setCropSrc]      = useState<string | null>(null);
     const [photoSaving,  setPhotoSaving]  = useState(false);
@@ -817,6 +835,24 @@ export default function ProfileShow() {
             })
             .catch(err => console.error('Could not load photo for editing:', err));
     }
+
+    
+    function updateDocMenuPos() {
+        if (!docBtnRef.current) return;
+        const r = docBtnRef.current.getBoundingClientRect();
+        setDocMenuPos({ top: r.bottom + 8, left: Math.max(8, r.right - 224) });
+    }
+
+    useEffect(() => {
+        if (!docMenuOpen) return;
+        const update = () => updateDocMenuPos();
+        window.addEventListener('scroll', update, true);
+        window.addEventListener('resize', update);
+        return () => {
+            window.removeEventListener('scroll', update, true);
+            window.removeEventListener('resize', update);
+        };
+    }, [docMenuOpen]);
 
     const visibleNav = navItems.filter(n => n.id !== 'government' || canEditCompany || isOwn);
 
@@ -970,7 +1006,6 @@ export default function ProfileShow() {
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h1 className="text-xl sm:text-2xl font-semibold text-green-800 leading-tight">{name}</h1>
-                                    {progress === 100 && <BadgeCheck className="text-white bg-green-600 w-5 h-5" />}
                                 </div>
                                 <p className="text-sm text-gray-500 mt-0.5">{ep?.position ?? 'No position set'}</p>
                             </div>
@@ -986,21 +1021,56 @@ export default function ProfileShow() {
                                             <MessagesSquare className="w-4 h-4" /> Message
                                         </button>
                                         {canEditCompany ? (
-                                            <>
-                                                <a href={`/pds/download/${user.id}`} target="_blank" rel="noopener noreferrer"
-                                                    className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition">
-                                                    <Download className="w-4 h-4" /> Download PDS
-                                                </a>
-                                                <button onClick={handleGenerateArtaId}
-                                                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-50 transition">
-                                                    <SquareUser className="h-4 w-4" /> Generate ARTA ID
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400">
-                                                <Download className="w-4 h-4" /> Generate PDS
+                                        <div className="relative">
+                                            <button
+                                                ref={docBtnRef}
+                                                onClick={() => { updateDocMenuPos(); setDocMenuOpen(o => !o); }}
+                                                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 bg-green-600 px-2 p-1.5 text-sm font-semibold text-white hover:bg-green-700 transition"
+                                            >
+                                                <EllipsisVertical className='w-5 h-5' />
                                             </button>
-                                        )}
+
+                                            {docMenuOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-100" onClick={() => setDocMenuOpen(false)} />
+                                                    <div
+                                                        className="fixed z-101 min-w-56 rounded-xl border border-gray-100 bg-white shadow-xl p-1"
+                                                        style={docMenuPos}
+                                                    >
+                                                        <a
+                                                            href={`/pds/download/${user.id}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            onClick={() => setDocMenuOpen(false)}
+                                                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition rounded-lg"
+                                                        >
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50">
+                                                                <Download className="h-4 w-4 text-gray-500" />
+                                                            </div>
+                                                            <span>Download PDS</span>
+                                                        </a>
+                                                        <button
+                                                            onClick={() => { setDocMenuOpen(false); handleGenerateArtaId(); }}
+                                                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition rounded-lg"
+                                                        >
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50">
+                                                                <SquareUser className="h-4 w-4 text-gray-500" />
+                                                            </div>
+                                                            <span>Generate ARTA ID</span>
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-400"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            <span>Generate PDS</span>
+                                        </button>
+                                    )}
                                     </>
                                 )}
                             </div>
@@ -1140,7 +1210,6 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Government Issued IDs</h2>
-                                    {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('government')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[

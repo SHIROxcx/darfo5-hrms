@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Controllers\Concerns\BuildsPdsData;
 use App\Models\EmployeeProfile;
 use App\Models\PdsPersonalInfo;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,7 @@ use Inertia\Inertia;
 
 class UserProfileController extends Controller
 {
+    use BuildsPdsData;
     /**
      * Show the authenticated user's own profile.
      */
@@ -42,8 +44,6 @@ class UserProfileController extends Controller
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
         ]);
     }
-
-    use BuildsPdsData;
 
     /**
      * Update personal info (users table + pds_personal_info).

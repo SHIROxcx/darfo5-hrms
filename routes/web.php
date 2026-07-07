@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PdsController;
 use App\Http\Controllers\PdsPdfController;
+use App\Http\Controllers\PublicEmployeeController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\WesController;
@@ -27,6 +28,11 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+// Employee QR details display
+Route::get('/id/{employeeNumber}', [PublicEmployeeController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('public.employee.show');
 
 // Pending approval page — accessible without auth
 Route::get('/pending-approval', function () {
