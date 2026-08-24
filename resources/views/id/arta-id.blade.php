@@ -5,7 +5,7 @@
         <title>ARTA ID</title>
 
     </head>
-    <body style="margin:0; padding:24px; background:#f4f4f5; display:flex; justify-content:center; justify-items: center;">
+    <body style="margin: 0; padding: 24px; background: #f4f4f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box;">
 
     @php
         $isPermanent = strtolower($employee->employment_type ?? '') === 'permanent';
@@ -96,28 +96,171 @@
                 border: none !important;
                 box-shadow: none !important; 
             }
-            .id-card { position: relative; width: 326px; height: 509px; background: #ffffff; box-shadow: 0 4px 32px rgba(0,0,0,0.18); display: flex; flex-direction: column; overflow: hidden; }
-            .id-border-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; z-index: 1; }
-            .id-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; padding: 0.14in 0.12in; box-sizing: border-box; }
-            .id-header { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 65px; }
-            .id-logo-left { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); height: 80px; width: 80px; object-fit: contain; }
-            .id-logo-right { position: absolute; right: 4px; top: 50%; background: #ffffff; transform: translateY(-50%); height: 85px; width: 85px; object-fit: contain; }
-            .id-header-text { width: 100%; text-align: center; padding: 0; }
-            .id-republic { font-size: 6pt; color: #222; margin: 0; line-height: 1.1; }
-            .id-dept { font-size: 7pt; font-weight: 700; color: #111; margin: 0; line-height: 1.1; text-transform: uppercase; }
-            .id-office { font-size: 6.5pt; font-weight: 700; color: #222; margin: 0; line-height: 1.1; text-transform: uppercase; }
-            .id-address { font-size: 6pt; color: #222; margin: 0; line-height: 1.1; }
-            .id-divider { width: 100%; height: 1px; margin: 4px 0 0 0; }
-            .id-emp-no { font-size: 10pt; font-weight: 700; color: #222; margin: 8px 0; }
-            .id-photo-box { width: 2in; height: 2in; border: 3px solid; margin-top: 5px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; flex-shrink: 0; }
-            .id-photo-img { width: 100%; height: 100%; object-fit: cover; }
-            .id-photo-empty { font-size: 8pt; color: #aaa; }
-            .id-name { font-size: 16pt; font-weight: bold; text-align: center; margin: 4px 0 0 0; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1; }
-            .id-position { font-size: 10pt; font-weight: 700; color: #222; margin: 1px 0; text-align: center; line-height: 1; }
-            .id-office-label { font-size: 12pt; font-weight: 700; color: #111; margin: 1px 0 0 0; letter-spacing: 1.1px; text-align: center; text-transform: uppercase; }
-            .id-bottom { position: absolute; bottom: 20px; display: flex; align-items: flex-end; gap: 10px; }
-            .id-signature { flex: 1; display: flex; flex-direction: column; align-items: center; }
-            .id-signature-label { font-size: 9pt; color: #222; }
+            .id-card { 
+                position: relative; 
+                width: 326px; 
+                height: 509px; 
+                background: #ffffff; 
+                box-shadow: 0 4px 32px rgba(0,0,0,0.18); 
+                display: flex; 
+                flex-direction: column; 
+                overflow: hidden; 
+            }
+            .id-border-img { 
+                position: absolute; 
+                inset: 0; 
+                width: 100%; 
+                height: 100%; 
+                object-fit: fill; 
+                pointer-events: none; 
+                z-index: 1; 
+            }
+            .id-content { 
+                position: relative; 
+                z-index: 2; 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                height: 100%; 
+                padding: 0.14in 0.12in; 
+                box-sizing: border-box; 
+            }
+            .id-header { 
+                position: relative; 
+                width: 100%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                min-height: 65px; 
+            }
+            .id-logo-left { 
+                position: absolute; 
+                left: 8px; 
+                top: 50%; 
+                transform: translateY(-50%); 
+                height: 80px; 
+                width: 80px; 
+                object-fit: contain; 
+            }
+            .id-logo-right { 
+                position: absolute; 
+                right: 4px; 
+                top: 50%; 
+                background: #ffffff; 
+                transform: translateY(-50%); 
+                height: 80px; 
+                width: 80px; 
+                object-fit: contain; 
+            }
+            .id-header-text { 
+                width: 100%; 
+                text-align: center; 
+                padding: 0; 
+            }
+            .id-republic { 
+                font-size: 6pt; 
+                color: #222; 
+                margin: 0; 
+                line-height: 1.1; 
+            }
+            .id-dept { 
+                font-size: 7pt; 
+                font-weight: 700; 
+                color: #111; 
+                margin: 0; 
+                line-height: 1.1;
+                text-transform: uppercase; 
+            }
+            .id-office { 
+                font-size: 6.5pt; 
+                font-weight: 700; 
+                color: #222; 
+                margin: 0; 
+                line-height: 1.1; 
+                text-transform: uppercase; 
+            }
+            .id-address { 
+                font-size: 6pt; 
+                color: #222; 
+                margin: 0; 
+                line-height: 1.1; 
+            }
+            .id-divider { 
+                width: 100%; 
+                height: 1px; 
+                margin: 4px 0 0 0; 
+            }
+            .id-emp-no { 
+                font-size: 10pt; 
+                font-weight: 700; 
+                color: #222; 
+                margin: 8px 0; 
+            }
+            .id-photo-box { 
+                width: 2in; 
+                height: 2in; 
+                border: 3px solid; 
+                margin-top: 5px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                background: #f8fafc; 
+                overflow: hidden; 
+                flex-shrink: 0; 
+            }
+            .id-photo-img { 
+                width: 100%; 
+                height: 100%; 
+                object-fit: cover; 
+            }
+            .id-photo-empty { 
+                font-size: 8pt; 
+                color: #aaa; 
+            }
+            .id-name { 
+                font-size: 16pt; 
+                font-weight: bold; 
+                text-align: center; 
+                margin: 4px 0 0 0; 
+                letter-spacing: 0.5px; 
+                text-transform: uppercase; 
+                line-height: 1; 
+            }
+            .id-position { 
+                font-size: 10pt; 
+                font-weight: 700; 
+                color: #222; 
+                margin: 1px 0; text-align: 
+                center; line-height: 1; 
+            }
+            .id-office-label { 
+                font-size: 12pt; 
+                font-weight: 700; 
+                color: #111; 
+                margin: 1px 0 0 0; 
+                letter-spacing: 1.1px; 
+                text-align: center; 
+                text-transform: uppercase; 
+            }
+            .id-bottom { 
+                position: absolute; 
+                bottom: 20px; 
+                display: flex; 
+                align-items: 
+                flex-end; 
+                gap: 10px; 
+            }
+            .id-signature { 
+                flex: 1; 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+            }
+            .id-signature-label { 
+                font-size: 9pt; 
+                color: #222; 
+            }
 
             @media print {
                 @page { 

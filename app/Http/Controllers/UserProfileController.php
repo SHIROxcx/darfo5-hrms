@@ -38,7 +38,7 @@ class UserProfileController extends Controller
 
         return Inertia::render('Profile/Show', [
             'profileUser'    => $this->formatUser($user),
-            'canEditCompany' => $isAdmin,
+            'canEditCompany' => $authUser->can('manage employees'),
             'pdsData'        => $this->getPdsData($targetId),   // ← confirm this line exists
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
@@ -55,15 +55,18 @@ class UserProfileController extends Controller
         $this->authorizeProfileEdit($targetId);
 
         $data = $request->validate([
-            'first_name'    => 'nullable|string|max:100',
+            'first_name'    => 'required|string|max:100',
             'middle_name'   => 'nullable|string|max:100',
-            'last_name'     => 'nullable|string|max:100',
+            'last_name'     => 'required|string|max:100',
             'name_ext'      => 'nullable|string|max:20',
-            'email'         => 'nullable|email|max:255|unique:users,email,' . $targetId,
-            'sex'           => 'nullable|in:Male,Female',
-            'birth_place'   => 'nullable|string',
-            'civil_status'  => 'nullable|in:Single,Married,Widowed,Separated,Other',
-            'mobile_number' => 'nullable|string|max:20',
+            'sex'           => 'required|in:Male,Female',
+            'birth_place'   => 'required|string',
+            'date_of_birth' => 'required|date',
+            'civil_status'  => 'required|in:Single,Married,Widowed,Separated,Other',
+            'mobile_number' => 'required|string|max:20',
+            'height'        => 'required|numeric',
+            'weight'        => 'required|numeric',
+            'blood_type'    => 'required|string|max:5',
         ]);
 
         // Update users table
@@ -72,7 +75,6 @@ class UserProfileController extends Controller
             'middle_name' => $data['middle_name'] ?? null,
             'last_name'   => $data['last_name']   ?? null,
             'name_ext'    => $data['name_ext']    ?? null,
-            'email'       => $data['email']       ?? null,
         ]);
 
         // Update pds_personal_info for personal fields
@@ -81,8 +83,12 @@ class UserProfileController extends Controller
             [
                 'sex'           => $data['sex']           ?? null,
                 'birth_place'   => $data['birth_place']   ?? null,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
                 'civil_status'  => $data['civil_status']  ?? null,
                 'mobile_number' => $data['mobile_number'] ?? null,
+                'height'        => $data['height']        ?? null,
+                'weight'        => $data['weight']        ?? null,
+                'blood_type'    => $data['blood_type']    ?? null,
             ]
         );
 
@@ -182,7 +188,7 @@ class UserProfileController extends Controller
 
     private function authorizeAdminEdit(): void
     {
-        if (!Auth::user()->hasAnyRole(['admin', 'superadmin', 'hr'])) {
+        if (!Auth::user()->can('manage employees')) {
             abort(403, 'Only administrators can update company information.');
         }
     }
@@ -221,8 +227,12 @@ class UserProfileController extends Controller
             'personal_info' => $pds ? [
                 'sex'               => $pds->sex,
                 'birth_place'       => $pds->birth_place,
+                'date_of_birth'     => $pds->date_of_birth,
                 'civil_status'      => $pds->civil_status,
                 'mobile_number'     => $pds->mobile_number,
+                'height'            => $pds->height,
+                'weight'            => $pds->weight,
+                'blood_type'        => $pds->blood_type,
                 'umid_number'       => $pds->umid_number,
                 'pagibig_number'    => $pds->pagibig_number,
                 'philhealth_number' => $pds->philhealth_number,

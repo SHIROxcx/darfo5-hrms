@@ -36,8 +36,12 @@ interface EmployeeProfile {
 interface PersonalInfo {
     sex: 'Male' | 'Female' | null;
     birth_place: string | null;
+    date_of_birth: string | null;
     civil_status: string | null;
     mobile_number: string | null;
+    height: string | null;
+    weight: string | null;
+    blood_type: string | null;
     agency_employee_no: string | null;
     umid_number: string | null;
     pagibig_number: string | null;
@@ -120,6 +124,25 @@ function fullName(u: ProfileUser) {
 function educationPeriod(from: string | null, to: string | null) {
     if (!from && !to) return null;
     return [from || '—', to || 'Present'].join(' – ');
+}
+
+function lengthOfService(dateHired: string | null | undefined): string | null {
+    if (!dateHired) return null;
+    const start = new Date(dateHired);
+    if (isNaN(start.getTime())) return null;
+
+    const now = new Date();
+    let years = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth() - start.getMonth();
+    if (now.getDate() < start.getDate()) months -= 1;
+    if (months < 0) { years -= 1; months += 12; }
+    if (years < 0) return null;
+
+    if (years === 0 && months === 0) return 'Less than a month';
+    const parts: string[] = [];
+    if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
+    if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+    return parts.join(', ');
 }
 
 // Photo Crop Modal
@@ -430,15 +453,15 @@ function EditBtn({ onClick }: { onClick: () => void }) {
     );
 }
 
-function InfoGrid({ items }: { items: { label: string; value: string | null | undefined }[] }) {
-    const visible = items.filter(i => i.value);
+function InfoGrid({ items, showAll }: { items: { label: string; value: string | null | undefined }[]; showAll?: boolean }) {
+    const visible = showAll ? items : items.filter(i => i.value);
     if (!visible.length) return <p className="text-sm text-gray-400 italic">No information available.</p>;
     return (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map(({ label, value }) => (
                 <div key={label}>
                     <p className="text-xs text-gray-400 mb-0.5 uppercase tracking-wide">{label}</p>
-                    <p className="text-sm font-medium text-gray-800">{value}</p>
+                    <p className={cn('text-sm font-medium', value ? 'text-gray-800' : 'text-gray-400 italic')}>{value || 'Not set'}</p>
                 </div>
             ))}
         </div>
@@ -457,6 +480,21 @@ function SectionBlock({ title, children }: { title: string; children: React.Reac
 // Modals
 
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600";
+const errorInputCls = "w-full rounded-lg border border-red-400 px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500";
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+});
+
+function firstErrorMessage(errors: Record<string, string>, fallback: string): string {
+    const values = Object.values(errors);
+    return values.length > 0 ? values[0] : fallback;
+}
 
 function ModalShell({ title, onClose, onSave, saving, children }: {
     title: string; onClose: () => void; onSave: () => void; saving: boolean; children: React.ReactNode;
@@ -481,44 +519,109 @@ function ModalShell({ title, onClose, onSave, saving, children }: {
     );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
     return (
         <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">{label}</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+                {label}{required && <span className="text-red-500"> *</span>}
+            </label>
             {children}
         </div>
     );
 }
 
+type PersonalForm = {
+    first_name: string; middle_name: string; last_name: string; name_ext: string;
+    sex: string; birth_place: string; date_of_birth: string; civil_status: string;
+    mobile_number: string; height: string; weight: string; blood_type: string;
+};
+type PersonalFormErrors = Partial<Record<keyof PersonalForm, string>>;
+
+const PERSONAL_REQUIRED_FIELDS: Array<{ key: keyof PersonalForm; label: string }> = [
+    { key: 'first_name',    label: 'First Name' },
+    { key: 'last_name',     label: 'Last Name' },
+    { key: 'sex',           label: 'Sex' },
+    { key: 'civil_status',  label: 'Civil Status' },
+    { key: 'date_of_birth', label: 'Date of Birth' },
+    { key: 'birth_place',   label: 'Place of Birth' },
+    { key: 'mobile_number', label: 'Mobile Number' },
+    { key: 'height',        label: 'Height' },
+    { key: 'weight',        label: 'Weight' },
+    { key: 'blood_type',    label: 'Blood Type' },
+];
+
+function validatePersonalForm(form: PersonalForm): PersonalFormErrors {
+    const errors: PersonalFormErrors = {};
+    for (const { key, label } of PERSONAL_REQUIRED_FIELDS) {
+        if (!form[key] || String(form[key]).trim() === '') {
+            errors[key] = `${label} is required.`;
+        }
+    }
+    return errors;
+}
+
 function EditPersonalModal({ user, isOwn, onClose }: { user: ProfileUser; isOwn: boolean; onClose: () => void }) {
     const pi = user.personal_info;
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<PersonalForm>({
         first_name:    user.first_name    ?? '',
         middle_name:   user.middle_name   ?? '',
         last_name:     user.last_name     ?? '',
         name_ext:      user.name_ext      ?? '',
-        email:         user.email         ?? '',
         sex:           pi?.sex            ?? '',
         birth_place:   pi?.birth_place    ?? '',
+        date_of_birth: pi?.date_of_birth ? pi.date_of_birth.substring(0, 10) : '',
         civil_status:  pi?.civil_status   ?? '',
         mobile_number: pi?.mobile_number  ?? '',
+        height:        pi?.height         ?? '',
+        weight:        pi?.weight         ?? '',
+        blood_type:    pi?.blood_type     ?? '',
     });
     const [saving, setSaving] = useState(false);
-    const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    const [errors, setErrors] = useState<PersonalFormErrors>({});
+    const set = (k: keyof PersonalForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
         setForm(f => ({ ...f, [k]: e.target.value }));
 
+    const ic  = (key: keyof PersonalForm) => errors[key] ? errorInputCls : inputCls;
+    const err = (key: keyof PersonalForm) => errors[key]
+        ? <p className="mt-1 text-xs text-red-500">{errors[key]}</p>
+        : null;
+
     function save() {
+        const validationErrors = validatePersonalForm(form);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+        setErrors({});
         setSaving(true);
         const url = isOwn ? '/profile/personal' : '/profile/' + user.id + '/personal';
-        router.post(url, form, { preserveScroll: true, onSuccess: () => { setSaving(false); onClose(); }, onError: () => setSaving(false) });
+        router.post(url, form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSaving(false);
+                onClose();
+                Toast.fire({ icon: 'success', title: 'Personal information updated.' });
+            },
+            onError: (serverErrors) => {
+                setErrors(serverErrors as PersonalFormErrors);
+                setSaving(false);
+                Toast.fire({ icon: 'error', title: firstErrorMessage(serverErrors as Record<string, string>, 'Failed to update personal information.') });
+            },
+        });
     }
 
     return (
         <ModalShell title="Edit Personal Info" onClose={onClose} onSave={save} saving={saving}>
             <div className="grid grid-cols-2 gap-3">
-                <Field label="First Name"><input value={form.first_name} onChange={set('first_name')} className={inputCls} /></Field>
+                <Field label="First Name" required>
+                    <input value={form.first_name} onChange={set('first_name')} className={ic('first_name')} />
+                    {err('first_name')}
+                </Field>
                 <Field label="Middle Name"><input value={form.middle_name} onChange={set('middle_name')} className={inputCls} /></Field>
-                <Field label="Last Name"><input value={form.last_name} onChange={set('last_name')} className={inputCls} /></Field>
+                <Field label="Last Name" required>
+                    <input value={form.last_name} onChange={set('last_name')} className={ic('last_name')} />
+                    {err('last_name')}
+                </Field>
                 <Field label="Suffix">
                     <select value={form.name_ext} onChange={set('name_ext')} className={inputCls}>
                         <option value="">None</option>
@@ -526,23 +629,53 @@ function EditPersonalModal({ user, isOwn, onClose }: { user: ProfileUser; isOwn:
                     </select>
                 </Field>
             </div>
-            <Field label="Email"><input type="email" value={form.email} onChange={set('email')} className={inputCls} /></Field>
-            <Field label="Mobile Number"><input value={form.mobile_number} onChange={set('mobile_number')} className={inputCls} /></Field>
+            <div className="grid grid-cols-3 gap-3">
+                <Field label="Height (m)" required>
+                    <input type="number" step="0.01" min="0" max="3" placeholder="e.g. 1.65"
+                        value={form.height} onChange={set('height')} className={ic('height')} />
+                    {err('height')}
+                </Field>
+                <Field label="Weight (kg)" required>
+                    <input type="number" step="0.1" min="0" placeholder="e.g. 60.5"
+                        value={form.weight} onChange={set('weight')} className={ic('weight')} />
+                    {err('weight')}
+                </Field>
+                <Field label="Blood Type" required>
+                    <select value={form.blood_type} onChange={set('blood_type')} className={ic('blood_type')}>
+                        <option value="">— Select —</option>
+                        {BLOOD_TYPES.map(bt => <option key={bt} value={bt}>{bt}</option>)}
+                    </select>
+                    {err('blood_type')}
+                </Field>
+            </div>
             <div className="grid grid-cols-2 gap-3">
-                <Field label="Sex">
-                    <select value={form.sex} onChange={set('sex')} className={inputCls}>
+                <Field label="Sex" required>
+                    <select value={form.sex} onChange={set('sex')} className={ic('sex')}>
                         <option value="">— Select —</option>
                         <option>Male</option><option>Female</option>
                     </select>
+                    {err('sex')}
                 </Field>
-                <Field label="Civil Status">
-                    <select value={form.civil_status} onChange={set('civil_status')} className={inputCls}>
+                <Field label="Civil Status" required>
+                    <select value={form.civil_status} onChange={set('civil_status')} className={ic('civil_status')}>
                         <option value="">— Select —</option>
                         {['Single', 'Married', 'Widowed', 'Separated', 'Other'].map(s => <option key={s}>{s}</option>)}
                     </select>
+                    {err('civil_status')}
                 </Field>
             </div>
-            <Field label="Place of Birth"><input value={form.birth_place} onChange={set('birth_place')} className={inputCls} /></Field>
+            <Field label="Date of Birth" required>
+                <input type="date" value={form.date_of_birth} onChange={set('date_of_birth')} className={ic('date_of_birth')} />
+                {err('date_of_birth')}
+            </Field>
+            <Field label="Place of Birth" required>
+                <input value={form.birth_place} onChange={set('birth_place')} className={ic('birth_place')} />
+                {err('birth_place')}
+            </Field>
+            <Field label="Mobile Number" required>
+                <input value={form.mobile_number} onChange={set('mobile_number')} className={ic('mobile_number')} />
+                {err('mobile_number')}
+            </Field>
         </ModalShell>
     );
 }
@@ -550,6 +683,7 @@ function EditPersonalModal({ user, isOwn, onClose }: { user: ProfileUser; isOwn:
 function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
     const ep = user.employee_profile;
     const [form, setForm] = useState({
+        employee_number: user.personal_info?.agency_employee_no ?? ep?.employee_number ?? '',
         employment_type: ep?.employment_type ?? '',
         position:        ep?.position        ?? '',
         salary_grade:    ep?.salary_grade    ?? '',
@@ -604,22 +738,32 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
 
     function save() {
         setSaving(true);
-        router.post('/profile/' + user.id + '/company', form, { preserveScroll: true, onSuccess: () => { setSaving(false); onClose(); }, onError: () => setSaving(false) });
+        router.post('/profile/' + user.id + '/company', form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSaving(false);
+                onClose();
+                Toast.fire({ icon: 'success', title: 'Company information updated.' });
+            },
+            onError: (serverErrors) => {
+                setSaving(false);
+                Toast.fire({ icon: 'error', title: firstErrorMessage(serverErrors as Record<string, string>, 'Failed to update company information.') });
+            },
+        });
     }
 
     return (
         <ModalShell title="Edit Company Info" onClose={onClose} onSave={save} saving={saving}>
             <div className="grid grid-cols-2 gap-3">
                 <Field label="Agency Employee No.">
-                    <div className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-400 select-none cursor-not-allowed">
-                        {user.personal_info?.agency_employee_no || ep?.employee_number || '—'}
-                    </div>
+                    <input value={form.employee_number} onChange={e => setForm(f => ({ ...f, employee_number: e.target.value }))} className={inputCls} />
                 </Field>
                 <Field label="Employment Type">
                     <select value={form.employment_type} onChange={e => setForm(f => ({ ...f, employment_type: e.target.value }))} className={inputCls}>
                         <option value="">— Select —</option>
                         <option value="JO">Job Order (JO)</option>
                         <option value="COS">Contract of Service (COS)</option>
+                        <option value="Pakyaw">Pakyaw</option>
                         <option value="Permanent">Permanent</option>
                     </select>
                 </Field>
@@ -660,7 +804,21 @@ function EditGovernmentModal({ user, onClose }: { user: ProfileUser; onClose: ()
     const [form, setForm] = useState({ umid_number: pi?.umid_number ?? '', pagibig_number: pi?.pagibig_number ?? '', philsys_number: pi?.philsys_number ?? '', philhealth_number: pi?.philhealth_number ?? '', tin_number: pi?.tin_number ?? '' });
     const [saving, setSaving] = useState(false);
     const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
-    function save() { setSaving(true); router.post('/profile/' + user.id + '/government', form, { preserveScroll: true, onSuccess: () => { setSaving(false); onClose(); }, onError: () => setSaving(false) }); }
+    function save() {
+        setSaving(true);
+        router.post('/profile/' + user.id + '/government', form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSaving(false);
+                onClose();
+                Toast.fire({ icon: 'success', title: 'Government IDs updated.' });
+            },
+            onError: (serverErrors) => {
+                setSaving(false);
+                Toast.fire({ icon: 'error', title: firstErrorMessage(serverErrors as Record<string, string>, 'Failed to update government IDs.') });
+            },
+        });
+    }
     return (
         <ModalShell title="Edit Government IDs" onClose={onClose} onSave={save} saving={saving}>
             <Field label="UMID Number"><input value={form.umid_number} onChange={set('umid_number')} className={inputCls} /></Field>
@@ -1111,10 +1269,17 @@ export default function ProfileShow() {
                                     {isOwn && <EditBtn onClick={() => setModal('personal')} />}
                                 </div>
                                 <Separator />
-                                <InfoGrid items={[
-                                    { label: 'Full Name',      value: name },
+                                <InfoGrid showAll items={[
+                                    { label: 'First Name',     value: user.first_name },
+                                    { label: 'Middle Name',    value: user.middle_name },
+                                    { label: 'Last Name',      value: user.last_name },
                                     { label: 'Sex',            value: pi?.sex },
                                     { label: 'Civil Status',   value: pi?.civil_status },
+                                    { label: 'Suffix',         value: user.name_ext },
+                                    { label: 'Blood Type',     value: pi?.blood_type },
+                                    { label: 'Height (m)',     value: pi?.height },
+                                    { label: 'Weight (kg)',    value: pi?.weight },
+                                    { label: 'Date of Birth',  value: pi?.date_of_birth ? new Date(pi.date_of_birth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
                                     { label: 'Place of Birth', value: pi?.birth_place },
                                     { label: 'Mobile Number',  value: pi?.mobile_number },
                                     { label: 'Email',          value: user.email },
@@ -1126,7 +1291,7 @@ export default function ProfileShow() {
                             <div className="space-y-6">
                                 <div className="flex items-start justify-between">
                                     <h2 className="text-base font-semibold text-green-800">Company Information</h2>
-                                    {(canEditCompany || isOwn) && <EditBtn onClick={() => setModal('company')} />}
+                                    {canEditCompany && <EditBtn onClick={() => setModal('company')} />}
                                 </div>
                                 <Separator />
                                 <InfoGrid items={[
@@ -1138,6 +1303,7 @@ export default function ProfileShow() {
                                     { label: 'Division / Office', value: ep?.division },
                                     { label: 'Section / Unit',    value: ep?.section },
                                     { label: 'Date Hired',        value: ep?.date_hired ? new Date(ep.date_hired).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
+                                    { label: 'Length in Service', value: lengthOfService(ep?.date_hired) },
                                 ]} />
                             </div>
                         )}

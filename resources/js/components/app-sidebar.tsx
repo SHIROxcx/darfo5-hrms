@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, FileText, Folder, LayoutGrid, MessagesSquare, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { Calendar, Database, FileText, Folder, LayoutGrid, MessagesSquare, ShieldCheck, UserCog, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -18,15 +18,30 @@ const commonNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
 ];
 
+const referenceDataNavItem: NavItem = {
+    title: 'Reference Data',
+    href: '/admin/reference-data/divisions',
+    icon: Database,
+    items: [
+        { title: 'Divisions & Sections', href: '/admin/reference-data/divisions' },
+        { title: 'Positions', href: '/admin/reference-data/positions' },
+        { title: 'Eligibilities', href: '/admin/reference-data/eligibilities' },
+        { title: 'Graduate Programs', href: '/admin/reference-data/graduate-programs' },
+        { title: "Bachelor's Degrees", href: '/admin/reference-data/bachelors-degrees' },
+    ],
+};
+
 const superAdminNavItems: NavItem[] = [
     { title: 'User Management', href: '/superadmin/users', icon: ShieldCheck },
     { title: 'Roles & Permissions', href: '/admin/roles', icon: UserCog },
+    referenceDataNavItem,
 ];
 
 const adminNavItems: NavItem[] = [
     { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
     { title: 'Employees', href: '/admin/employees', icon: Users },
     { title: 'Leave Management', href: '/admin/leave', icon: Calendar },
+    referenceDataNavItem,
 ];
 
 const employeeNavItems: NavItem[] = [

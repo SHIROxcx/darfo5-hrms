@@ -106,8 +106,12 @@ class EmployeeController extends Controller
             'personal_info' => $pds ? [
                 'sex'               => $pds->sex,
                 'birth_place'       => $pds->birth_place,
+                'date_of_birth'     => $pds->date_of_birth,
                 'civil_status'      => $pds->civil_status,
                 'mobile_number'     => $pds->mobile_number,
+                'height'            => $pds->height,
+                'weight'            => $pds->weight,
+                'blood_type'        => $pds->blood_type,
                 'agency_employee_no'=> $pds->agency_employee_no,
                 'umid_number'       => $pds->umid_number,
                 'pagibig_number'    => $pds->pagibig_number,

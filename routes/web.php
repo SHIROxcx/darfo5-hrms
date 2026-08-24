@@ -2,6 +2,12 @@
 
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\Admin\ReferenceData\BachelorsDegreeController;
+use App\Http\Controllers\Admin\ReferenceData\DivisionController;
+use App\Http\Controllers\Admin\ReferenceData\EligibilityController;
+use App\Http\Controllers\Admin\ReferenceData\GraduateProgramController;
+use App\Http\Controllers\Admin\ReferenceData\PositionController;
+use App\Http\Controllers\Admin\ReferenceData\SectionController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
@@ -70,6 +76,41 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // ARTA ID Routes
         Route::get('/arta-id/preview/{user}',  [ArtaIdController::class, 'preview'])->name('arta-id.preview');
         Route::get('/arta-id/download/{user}', [ArtaIdController::class, 'download'])->name('arta-id.download');
+    });
+
+// Reference Data management — HR admin and superadmin
+Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
+    ->prefix('admin/reference-data')
+    ->name('admin.reference-data.')
+    ->group(function () {
+        Route::get('/divisions', [DivisionController::class, 'index'])->name('divisions.index');
+        Route::post('/divisions', [DivisionController::class, 'store'])->name('divisions.store');
+        Route::put('/divisions/{division}', [DivisionController::class, 'update'])->name('divisions.update');
+        Route::delete('/divisions/{division}', [DivisionController::class, 'destroy'])->name('divisions.destroy');
+
+        Route::post('/divisions/{division}/sections', [SectionController::class, 'store'])->name('sections.store');
+        Route::put('/sections/{section}', [SectionController::class, 'update'])->name('sections.update');
+        Route::delete('/sections/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
+
+        Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');
+        Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
+        Route::put('/positions/{position}', [PositionController::class, 'update'])->name('positions.update');
+        Route::delete('/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
+
+        Route::get('/eligibilities', [EligibilityController::class, 'index'])->name('eligibilities.index');
+        Route::post('/eligibilities', [EligibilityController::class, 'store'])->name('eligibilities.store');
+        Route::put('/eligibilities/{eligibility}', [EligibilityController::class, 'update'])->name('eligibilities.update');
+        Route::delete('/eligibilities/{eligibility}', [EligibilityController::class, 'destroy'])->name('eligibilities.destroy');
+
+        Route::get('/graduate-programs', [GraduateProgramController::class, 'index'])->name('graduate-programs.index');
+        Route::post('/graduate-programs', [GraduateProgramController::class, 'store'])->name('graduate-programs.store');
+        Route::put('/graduate-programs/{graduateProgram}', [GraduateProgramController::class, 'update'])->name('graduate-programs.update');
+        Route::delete('/graduate-programs/{graduateProgram}', [GraduateProgramController::class, 'destroy'])->name('graduate-programs.destroy');
+
+        Route::get('/bachelors-degrees', [BachelorsDegreeController::class, 'index'])->name('bachelors-degrees.index');
+        Route::post('/bachelors-degrees', [BachelorsDegreeController::class, 'store'])->name('bachelors-degrees.store');
+        Route::put('/bachelors-degrees/{bachelorsDegree}', [BachelorsDegreeController::class, 'update'])->name('bachelors-degrees.update');
+        Route::delete('/bachelors-degrees/{bachelorsDegree}', [BachelorsDegreeController::class, 'destroy'])->name('bachelors-degrees.destroy');
     });
 
 // Authenticated Routes for verified users
