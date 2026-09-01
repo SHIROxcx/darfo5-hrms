@@ -1,11 +1,16 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import axios from 'axios';
+import { useEffect, useRef, useState } from 'react';
 import {
-    Check, Lock, ExternalLink,
+    Check, Lock, ExternalLink, FileDown, Upload,
     Search, Trash2, UserCheck, UserX, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { Spinner } from '@/components/ui/spinner';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import ServiceRecordImportModal from './ServiceRecordImportModal';
+import EmployeeFilters, { type FilterValues } from './EmployeeFilters';
 
 // Types
 
@@ -42,9 +47,17 @@ interface PaginatedEmployees {
     prev_page_url: string | null;
 }
 
+interface Filters {
+    search?: string;
+    status?: string;
+    employment_type?: string;
+    division?: string;
+}
+
 interface Props {
     employees: PaginatedEmployees;
-    filters: { search?: string; status?: string; };
+    filters: Filters;
+    divisions: string[];
 }
 
 // Helpers
@@ -64,6 +77,11 @@ const Toast = Swal.mixin({
     timer: 1500,
     timerProgressBar: true,
 });
+
+function firstErrorMessage(errors: Record<string, string>, fallback: string): string {
+    const values = Object.values(errors);
+    return values.length > 0 ? values[0] : fallback;
+}
 
 // Detail Modal
 
@@ -186,10 +204,21 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
 
 // ── Main Page
 
-export default function Index({ employees, filters }: Props) {
+export default function Index({ employees, filters, divisions }: Props) {
     const [search, setSearch]           = useState(filters.search ?? '');
-    const [status, setStatus]           = useState(filters.status ?? '');
+    const [filterValues, setFilterValues] = useState<FilterValues>({
+        status:          filters.status ?? '',
+        employment_type: filters.employment_type ?? '',
+        division:        filters.division ?? '',
+    });
+    const [isSearching, setIsSearching] = useState(false);
     const [detailModal, setDetailModal] = useState<Employee | null>(null);
+    const [importOpen, setImportOpen]   = useState(false);
+    const [selectedIds, setSelectedIds]     = useState<Set<number>>(new Set());
+    const [generatingPdf, setGeneratingPdf] = useState(false);
+
+    const debouncedSearch = useDebouncedValue(search, 350);
+    const isFirstRun = useRef(true);
 
     const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees.data);
     const [localTotal, setLocalTotal]         = useState<number>(employees.total);
@@ -226,9 +255,97 @@ export default function Index({ employees, filters }: Props) {
         };
     }, []);
 
-    const applyFilters = () => {
-        router.get('/admin/employees', { search, status }, { preserveState: true, replace: true });
-    };
+    function runSearch(nextSearch: string, nextFilters: FilterValues) {
+        const params: Record<string, string> = {};
+        if (nextSearch) params.search = nextSearch;
+        if (nextFilters.status) params.status = nextFilters.status;
+        if (nextFilters.employment_type) params.employment_type = nextFilters.employment_type;
+        if (nextFilters.division) params.division = nextFilters.division;
+
+        router.get('/admin/employees', params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['employees'],
+            onStart: () => setIsSearching(true),
+            onFinish: () => setIsSearching(false),
+        });
+    }
+
+    // Debounced live search — skips the very first run so page-load doesn't
+    // immediately re-request itself with the same filters it was just given.
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+        runSearch(debouncedSearch, filterValues);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearch]);
+
+    function handleFilterChange(patch: Partial<FilterValues>) {
+        const next = { ...filterValues, ...patch };
+        setFilterValues(next);
+        runSearch(search, next);
+    }
+
+    function toggleSelected(id: number) {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    }
+
+    const allOnPageSelected = localEmployees.length > 0 && localEmployees.every(e => selectedIds.has(e.id));
+
+    function toggleSelectAllOnPage() {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allOnPageSelected) {
+                localEmployees.forEach(e => next.delete(e.id));
+            } else {
+                localEmployees.forEach(e => next.add(e.id));
+            }
+            return next;
+        });
+    }
+
+    async function generateBulkPdf() {
+        if (selectedIds.size === 0 || generatingPdf) return;
+        setGeneratingPdf(true);
+        try {
+            const response = await axios.post(
+                '/admin/service-records/pdf/bulk',
+                { user_ids: Array.from(selectedIds) },
+                { responseType: 'blob' }
+            );
+            const blob = new Blob([response.data], { type: 'application/zip' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Service_Records_${new Date().toISOString().slice(0, 10)}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            Toast.fire({ icon: 'success', title: `Generated ${selectedIds.size} Service Record PDF${selectedIds.size !== 1 ? 's' : ''}.` });
+            setSelectedIds(new Set());
+        } catch (err) {
+            let message = 'Failed to generate Service Record PDFs.';
+            if (axios.isAxiosError(err) && err.response?.data instanceof Blob) {
+                try {
+                    const json = JSON.parse(await err.response.data.text());
+                    message = json.message ?? firstErrorMessage(json.errors ?? {}, message);
+                } catch {
+                    // response wasn't JSON — fall back to the generic message
+                }
+            }
+            Toast.fire({ icon: 'error', title: message });
+        } finally {
+            setGeneratingPdf(false);
+        }
+    }
 
     const approve = (emp: Employee) => {
         Swal.fire({
@@ -248,7 +365,7 @@ export default function Index({ employees, filters }: Props) {
                         setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: true } : e));
                         Toast.fire({ icon: 'success', title: getFullName(emp) + ' has been approved.' });
                     },
-                    onError: () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
+                    onError: (errors) => Toast.fire({ icon: 'error', title: firstErrorMessage(errors, 'Something went wrong.') }),
                 });
             }
         });
@@ -280,7 +397,7 @@ export default function Index({ employees, filters }: Props) {
                                 : getFullName(emp) + ' has been approved.',
                         });
                     },
-                    onError: () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
+                    onError: (errors) => Toast.fire({ icon: 'error', title: firstErrorMessage(errors, 'Something went wrong.') }),
                 });
             }
         });
@@ -323,16 +440,41 @@ export default function Index({ employees, filters }: Props) {
                 />
             )}
 
+            {importOpen && (
+                <ServiceRecordImportModal
+                    onClose={() => setImportOpen(false)}
+                    onImported={() => router.reload({ only: ['employees'] })}
+                />
+            )}
+
             <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        {localTotal} total employee{localTotal !== 1 ? 's' : ''}
-                    </p>
+                <div className="mb-6 flex items-start justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {localTotal} total employee{localTotal !== 1 ? 's' : ''}
+                        </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <button
+                            onClick={generateBulkPdf}
+                            disabled={selectedIds.size === 0 || generatingPdf}
+                            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                        >
+                            {generatingPdf ? <Spinner className="h-4 w-4" /> : <FileDown className="h-4 w-4" />}
+                            Generate Service Records{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+                        </button>
+                        <button
+                            onClick={() => setImportOpen(true)}
+                            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition"
+                        >
+                            <Upload className="h-4 w-4" /> Import Service Records
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="mb-4 flex gap-3 flex-wrap">
+                <div className="mb-4 flex gap-3 flex-wrap items-start">
                     <div className="relative flex-1 min-w-50">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -340,33 +482,35 @@ export default function Index({ employees, filters }: Props) {
                             placeholder="Search name, email, employee no., position..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && applyFilters()}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                     </div>
-                    <select
-                        value={status}
-                        onChange={e => setStatus(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="pending">Pending Approval</option>
-                    </select>
-                    <button
-                        onClick={applyFilters}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 cursor-pointer transition"
-                    >
-                        Search
-                    </button>
+                    <EmployeeFilters
+                        values={filterValues}
+                        divisions={divisions}
+                        onChange={handleFilterChange}
+                    />
                 </div>
 
                 {/* Table */}
-                <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 overflow-x-auto border-collapse">
+                <div className="relative bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 overflow-x-auto border-collapse">
+                    {isSearching && (
+                        <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-10">
+                            <Spinner className="h-6 w-6 text-green-600" />
+                        </div>
+                    )}
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs tracking-wider">
                             <tr>
+                                <th className="px-4 py-5 text-left w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={allOnPageSelected}
+                                        onChange={toggleSelectAllOnPage}
+                                        className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                                        aria-label="Select all on this page"
+                                    />
+                                </th>
                                 <th className="px-4 py-5 text-left">Employee</th>
                                 <th className="px-4 py-5 text-left">Employee No.</th>
                                 <th className="px-4 py-5 text-left">Position</th>
@@ -380,7 +524,7 @@ export default function Index({ employees, filters }: Props) {
                         <tbody className="divide-y divide-gray-100">
                             {localEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-12 text-gray-400 italic">No employees found.</td>
+                                    <td colSpan={9} className="text-center py-12 text-gray-400 italic">No employees found.</td>
                                 </tr>
                             ) : (
                                 localEmployees.map(emp => (
@@ -389,6 +533,15 @@ export default function Index({ employees, filters }: Props) {
                                         onClick={() => setDetailModal(emp)}
                                         className="hover:bg-gray-50 cursor-pointer transition"
                                     >
+                                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.has(emp.id)}
+                                                onChange={() => toggleSelected(emp.id)}
+                                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                                                aria-label={`Select ${getFullName(emp)}`}
+                                            />
+                                        </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 {emp.photo ? (
@@ -473,10 +626,10 @@ export default function Index({ employees, filters }: Props) {
                         <p>Page {employees.current_page} of {employees.last_page}</p>
                         <div className="flex gap-2">
                             {employees.prev_page_url && (
-                                <a href={employees.prev_page_url} className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Previous</a>
+                                <Link href={employees.prev_page_url} preserveScroll className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Previous</Link>
                             )}
                             {employees.next_page_url && (
-                                <a href={employees.next_page_url} className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Next</a>
+                                <Link href={employees.next_page_url} preserveScroll className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Next</Link>
                             )}
                         </div>
                     </div>

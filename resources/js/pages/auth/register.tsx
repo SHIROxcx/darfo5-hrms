@@ -330,7 +330,7 @@ export default function Register() {
                 <div className="flex items-center gap-2">
                     <img src="/images/da-masarig-logo.png" alt="DA RFO 5 Logo" className="h-14 w-14 object-contain" />
                     <div>
-                        <h1 className="text-xl font-bold text-green-700">DA RFO 5 — HRMS</h1>
+                        <h1 className="text-xl font-bold text-green-700">DA RFO 5 — HRIS</h1>
                         <p className="text-sm text-gray-500">Employee Registration Portal</p>
                     </div>
                 </div>
@@ -347,10 +347,10 @@ export default function Register() {
                 {step === 1 && (
                     <div>
                         <div className="px-6 sm:px-16 py-10">
-                            <h2 className="text-lg font-bold text-center text-gray-800 mb-6">HRMS Terms and Conditions</h2>
+                            <h2 className="text-lg font-bold text-center text-gray-800 mb-6">HRIS Terms and Conditions</h2>
                             <div className="p-6 text-sm text-gray-700 leading-relaxed text-justify">
                                 <p className="mb-4">
-                                    By signing in for my user account at the <strong>DA RFO 5 HRMS</strong>, I hereby acknowledge
+                                    By signing in for my user account at the <strong>DA RFO 5 HRIS</strong>, I hereby acknowledge
                                     that I have read and understood the Data Privacy Notice. I agree to provide my personal data at
                                     the Electronic Personal Data Sheet (e-PDS), pursuant to <strong>CSC Resolution No. 2500358</strong> promulgated on April 30, 2025.
                                 </p>

@@ -106,7 +106,7 @@ export default function EmployeeId({ found, employee }: Props) {
                             </>
                         )}
 
-                        <p className="mt-6 text-xs text-gray-400">DARFO 5 HRMS — Employee Verification</p>
+                        <p className="mt-6 text-xs text-gray-400">DARFO 5 HRIS — Employee Verification</p>
                     </div>
                 </main>
 

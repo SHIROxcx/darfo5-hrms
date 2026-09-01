@@ -6,7 +6,7 @@ import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
 import axios from 'axios';
 
-const appName = import.meta.env.VITE_APP_NAME || 'HRMS';
+const appName = import.meta.env.VITE_APP_NAME || 'HRIS';
 
 axios.interceptors.response.use(
     response => response,

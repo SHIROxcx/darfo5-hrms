@@ -27,6 +27,7 @@ class UserProfileController extends Controller
             'pdsPersonalInfo',
             'pdsEducation',
             'pdsEligibilities',
+            'serviceRecords',
         ])->findOrFail($targetId);
 
         $isOwn   = $authUser->id === (int) $targetId;
@@ -40,6 +41,7 @@ class UserProfileController extends Controller
             'profileUser'    => $this->formatUser($user),
             'canEditCompany' => $authUser->can('manage employees'),
             'pdsData'        => $this->getPdsData($targetId),   // ← confirm this line exists
+            'serviceRecords' => $user->serviceRecords,
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
         ]);
@@ -126,29 +128,6 @@ class UserProfileController extends Controller
         }
 
         return back()->with('success', 'Company information updated.');
-    }
-
-    /**
-     * Update government IDs (pds_personal_info table).
-     */
-    public function updateGovernment(Request $request, int $userId)
-    {
-        $this->authorizeProfileEdit($userId);
-
-        $data = $request->validate([
-            'umid_number'       => 'nullable|string',
-            'pagibig_number'    => 'nullable|string',
-            'philsys_number'    => 'nullable|string',
-            'philhealth_number' => 'nullable|string',
-            'tin_number'        => 'nullable|string',
-        ]);
-
-        PdsPersonalInfo::updateOrCreate(
-            ['user_id' => $userId],
-            $data
-        );
-
-        return back()->with('success', 'Government IDs updated.');
     }
 
     /**

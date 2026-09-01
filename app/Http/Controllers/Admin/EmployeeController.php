@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\BuildsPdsData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class EmployeeController extends Controller
@@ -37,13 +38,20 @@ class EmployeeController extends Controller
                     $query->where('is_approved', false);
                 }
             })
+            ->when($request->employment_type, function ($query, $employmentType) {
+                $query->whereHas('employeeProfile', fn($q) => $q->where('employment_type', $employmentType));
+            })
+            ->when($request->division, function ($query, $division) {
+                $query->whereHas('employeeProfile', fn($q) => $q->where('division', $division));
+            })
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Admin/Employees/Index', [
             'employees' => $employees,
-            'filters'   => $request->only(['search', 'status']),
+            'filters'   => $request->only(['search', 'status', 'employment_type', 'division']),
+            'divisions' => \App\Models\Division::orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -54,12 +62,14 @@ class EmployeeController extends Controller
             'pdsPersonalInfo',
             'pdsEducation',
             'pdsEligibilities',
+            'serviceRecords',
         ]);
 
         return Inertia::render('Profile/Show', [
             'profileUser'    => $this->formatUser($user),
             'canEditCompany' => true,
             'pdsData'        => $this->getPdsData($user->id),
+            'serviceRecords' => $user->serviceRecords,
             'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
             'sectionAbbreviations'  => \App\Models\Section::pluck('abbreviation', 'name'),
             'bachelorsDegrees'  => \App\Models\BachelorsDegree::orderBy('degree')->get(['id', 'degree', 'abbreviation']),
@@ -160,7 +170,9 @@ class EmployeeController extends Controller
     public function approve(User $user)
     {
         if (! $user->hasVerifiedEmail()) {
-            return back()->with('error', 'This employee has not verified their email yet.');
+            throw ValidationException::withMessages([
+                'is_approved' => 'This employee has not verified their email yet.',
+            ]);
         }
 
         $user->update(['is_approved' => true]);
@@ -172,7 +184,15 @@ class EmployeeController extends Controller
 
     public function toggleApproval(User $user)
     {
-        $user->update(['is_approved' => ! $user->is_approved]);
+        $willApprove = ! $user->is_approved;
+
+        if ($willApprove && ! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'is_approved' => 'This employee has not verified their email yet.',
+            ]);
+        }
+
+        $user->update(['is_approved' => $willApprove]);
 
         if ($user->is_approved) {
             $user->notify(new \App\Notifications\AccountApprovedNotification());

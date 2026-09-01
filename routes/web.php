@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\ReferenceData\EligibilityController;
 use App\Http\Controllers\Admin\ReferenceData\GraduateProgramController;
 use App\Http\Controllers\Admin\ReferenceData\PositionController;
 use App\Http\Controllers\Admin\ReferenceData\SectionController;
+use App\Http\Controllers\Admin\ServiceRecordBulkPdfController;
+use App\Http\Controllers\Admin\ServiceRecordController;
+use App\Http\Controllers\Admin\ServiceRecordImportController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
@@ -18,6 +21,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PdsController;
 use App\Http\Controllers\PdsPdfController;
 use App\Http\Controllers\PublicEmployeeController;
+use App\Http\Controllers\ServiceRecordPdfController;
 use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\WesController;
@@ -113,6 +117,22 @@ Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
         Route::delete('/bachelors-degrees/{bachelorsDegree}', [BachelorsDegreeController::class, 'destroy'])->name('bachelors-degrees.destroy');
     });
 
+// Service Records — HR admin and superadmin
+Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('/employees/{user}/service-records', [ServiceRecordController::class, 'store'])->name('service-records.store');
+        Route::put('/service-records/{serviceRecord}', [ServiceRecordController::class, 'update'])->name('service-records.update');
+        Route::delete('/service-records/{serviceRecord}', [ServiceRecordController::class, 'destroy'])->name('service-records.destroy');
+
+        Route::get('/service-records/import/template', [ServiceRecordImportController::class, 'template'])->name('service-records.import.template');
+        Route::post('/service-records/import/preview', [ServiceRecordImportController::class, 'preview'])->name('service-records.import.preview');
+        Route::post('/service-records/import/commit', [ServiceRecordImportController::class, 'commit'])->name('service-records.import.commit');
+
+        Route::post('/service-records/pdf/bulk', [ServiceRecordBulkPdfController::class, 'bulk'])->name('service-records.pdf.bulk');
+    });
+
 // Authenticated Routes for verified users
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -124,7 +144,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/personal',             [UserProfileController::class, 'updatePersonal'])->name('profile.personal');
     Route::post('/profile/{id}/personal',        [UserProfileController::class, 'updatePersonalFor'])->name('profile.personal.for');
     Route::post('/profile/{id}/company',         [UserProfileController::class, 'updateCompany'])->name('profile.company');
-    Route::post('/profile/{id}/government',      [UserProfileController::class, 'updateGovernment'])->name('profile.government');
     Route::post('/profile/{userId}/degree',      [UserProfileController::class, 'storeDegree'])->name('profile.degree.store');
     Route::post('/profile/degree/{id}',          [UserProfileController::class, 'updateDegree'])->name('profile.degree.update');
     Route::post('/profile/{userId}/program',     [UserProfileController::class, 'storeGraduateStudy'])->name('profile.program.store');
@@ -186,6 +205,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // PDS Work Experience Sheet Section
     Route::get('/pds/wes/preview/{userId?}',  [WesController::class, 'preview'])->name('pds.wes.preview');
     Route::get('/pds/wes/download/{userId?}', [WesController::class, 'download'])->name('pds.wes.download');
+
+    // Service Record PDF (AFD-HRMS-012-0)
+    Route::get('/service-records/pdf/preview/{userId?}',  [ServiceRecordPdfController::class, 'preview'])->name('service-records.pdf.preview');
+    Route::get('/service-records/pdf/download/{userId?}', [ServiceRecordPdfController::class, 'download'])->name('service-records.pdf.download');
 
     // Location Routes
     Route::prefix('api/locations')->group(function () {

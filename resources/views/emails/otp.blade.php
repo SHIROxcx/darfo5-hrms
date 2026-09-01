@@ -3,7 +3,7 @@
 
 Hello, **{{ $firstName }}**!
 
-To complete your registration at **DA RFO 5 HRMS**, please use the verification code below:
+To complete your registration at **DA RFO 5 HRIS**, please use the verification code below:
     
 <x-mail::panel>
 # {{ $otp }}

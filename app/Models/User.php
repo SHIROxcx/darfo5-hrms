@@ -101,5 +101,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(LeaveCredit::class);
     }
- 
+
+    public function serviceRecords(): HasMany
+    {
+        return $this->hasMany(ServiceRecord::class)->orderBy('date_from');
+    }
+
 }

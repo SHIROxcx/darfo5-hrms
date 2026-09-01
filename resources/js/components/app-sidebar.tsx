@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, Database, FileText, Folder, LayoutGrid, MessagesSquare, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { Calendar, FileText, Folder, LayoutGrid, MessagesSquare, Settings, ShieldCheck, UserCog, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -19,9 +19,9 @@ const commonNavItems: NavItem[] = [
 ];
 
 const referenceDataNavItem: NavItem = {
-    title: 'Reference Data',
+    title: 'Settings',
     href: '/admin/reference-data/divisions',
-    icon: Database,
+    icon: Settings,
     items: [
         { title: 'Divisions & Sections', href: '/admin/reference-data/divisions' },
         { title: 'Positions', href: '/admin/reference-data/positions' },
@@ -39,7 +39,7 @@ const superAdminNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
     { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
-    { title: 'Employees', href: '/admin/employees', icon: Users },
+    { title: 'Manage Employees', href: '/admin/employees', icon: Users },
     { title: 'Leave Management', href: '/admin/leave', icon: Calendar },
     referenceDataNavItem,
 ];

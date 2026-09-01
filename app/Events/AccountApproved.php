@@ -28,7 +28,7 @@ class AccountApproved implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'message' => 'Welcome to DARFO 5 - HRMS!',
+            'message' => 'Welcome to DARFO 5 - HRIS!',
             'url'     => '/dashboard',
         ];
     }

@@ -1,8 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
-    Camera, Pencil, Plus,
-    GraduationCap, Award, MessagesSquare, BadgeCheck, X,
-    Dot, ZoomIn, ZoomOut, RotateCw, Check,
+    Camera, Pencil,
+    MessagesSquare, X,
+    ZoomIn, ZoomOut, RotateCw, Check,
     SquareUser,
     Image,
     Download, Printer,
@@ -13,88 +13,18 @@ import { cn } from '@/lib/utils';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Spinner } from '@/components/ui/spinner';
-import { Separator } from '@/components/ui/separator';
 import Swal from 'sweetalert2';
 
 import type { PdsData } from '@/types/pds';
 import { calculatePdsCompletion } from '@/lib/pds-completion';
+import ServiceRecordSection, { type ServiceRecordRow } from '@/pages/Profile/sections/ServiceRecordSection';
+import PersonalSection from '@/pages/Profile/sections/PersonalSection';
+import CompanySection from '@/pages/Profile/sections/CompanySection';
+import EducationSection from '@/pages/Profile/sections/EducationSection';
+import EligibilitySection from '@/pages/Profile/sections/EligibilitySection';
+import type { ProfileUser } from '@/pages/Profile/types';
 
 // Types
-
-interface EmployeeProfile {
-    employee_number: string | null;
-    employment_type: string | null;
-    position: string | null;
-    salary_grade: string | null;
-    place_assign: string | null;
-    division: string | null;
-    section: string | null;
-    date_hired: string | null;
-    is_active: boolean;
-}
-
-interface PersonalInfo {
-    sex: 'Male' | 'Female' | null;
-    birth_place: string | null;
-    date_of_birth: string | null;
-    civil_status: string | null;
-    mobile_number: string | null;
-    height: string | null;
-    weight: string | null;
-    blood_type: string | null;
-    agency_employee_no: string | null;
-    umid_number: string | null;
-    pagibig_number: string | null;
-    philhealth_number: string | null;
-    philsys_number: string | null;
-    tin_number: string | null;
-}
-
-interface Degree {
-    id: number;
-    degree: string | null;
-    school_name: string | null;
-    period_from: string | null;
-    period_to: string | null;
-    year_graduated: string | null;
-    honors_received: string | null;
-}
-
-interface GraduateStudy {
-    id: number;
-    program: string | null;
-    school_name: string | null;
-    period_from: string | null;
-    period_to: string | null;
-}
-
-interface UserEligibility {
-    id: number;
-    eligibility: string | null;
-    rating: string | null;
-    date_of_examination: string | null;
-    place_of_examination: string | null;
-    license_number: string | null;
-    license_validity: string | null;
-}
-
-interface ProfileUser {
-    id: number;
-    name: string;
-    first_name: string | null;
-    middle_name: string | null;
-    last_name: string | null;
-    name_ext: string | null;
-    email: string;
-    photo: string | null;
-    is_approved: boolean;
-    roles: string[];
-    employee_profile: EmployeeProfile | null;
-    personal_info: PersonalInfo | null;
-    degrees: Degree[];
-    graduate_studies: GraduateStudy[];
-    eligibilities: UserEligibility[];
-}
 
 interface DivisionData { id: number; name: string; sections: { id: number; name: string }[] }
 interface PositionData  { id: number; title: string; salary_grade: number }
@@ -103,7 +33,8 @@ interface PageProps {
     auth: { user: { id: number; roles: string[] } };
     profileUser: ProfileUser;
     canEditCompany: boolean;
-    pdsData: PdsData; 
+    pdsData: PdsData;
+    serviceRecords: ServiceRecordRow[];
     divisionAbbreviations: Record<string, string>;
     sectionAbbreviations: Record<string, string>;
     [key: string]: unknown;
@@ -119,30 +50,6 @@ function getInitials(u: ProfileUser) {
 function fullName(u: ProfileUser) {
     const mid = u.middle_name ? u.middle_name[0].toUpperCase() + '.' : null;
     return [u.first_name, mid, u.last_name, u.name_ext].filter(Boolean).join(' ') || u.name;
-}
-
-function educationPeriod(from: string | null, to: string | null) {
-    if (!from && !to) return null;
-    return [from || '—', to || 'Present'].join(' – ');
-}
-
-function lengthOfService(dateHired: string | null | undefined): string | null {
-    if (!dateHired) return null;
-    const start = new Date(dateHired);
-    if (isNaN(start.getTime())) return null;
-
-    const now = new Date();
-    let years = now.getFullYear() - start.getFullYear();
-    let months = now.getMonth() - start.getMonth();
-    if (now.getDate() < start.getDate()) months -= 1;
-    if (months < 0) { years -= 1; months += 12; }
-    if (years < 0) return null;
-
-    if (years === 0 && months === 0) return 'Less than a month';
-    const parts: string[] = [];
-    if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
-    if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
-    return parts.join(', ');
 }
 
 // Photo Crop Modal
@@ -443,39 +350,6 @@ function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () =
 }
 
 // Shared UI
-
-function EditBtn({ onClick }: { onClick: () => void }) {
-    return (
-        <button onClick={onClick}
-            className="flex cursor-pointer items-center gap-1.5 rounded-full p-1.5 text-xs font-semibold text-white hover:bg-green-700 transition bg-green-600">
-            <Pencil className="h-5 w-5" />
-        </button>
-    );
-}
-
-function InfoGrid({ items, showAll }: { items: { label: string; value: string | null | undefined }[]; showAll?: boolean }) {
-    const visible = showAll ? items : items.filter(i => i.value);
-    if (!visible.length) return <p className="text-sm text-gray-400 italic">No information available.</p>;
-    return (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map(({ label, value }) => (
-                <div key={label}>
-                    <p className="text-xs text-gray-400 mb-0.5 uppercase tracking-wide">{label}</p>
-                    <p className={cn('text-sm font-medium', value ? 'text-gray-800' : 'text-gray-400 italic')}>{value || 'Not set'}</p>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-green-900">{title}</h3>
-            {children}
-        </div>
-    );
-}
 
 // Modals
 
@@ -799,37 +673,6 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
     );
 }
 
-function EditGovernmentModal({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
-    const pi = user.personal_info;
-    const [form, setForm] = useState({ umid_number: pi?.umid_number ?? '', pagibig_number: pi?.pagibig_number ?? '', philsys_number: pi?.philsys_number ?? '', philhealth_number: pi?.philhealth_number ?? '', tin_number: pi?.tin_number ?? '' });
-    const [saving, setSaving] = useState(false);
-    const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
-    function save() {
-        setSaving(true);
-        router.post('/profile/' + user.id + '/government', form, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSaving(false);
-                onClose();
-                Toast.fire({ icon: 'success', title: 'Government IDs updated.' });
-            },
-            onError: (serverErrors) => {
-                setSaving(false);
-                Toast.fire({ icon: 'error', title: firstErrorMessage(serverErrors as Record<string, string>, 'Failed to update government IDs.') });
-            },
-        });
-    }
-    return (
-        <ModalShell title="Edit Government IDs" onClose={onClose} onSave={save} saving={saving}>
-            <Field label="UMID Number"><input value={form.umid_number} onChange={set('umid_number')} className={inputCls} /></Field>
-            <Field label="Pag-IBIG Number"><input value={form.pagibig_number} onChange={set('pagibig_number')} className={inputCls} /></Field>
-            <Field label="PhilSys Number"><input value={form.philsys_number} onChange={set('philsys_number')} className={inputCls} /></Field>
-            <Field label="PhilHealth Number"><input value={form.philhealth_number} onChange={set('philhealth_number')} className={inputCls} /></Field>
-            <Field label="TIN Number"><input value={form.tin_number} onChange={set('tin_number')} className={inputCls} /></Field>
-        </ModalShell>
-    );
-}
-
 // Completion Donut
 
 function CompletionDonut({ percent, isOwn }: { percent: number; isOwn: boolean }) {
@@ -858,13 +701,13 @@ function CompletionDonut({ percent, isOwn }: { percent: number; isOwn: boolean }
 
 // Nav
 
-type Section = 'personal' | 'company' | 'education' | 'eligibility' | 'government';
+type Section = 'personal' | 'company' | 'education' | 'eligibility' | 'service-record';
 const navItems: { id: Section; label: string }[] = [
-    { id: 'personal',    label: 'About' },
-    { id: 'company',     label: 'Agency' },
-    { id: 'education',   label: 'Education' },
-    { id: 'eligibility', label: 'Eligibility' },
-    { id: 'government',  label: 'Government IDs' },
+    { id: 'personal',       label: 'About' },
+    { id: 'company',        label: 'Agency' },
+    { id: 'education',      label: 'Education' },
+    { id: 'eligibility',    label: 'Eligibility' },
+    { id: 'service-record', label: 'Service Record' },
 ];
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Profile', href: '/profile' }];
@@ -872,10 +715,9 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Profile', href: '/profile' }
 // Main Page
 
 export default function ProfileShow() {
-    const { auth, profileUser: user, canEditCompany, pdsData } = usePage<PageProps>().props;
+    const { auth, profileUser: user, canEditCompany, pdsData, serviceRecords } = usePage<PageProps>().props;
 
     const ep       = user.employee_profile;
-    const pi       = user.personal_info;
     const isOwn    = auth.user.id === user.id;
     const name     = fullName(user);
     const avatar   = user.photo ? '/storage/' + user.photo : null;
@@ -897,7 +739,7 @@ export default function ProfileShow() {
     // Photo crop state
     const [cropSrc,      setCropSrc]      = useState<string | null>(null);
     const [photoSaving,  setPhotoSaving]  = useState(false);
-    const [modal, setModal] = useState<'personal' | 'company' | 'government' | null>(null);
+    const [modal, setModal] = useState<'personal' | 'company' | null>(null);
 
     const [viewingPhoto, setViewingPhoto] = useState(false);
 
@@ -1012,16 +854,14 @@ export default function ProfileShow() {
         };
     }, [docMenuOpen]);
 
-    const visibleNav = navItems.filter(n => n.id !== 'government' || canEditCompany || isOwn);
-
     const TabBar = () => {
         const [moreOpen, setMoreOpen] = useState(false);
-        const mobileHidden = visibleNav.slice(3);
+        const mobileHidden = navItems.slice(3);
         return (
             <div className="bg-white border-b border-gray-200 rounded-none sm:rounded-b-2xl shadow-sm">
                 <div className="flex items-center px-4 sm:px-6">
                     <nav className="flex flex-1 relative">
-                        {visibleNav.map(({ id, label }, idx) => (
+                        {navItems.map(({ id, label }, idx) => (
                             <button key={id} onClick={() => setActiveSection(id)}
                                 className={cn('relative shrink-0 cursor-pointer px-4 py-3.5 text-sm font-semibold transition whitespace-nowrap',
                                     idx >= 3 ? 'hidden sm:block' : '',
@@ -1086,9 +926,8 @@ export default function ProfileShow() {
             )}
 
             {/* Other Modals */}
-            {modal === 'personal'   && <EditPersonalModal   user={user} isOwn={isOwn} onClose={() => setModal(null)} />}
-            {modal === 'company'    && <EditCompanyModal    user={user} onClose={() => setModal(null)} />}
-            {modal === 'government' && <EditGovernmentModal user={user} onClose={() => setModal(null)} />}
+            {modal === 'personal' && <EditPersonalModal user={user} isOwn={isOwn} onClose={() => setModal(null)} />}
+            {modal === 'company'  && <EditCompanyModal  user={user} onClose={() => setModal(null)} />}
             {showArtaPreview && (
                 <ArtaIdPreviewModal userId={user.id} onClose={() => setShowArtaPreview(false)} />
             )}
@@ -1263,129 +1102,27 @@ export default function ProfileShow() {
                     <div className="flex-1 min-w-0 w-full rounded-2xl bg-white shadow-sm px-5 sm:px-8 py-8">
 
                         {activeSection === 'personal' && (
-                            <div className="space-y-5">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="text-base font-semibold text-green-800">Overview</h2>
-                                    {isOwn && <EditBtn onClick={() => setModal('personal')} />}
-                                </div>
-                                <Separator />
-                                <InfoGrid showAll items={[
-                                    { label: 'First Name',     value: user.first_name },
-                                    { label: 'Middle Name',    value: user.middle_name },
-                                    { label: 'Last Name',      value: user.last_name },
-                                    { label: 'Sex',            value: pi?.sex },
-                                    { label: 'Civil Status',   value: pi?.civil_status },
-                                    { label: 'Suffix',         value: user.name_ext },
-                                    { label: 'Blood Type',     value: pi?.blood_type },
-                                    { label: 'Height (m)',     value: pi?.height },
-                                    { label: 'Weight (kg)',    value: pi?.weight },
-                                    { label: 'Date of Birth',  value: pi?.date_of_birth ? new Date(pi.date_of_birth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
-                                    { label: 'Place of Birth', value: pi?.birth_place },
-                                    { label: 'Mobile Number',  value: pi?.mobile_number },
-                                    { label: 'Email',          value: user.email },
-                                ]} />
-                            </div>
+                            <PersonalSection user={user} isOwn={isOwn} onEdit={() => setModal('personal')} />
                         )}
 
                         {activeSection === 'company' && (
-                            <div className="space-y-6">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="text-base font-semibold text-green-800">Company Information</h2>
-                                    {canEditCompany && <EditBtn onClick={() => setModal('company')} />}
-                                </div>
-                                <Separator />
-                                <InfoGrid items={[
-                                    { label: 'Employee No.',      value: ep?.employee_number },
-                                    { label: 'Position',          value: ep?.position },
-                                    { label: 'Employment Type',   value: ep?.employment_type },
-                                    { label: 'Salary Grade',      value: ep?.salary_grade },
-                                    { label: 'Agency',            value: ep?.place_assign },
-                                    { label: 'Division / Office', value: ep?.division },
-                                    { label: 'Section / Unit',    value: ep?.section },
-                                    { label: 'Date Hired',        value: ep?.date_hired ? new Date(ep.date_hired).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null },
-                                    { label: 'Length in Service', value: lengthOfService(ep?.date_hired) },
-                                ]} />
-                            </div>
+                            <CompanySection user={user} canEditCompany={canEditCompany} onEdit={() => setModal('company')} />
                         )}
 
                         {activeSection === 'education' && (
-                            <div className="space-y-6">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="text-base font-semibold text-green-800">Education</h2>
-                                </div>
-                                <Separator />
-                                <SectionBlock title="Bachelor's Degree">
-                                    {user.degrees.length === 0
-                                        ? <p className="text-sm text-gray-400 italic">No college education records found in PDS.</p>
-                                        : <div className="space-y-3">{user.degrees.map(d => (
-                                            <div key={d.id} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white"><GraduationCap className="h-5 w-5" /></div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-700 text-sm">{d.degree ?? '—'}</p>
-                                                    {d.school_name && <p className="text-xs text-gray-500 mt-0.5">{d.school_name}</p>}
-                                                    <p className="text-xs text-gray-400 mt-0.5">{educationPeriod(d.period_from, d.period_to) ?? '—'}{d.year_graduated && <><Dot className="w-5 h-5 inline" />Graduated {d.year_graduated}</>}</p>
-                                                    {d.honors_received && <p className="text-xs text-green-700 mt-0.5">{d.honors_received}</p>}
-                                                </div>
-                                            </div>
-                                        ))}</div>
-                                    }
-                                </SectionBlock>
-                                <SectionBlock title="Graduate Studies">
-                                    {user.graduate_studies.length === 0
-                                        ? <p className="text-sm text-gray-400 italic">No graduate studies records found in PDS.</p>
-                                        : <div className="space-y-3">{user.graduate_studies.map(g => (
-                                            <div key={g.id} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white"><GraduationCap className="h-5 w-5" /></div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-900 text-sm">{g.program ?? '—'}</p>
-                                                    {g.school_name && <p className="text-xs text-gray-500 mt-0.5">{g.school_name}</p>}
-                                                    <p className="text-xs text-gray-400 mt-0.5">{educationPeriod(g.period_from, g.period_to) ?? '—'}</p>
-                                                </div>
-                                            </div>
-                                        ))}</div>
-                                    }
-                                </SectionBlock>
-                            </div>
+                            <EducationSection user={user} />
                         )}
 
                         {activeSection === 'eligibility' && (
-                            <div className="space-y-6">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="text-base font-semibold text-green-800">Eligibilities & Licenses</h2>
-                                </div>
-                                <Separator />
-                                {user.eligibilities.length === 0
-                                    ? <p className="text-sm text-gray-400 italic">No eligibility records found in PDS.</p>
-                                    : <div className="space-y-3">{user.eligibilities.map(e => (
-                                        <div key={e.id} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white"><Award className="h-5 w-5" /></div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-gray-900">{e.eligibility ?? '—'}</p>
-                                                {e.date_of_examination && <p className="text-xs text-gray-500">{new Date(e.date_of_examination).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>}
-                                                {e.place_of_examination && <p className="text-xs text-gray-500">{e.place_of_examination}</p>}
-                                                {e.rating && <p className="text-xs text-gray-500">Rating: {e.rating}</p>}
-                                                {e.license_number && <p className="text-xs text-gray-500 mt-0.5">License No. {e.license_number}{e.license_validity && ` · Valid until ${new Date(e.license_validity).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}</p>}
-                                            </div>
-                                        </div>
-                                    ))}</div>
-                                }
-                            </div>
+                            <EligibilitySection user={user} />
                         )}
 
-                        {activeSection === 'government' && (
-                            <div className="space-y-6">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="text-base font-semibold text-green-800">Government Issued IDs</h2>
-                                </div>
-                                <Separator />
-                                <InfoGrid items={[
-                                    { label: 'UMID Number',       value: pi?.umid_number },
-                                    { label: 'Pag-IBIG Number',   value: pi?.pagibig_number },
-                                    { label: 'PhilSys Number',    value: pi?.philsys_number },
-                                    { label: 'PhilHealth Number', value: pi?.philhealth_number },
-                                    { label: 'TIN Number',        value: pi?.tin_number },
-                                ]} />
-                            </div>
+                        {activeSection === 'service-record' && (
+                            <ServiceRecordSection
+                                serviceRecords={serviceRecords}
+                                userId={user.id}
+                                canEdit={canEditCompany}
+                            />
                         )}
 
                     </div>

@@ -61,7 +61,7 @@ export default function Welcome({
                 <main className="relative z-20 flex flex-1 flex-col items-center justify-center gap-6 text-center">
                     <div className='mt-60 sm:mt-96'>
                         <h1 className="text-4xl font-bold tracking-widest text-white drop-shadow-lg sm:text-5xl md:text-7xl">
-                            HRMS
+                            HRIS
                         </h1>
                         <p className="mt-2 text-sm font-medium text-white/80">
                             Human Resource Management System

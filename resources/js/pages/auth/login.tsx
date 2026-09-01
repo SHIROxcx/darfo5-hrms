@@ -76,7 +76,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                         />
                     </div>
 
-                    <h2 className="text-green-700 text-center text-3xl font-semibold mb-5">HRMS</h2>
+                    <h2 className="text-green-700 text-center text-3xl font-semibold mb-5">HRIS</h2>
 
                     {/* Session Status */}
                     {status && (
