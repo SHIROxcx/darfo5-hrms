@@ -8,10 +8,15 @@ class PdfBrowsershot
 {
     public static function make(string $html): Browsershot
     {
-        $browsershot = Browsershot::html($html)
-            ->setNodeBinary(config('services.browsershot.node_binary'))
-            ->setNpmBinary(config('services.browsershot.npm_binary'))
-            ->noSandbox();
+        $browsershot = Browsershot::html($html)->noSandbox();
+
+        if ($nodeBinary = config('services.browsershot.node_binary')) {
+            $browsershot->setNodeBinary($nodeBinary);
+        }
+
+        if ($npmBinary = config('services.browsershot.npm_binary')) {
+            $browsershot->setNpmBinary($npmBinary);
+        }
 
         if ($chromePath = config('services.browsershot.chrome_path')) {
             $browsershot->setChromePath($chromePath);

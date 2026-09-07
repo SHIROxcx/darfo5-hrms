@@ -45,7 +45,7 @@ class ServiceRecordPdfService
     private function buildBrowsershot(string $html): Browsershot
     {
         return PdfBrowsershot::make($html)
-            ->paperSize(8.5, 13, 'in')
+            ->format('A4')
             ->margins(11, 11, 8, 11, 'mm')
             ->showBackground()
             ->waitUntilNetworkIdle()
