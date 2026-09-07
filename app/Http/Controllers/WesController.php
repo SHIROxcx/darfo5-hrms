@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Browsershot\Browsershot;
+use App\Support\PdfBrowsershot;
 
 class WesController extends Controller
 {
@@ -89,9 +90,9 @@ class WesController extends Controller
 
     private function buildBrowsershot(string $html): Browsershot
     {
-        return Browsershot::html($html)
+        return PdfBrowsershot::make($html)
             ->paperSize(8.5, 13, 'in')
-            ->margins(0, 0, 0, 0, 'mm')
+            ->margins(11, 11, 8, 11, 'mm')
             ->showBackground()
             ->waitUntilNetworkIdle()
             ->deviceScaleFactor(2)

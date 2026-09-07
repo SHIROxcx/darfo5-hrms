@@ -23,8 +23,31 @@
 
     @font-face {
         font-family: 'Arial Narrow';
-        src: local('Arial Narrow'), local('Arial-Narrow');
-        font-stretch: condensed;
+        src: local('Arial Narrow'), local('Arial-Narrow'),
+             url(data:font/ttf;base64,{{ base64_encode(file_get_contents(public_path('fonts/ARIALN.TTF'))) }}) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: 'Arial Narrow';
+        src: local('Arial Narrow Bold'), local('Arial-NarrowBold'),
+             url(data:font/ttf;base64,{{ base64_encode(file_get_contents(public_path('fonts/ARIALNB.TTF'))) }}) format('truetype');
+        font-weight: bold;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: 'Arial Narrow';
+        src: local('Arial Narrow Italic'), local('Arial-NarrowItalic'),
+             url(data:font/ttf;base64,{{ base64_encode(file_get_contents(public_path('fonts/ARIALNI.TTF'))) }}) format('truetype');
+        font-weight: normal;
+        font-style: italic;
+    }
+    @font-face {
+        font-family: 'Arial Narrow';
+        src: local('Arial Narrow Bold Italic'), local('Arial-NarrowBoldItalic'),
+             url(data:font/ttf;base64,{{ base64_encode(file_get_contents(public_path('fonts/ARIALNBI.TTF'))) }}) format('truetype');
+        font-weight: bold;
+        font-style: italic;
     }
 
     body { 
