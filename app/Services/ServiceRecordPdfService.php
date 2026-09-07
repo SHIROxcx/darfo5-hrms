@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Spatie\Browsershot\Browsershot;
+use App\Support\PdfBrowsershot;
 
 class ServiceRecordPdfService
 {
@@ -39,9 +40,9 @@ class ServiceRecordPdfService
 
     private function buildBrowsershot(string $html): Browsershot
     {
-        return Browsershot::html($html)
-            ->format('A4')
-            ->margins(10, 10, 10, 10, 'mm')
+        return PdfBrowsershot::make($html)
+            ->paperSize(8.5, 13, 'in')
+            ->margins(11, 11, 8, 11, 'mm')
             ->showBackground()
             ->waitUntilNetworkIdle()
             ->deviceScaleFactor(2)
