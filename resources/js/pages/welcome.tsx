@@ -64,7 +64,7 @@ export default function Welcome({
                             HRIS
                         </h1>
                         <p className="mt-2 text-sm font-medium text-white/80">
-                            Human Resource Management System
+                            Human Resource Information System
                         </p>
                     </div>
                 </main>
