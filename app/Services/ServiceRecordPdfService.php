@@ -10,8 +10,11 @@ class ServiceRecordPdfService
 {
     /**
      * Render the Service Record Blade view for one employee.
+     *
+     * $preview adds an on-screen page outline for the browser-based
+     * html-preview route only — it never applies to the actual PDF.
      */
-    public function buildHtml(User $user): string
+    public function buildHtml(User $user, bool $preview = false): string
     {
         $user->loadMissing(['pdsPersonalInfo', 'serviceRecords' => fn ($q) => $q->orderBy('date_from')]);
 
@@ -20,6 +23,7 @@ class ServiceRecordPdfService
             'pds'            => $user->pdsPersonalInfo,
             'serviceRecords' => $user->serviceRecords,
             'daLogo'         => $this->fileToDataUri(public_path('images/da-rfo5-logo.png')),
+            'preview'        => $preview,
         ])->render();
     }
 

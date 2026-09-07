@@ -18,6 +18,21 @@
         min-height: 297mm;
         padding: 10mm 12mm;
         background: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Browser-preview only (html-preview route) — never applied to the
+       actual PDF. Shows the true A4 page boundary on a neutral canvas. */
+    body.preview-mode {
+        background: #e5e5e5;
+        padding: 24px 0;
+        display: flex;
+        justify-content: center;
+    }
+    .page.page-preview {
+        outline: 1px solid #999;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
     }
 
     .header {
@@ -54,24 +69,45 @@
         border-bottom: 1px solid #000;
         min-height: 16px;
         padding: 0 4px;
-        text-align: center;
+        display: flex;
+        justify-content: space-between;
     }
-    .identity .note { font-size: 8pt; white-space: nowrap; margin-left: 2px; }
+    .identity .note { font-size: 8pt; white-space: nowrap; font-weight: normal;}
     .identity .captions { 
         display: flex; 
         margin-top: 2px; 
         font-size: 8pt; 
         text-align: start; 
         margin-left: 50px;
-        gap: 80px;
+        justify-content: space-between;
+        width: 360px;
     }
-    .captions {
+    .birth_label {
+        display: flex;
+    }
+    .birth_value {
+        width: 360px;
+        display: flex;
+        justify-content: space-evenly;
+    }
+    .birth_captions { 
         display: flex; 
-        gap: 90px;
+        margin-top: 2px; 
+        font-size: 8pt; 
+        text-align: start; 
+        margin-left: 60px;
+        gap: 120px;
+    }  
+    .birth_row {
+        position: relative;
+    } 
+    .birth_note {
+        position: absolute;
+        right: 38px;
+        top: 2px;
     }
-
     .certification {
-        margin-top: 16px;
+        margin-top: 18px;
         font-size: 9pt;
         text-align: center;
         line-height: 1.5;
@@ -82,19 +118,30 @@
         border-collapse: collapse;
         margin-top: 16px;
         table-layout: fixed;
+        border: 2px solid #000;
     }
     table.service-table th,
     table.service-table td {
         border: 1px solid #000;
-        padding: 3px 4px;
-        font-size: 7.5pt;
-        text-align: center;
+        padding: 2px 2px;
+        font-size: 6.5pt;
+        text-align: left;
         vertical-align: middle;
         word-wrap: break-word;
     }
-    table.service-table thead th { font-weight: 700; background: #f2f2f2; }
-    table.service-table .group-caption { font-size: 6.5pt; font-weight: 400; display: block; }
-    table.service-table td.remarks-col { text-align: left; }
+    table.service-table thead th {
+        font-weight: 700;
+        text-align: center;
+        color: #000;
+    }
+    /* Thick rule separating the merged header block (rows 1-3) from the body,
+       so the header reads as one bold-bordered unit. */
+    table.service-table thead tr:last-child th {
+        border-bottom: 2px solid #000;
+    }
+    table.service-table td.col-station {
+        text-align: left;
+    }
     table.service-table .nothing-follows td {
         text-align: center;
         font-style: italic;
@@ -116,21 +163,22 @@
     }
     .signoff .date-line,
     .signoff .cert-line {
-        border-top: 1px solid #000;
         padding-top: 2px;
         width: 220px;
-        text-align: center;
+        display: flex;
+        justify-content: space-evenly;
     }
-
     .form-code {
-        margin-top: 40px;
+        margin-top: auto;
+        padding-top: 40px;
         font-size: 7.5pt;
         color: #333;
+        font-family: "Time New Roman";
     }
 </style>
 </head>
-<body>
-<div class="page">
+<body class="{{ ($preview ?? false) ? 'preview-mode' : '' }}">
+<div class="page {{ ($preview ?? false) ? 'page-preview' : '' }}">
 
     <div class="header">
         @if($daLogo)
@@ -159,16 +207,23 @@
             <span class="note">(If married women give also full maiden name)</span>
         </div>
         <div class="captions">
-            <span>(Surname)</span><span>(Given Name)</span><span>(Middle Name)</span>
+            <span>(Surname)</span>
+            <span>(Given Name)</span>
+            <span>(Middle Name)</span>
         </div>
 
-        <div class="row" style="margin-top: 10px;">
-            <span class="label">BIRTH:</span>
-            <span class="value">{{ optional($pds?->date_of_birth)->format('F d, Y') }} {{ $pds?->birth_place }}</span>
-            <span class="note">(Data herein should be checked from birth or baptismal<br>certificate or some other reliable documents)</span>
+        <div class="row birth_row" style="margin-top: 14px;">
+            <div class="birth_label">
+                <span class="label">BIRTH:</span>
+                <div class="value birth_value">
+                    <span>{{ optional($pds?->date_of_birth)->format('F d, Y') }} </span>
+                    <span>{{ $pds?->birth_place }}</span>
+                </div>
+            </div>
+            <span class="note birth_note">(Data herein should be checked from birth or baptismal<br>certificate or some other reliable documents)</span>
         </div>
-        <div class="captions">
-            <span">DATE</span>
+        <div class="birth_captions">
+            <span>DATE</span>
             <span>PLACE</span>
         </div>
     </div>
@@ -181,25 +236,42 @@
     </p>
 
     <table class="service-table">
+        <colgroup>
+            <col style="width: 8%">
+            <col style="width: 8%">
+            <col style="width: 13%">
+            <col style="width: 9%">
+            <col style="width: 12%">
+            <col style="width: 11%">
+            <col style="width: 7%">
+            <col style="width: 9%">
+            <col style="width: 6%">
+            <col style="width: 6%">
+            <col style="width: 11%">
+        </colgroup>
         <thead>
             <tr>
-                <th colspan="2">SERVICE<span class="group-caption">(Inclusive dates)</span></th>
+                <th colspan="2">SERVICE</th>
                 <th colspan="3">RECORD OF APPOINTMENT</th>
                 <th colspan="2">OFFICE ENTITY/DIVISION</th>
-                <th rowspan="2">LEAVE<br>WITHOUT PAY</th>
+                <th>LEAVE</th>
                 <th colspan="2">SEPARATION</th>
-                <th rowspan="2">REMARKS</th>
+                <th rowspan="3">REMARKS</th>
+            </tr>
+            <tr>
+                <th colspan="2">(Inclusive dates)</th>
+                <th rowspan="2">Designation</th>
+                <th rowspan="2">Employment<br>Status</th>
+                <th rowspan="2">Salary</th>
+                <th rowspan="2">Station/Place<br>of assignment</th>
+                <th rowspan="2">Branch</th>
+                <th rowspan="2">WITHOUT PAY</th>
+                <th rowspan="2">Date</th>
+                <th rowspan="2">Cause</th>
             </tr>
             <tr>
                 <th>From</th>
                 <th>To</th>
-                <th>Designation</th>
-                <th>Employment<br>Status</th>
-                <th>Salary</th>
-                <th>Station/Place<br>of assignment</th>
-                <th>Branch</th>
-                <th>Date</th>
-                <th>Cause</th>
             </tr>
         </thead>
         <tbody>
@@ -227,12 +299,12 @@
                     <td>{{ $showDesignation }}</td>
                     <td>{{ $showStatus }}</td>
                     <td>{{ number_format((float) $sr->salary, 2) }} /a</td>
-                    <td>{{ $showStation }}</td>
+                    <td class="col-station">{{ $showStation }}</td>
                     <td>{{ $showBranch }}</td>
                     <td>{{ $sr->leave_without_pay }}</td>
                     <td>{{ optional($sr->separation_date)->format('m-d-Y') }}</td>
                     <td>{{ $sr->separation_cause }}</td>
-                    <td class="remarks-col">{{ $sr->remarks }}</td>
+                    <td>{{ $sr->remarks }}</td>
                 </tr>
             @empty
                 <tr>

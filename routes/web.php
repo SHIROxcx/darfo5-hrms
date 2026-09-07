@@ -190,6 +190,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('pds.pdf', compact('user', 'ep', 'pds'));
     
         })->middleware(['auth'])->name('pds.html-preview');
+
+        Route::get('/service-records/html-preview/{userId?}', function (?int $userId = null) {
+            $authUser = Auth::user();
+            $targetId = $userId ?? $authUser->id;
+
+            $user = \App\Models\User::findOrFail($targetId);
+
+            // Reuses the exact same HTML the PDF generator renders — so the
+            // browser displays it directly. Reload the tab to see any change.
+            return app(\App\Services\ServiceRecordPdfService::class)->buildHtml($user, preview: true);
+        })->middleware(['auth'])->name('service-records.html-preview');
     }
 
     // PDS Routes
