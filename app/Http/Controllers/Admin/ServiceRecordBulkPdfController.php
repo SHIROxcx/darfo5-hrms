@@ -23,10 +23,10 @@ class ServiceRecordBulkPdfController extends Controller
     public function bulk(Request $request)
     {
         $data = $request->validate([
-            'user_ids'   => 'required|array|min:1|max:' . self::MAX_EMPLOYEES,
-            'user_ids.*' => 'integer|exists:users,id',
+            'user_tokens'   => 'required|array|min:1|max:' . self::MAX_EMPLOYEES,
+            'user_tokens.*' => 'string|exists:users,public_token',
         ], [
-            'user_ids.max' => 'You can generate up to ' . self::MAX_EMPLOYEES . ' Service Records at a time.',
+            'user_tokens.max' => 'You can generate up to ' . self::MAX_EMPLOYEES . ' Service Records at a time.',
         ]);
 
         // Rendering each PDF spins up headless Chrome (~3-5s apiece); a full
@@ -34,7 +34,7 @@ class ServiceRecordBulkPdfController extends Controller
         // execution time limit, so extend it just for this action.
         set_time_limit(300);
 
-        $users = User::whereIn('id', $data['user_ids'])->get();
+        $users = User::whereIn('public_token', $data['user_tokens'])->get();
 
         $zipPath = tempnam(sys_get_temp_dir(), 'service-records-') . '.zip';
 

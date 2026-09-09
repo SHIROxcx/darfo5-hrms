@@ -55,9 +55,9 @@ type SectionId = typeof SECTIONS[number]['id'];
 
 // ── PDF Preview Modal ──────────────────────────────────────────────────────────
 
-function PdfPreviewModal({ userId, onClose }: { userId: number; onClose: () => void }) {
-    const previewUrl  = `/pds/preview/${userId}`;
-    const downloadUrl = `/pds/download/${userId}`;
+function PdfPreviewModal({ userToken, onClose }: { userToken: string; onClose: () => void }) {
+    const previewUrl  = `/pds/preview/${userToken}`;
+    const downloadUrl = `/pds/download/${userToken}`;
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -269,7 +269,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
             <Head title="Personal Data Sheet" />
 
             {showPreview && (
-                <PdfPreviewModal userId={user.id!} onClose={() => setShowPreview(false)} />
+                <PdfPreviewModal userToken={user.public_token} onClose={() => setShowPreview(false)} />
             )}
 
             <WorkExperienceSheetModal

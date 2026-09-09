@@ -15,9 +15,9 @@ class ServiceRecordPdfController extends Controller
     /**
      * Download one employee's Service Record as a PDF attachment.
      */
-    public function download(?int $userId = null)
+    public function download(?string $userToken = null)
     {
-        $user = $this->resolveUser($userId);
+        $user = $this->resolveUser($userToken);
 
         return response($this->pdfService->buildPdf($user), 200, [
             'Content-Type'        => 'application/pdf',
@@ -28,9 +28,9 @@ class ServiceRecordPdfController extends Controller
     /**
      * Stream one employee's Service Record PDF inline for browser preview.
      */
-    public function preview(?int $userId = null)
+    public function preview(?string $userToken = null)
     {
-        $user = $this->resolveUser($userId);
+        $user = $this->resolveUser($userToken);
 
         return response($this->pdfService->buildPdf($user), 200, [
             'Content-Type'        => 'application/pdf',
@@ -38,15 +38,15 @@ class ServiceRecordPdfController extends Controller
         ]);
     }
 
-    private function resolveUser(?int $userId): User
+    private function resolveUser(?string $userToken): User
     {
         $authUser = Auth::user();
-        $targetId = $userId ?? $authUser->id;
+        $user     = $userToken ? User::where('public_token', $userToken)->firstOrFail() : $authUser;
 
-        if ($targetId !== $authUser->id && ! $authUser->hasAnyRole(['admin', 'superadmin'])) {
+        if ($user->id !== $authUser->id && ! $authUser->hasAnyRole(['admin', 'superadmin'])) {
             abort(403);
         }
 
-        return User::findOrFail($targetId);
+        return $user;
     }
 }

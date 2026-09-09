@@ -85,7 +85,8 @@ class EmployeeController extends Controller
         $pds = $u->pdsPersonalInfo;
 
         return [
-            'id'          => $u->id,
+            'id'           => $u->id,
+            'public_token' => $u->public_token,
             'name'        => $u->name,
             'first_name'  => $u->first_name,
             'middle_name' => $u->middle_name,

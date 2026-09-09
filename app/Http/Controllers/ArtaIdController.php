@@ -23,11 +23,13 @@ class ArtaIdController extends Controller
         }
     }
 
-    private function buildEmployee(int $userId): object
+    private function buildEmployee(string $userToken): object
     {
-        $user = User::with(['employeeProfile', 'pdsPersonalInfo'])->findOrFail($userId);
+        $user = User::with(['employeeProfile', 'pdsPersonalInfo'])
+            ->where('public_token', $userToken)
+            ->firstOrFail();
         $ep   = $user->employeeProfile;
-        $gov  = PdsGovernmentId::where('user_id', $userId)->first();
+        $gov  = PdsGovernmentId::where('user_id', $user->id)->first();
 
         $employeeNumber = $ep->employee_number
             ?? $user->pdsPersonalInfo->agency_employee_no
@@ -78,18 +80,18 @@ class ArtaIdController extends Controller
         return $result->getDataUri();
 }
 
-    public function preview(int $user)
+    public function preview(string $userToken)
     {
         $this->authorizeAdmin();
-        $employee = $this->buildEmployee($user);
+        $employee = $this->buildEmployee($userToken);
 
         return view('id.arta-id', compact('employee'));
     }
 
-    public function download(int $user)
+    public function download(string $userToken)
     {
         $this->authorizeAdmin();
-        $employee = $this->buildEmployee($user);
+        $employee = $this->buildEmployee($userToken);
 
         $html = view('id.arta-id', compact('employee'))->render();
 

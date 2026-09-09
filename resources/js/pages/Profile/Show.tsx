@@ -283,9 +283,9 @@ function PhotoCropModal({ src, onSave, onClose, saving }: {
 
 // ARTA ID Preview
 
-function ArtaIdPreviewModal({ userId, onClose }: { userId: number; onClose: () => void }) {
-    const previewUrl  = `/admin/arta-id/preview/${userId}`;
-    const downloadUrl = `/admin/arta-id/download/${userId}`;
+function ArtaIdPreviewModal({ userToken, onClose }: { userToken: string; onClose: () => void }) {
+    const previewUrl  = `/admin/arta-id/preview/${userToken}`;
+    const downloadUrl = `/admin/arta-id/download/${userToken}`;
     const [loaded, setLoaded] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -934,7 +934,7 @@ export default function ProfileShow() {
             {modal === 'personal' && <EditPersonalModal user={user} isOwn={isOwn} onClose={() => setModal(null)} />}
             {modal === 'company'  && <EditCompanyModal  user={user} onClose={() => setModal(null)} />}
             {showArtaPreview && (
-                <ArtaIdPreviewModal userId={user.id} onClose={() => setShowArtaPreview(false)} />
+                <ArtaIdPreviewModal userToken={user.public_token} onClose={() => setShowArtaPreview(false)} />
             )}
 
             <div className="sm:px-6 sm:py-4 space-y-0 h-full">
@@ -1040,7 +1040,7 @@ export default function ProfileShow() {
                                                         style={docMenuPos}
                                                     >
                                                         <a
-                                                            href={`/pds/download/${user.id}`}
+                                                            href={`/pds/download/${user.public_token}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             onClick={() => setDocMenuOpen(false)}
@@ -1126,6 +1126,7 @@ export default function ProfileShow() {
                             <ServiceRecordSection
                                 serviceRecords={serviceRecords}
                                 userId={user.id}
+                                userToken={user.public_token}
                                 canEdit={canEditCompany}
                             />
                         )}

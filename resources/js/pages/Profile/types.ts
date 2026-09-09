@@ -57,6 +57,7 @@ export interface UserEligibility {
 
 export interface ProfileUser {
     id: number;
+    public_token: string;
     name: string;
     first_name: string | null;
     middle_name: string | null;

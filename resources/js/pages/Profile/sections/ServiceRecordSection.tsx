@@ -23,6 +23,7 @@ export interface ServiceRecordRow {
 interface Props {
     serviceRecords: ServiceRecordRow[];
     userId: number;
+    userToken: string;
     canEdit: boolean;
 }
 
@@ -214,9 +215,9 @@ function ServiceRecordModal({ title, form, errors, saving, onChange, onSave, onC
 
 // PDF Preview
 
-function ServiceRecordPdfViewer({ userId, onClose }: { userId: number; onClose: () => void }) {
-    const previewUrl  = `/service-records/pdf/preview/${userId}`;
-    const downloadUrl = `/service-records/pdf/download/${userId}`;
+function ServiceRecordPdfViewer({ userToken, onClose }: { userToken: string; onClose: () => void }) {
+    const previewUrl  = `/service-records/pdf/preview/${userToken}`;
+    const downloadUrl = `/service-records/pdf/download/${userToken}`;
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -281,7 +282,7 @@ function ServiceRecordPdfViewer({ userId, onClose }: { userId: number; onClose: 
 
 // Main
 
-export default function ServiceRecordSection({ serviceRecords, userId, canEdit }: Props) {
+export default function ServiceRecordSection({ serviceRecords, userId, userToken, canEdit }: Props) {
     const sorted = [...serviceRecords].sort((a, b) => a.date_from.localeCompare(b.date_from));
 
     const [modal, setModal] = useState<'new' | ServiceRecordRow | null>(null);
@@ -455,7 +456,7 @@ export default function ServiceRecordSection({ serviceRecords, userId, canEdit }
             )}
 
             {pdfPreviewOpen && (
-                <ServiceRecordPdfViewer userId={userId} onClose={() => setPdfPreviewOpen(false)} />
+                <ServiceRecordPdfViewer userToken={userToken} onClose={() => setPdfPreviewOpen(false)} />
             )}
         </div>
     );

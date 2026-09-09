@@ -26,9 +26,9 @@ class PdsPdfController extends Controller
     /**
      * Download the PDS as a PDF attachment.
      */
-    public function download(Request $request, ?int $userId = null)
+    public function download(Request $request, ?string $userToken = null)
     {
-        [$user, $ep, $pds] = $this->resolveData($userId);
+        [$user, $ep, $pds] = $this->resolveData($userToken);
 
         $html     = $this->buildHtml($user, $ep, $pds);
         $pdfBytes = $this->buildBrowsershot($html)->pdf();
@@ -46,9 +46,9 @@ class PdsPdfController extends Controller
     /**
      * Stream the PDS PDF inline for browser preview.
      */
-    public function preview(Request $request, ?int $userId = null)
+    public function preview(Request $request, ?string $userToken = null)
     {
-        [$user, $ep, $pds] = $this->resolveData($userId);
+        [$user, $ep, $pds] = $this->resolveData($userToken);
 
         $html     = $this->buildHtml($user, $ep, $pds);
         $pdfBytes = $this->buildBrowsershot($html)->pdf();
@@ -59,18 +59,18 @@ class PdsPdfController extends Controller
         ]);
     }
 
-    private function resolveData(?int $userId): array
+    private function resolveData(?string $userToken): array
     {
         $authUser = Auth::user();
-        $targetId = $userId ?? $authUser->id;
+        $user     = $userToken ? User::where('public_token', $userToken)->firstOrFail() : $authUser;
+        $targetId = $user->id;
 
         if ($targetId !== $authUser->id
             && ! $authUser->hasAnyRole(['admin', 'superadmin', 'hr'])) {
             abort(403);
         }
 
-        $user = User::findOrFail($targetId);
-        $ep   = EmployeeProfile::where('user_id', $targetId)->first();
+        $ep = EmployeeProfile::where('user_id', $targetId)->first();
 
         $pds = [
             'personal'        => PdsPersonalInfo::where('user_id', $targetId)->first(),

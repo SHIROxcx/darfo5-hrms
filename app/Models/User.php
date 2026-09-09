@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -22,10 +23,17 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'public_token',
         'photo', 'first_name', 'middle_name',
         'last_name', 'name_ext', 'is_approved',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            $user->public_token ??= (string) Str::uuid();
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.

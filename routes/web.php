@@ -78,8 +78,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/leave/{leaveRequest}/deny', [AdminLeaveController::class, 'deny'])->name('leave.deny');
        
         // ARTA ID Routes
-        Route::get('/arta-id/preview/{user}',  [ArtaIdController::class, 'preview'])->name('arta-id.preview');
-        Route::get('/arta-id/download/{user}', [ArtaIdController::class, 'download'])->name('arta-id.download');
+        Route::get('/arta-id/preview/{userToken}',  [ArtaIdController::class, 'preview'])->name('arta-id.preview');
+        Route::get('/arta-id/download/{userToken}', [ArtaIdController::class, 'download'])->name('arta-id.download');
     });
 
 // Reference Data management — HR admin and superadmin
@@ -204,22 +204,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     }
 
     // PDS Routes
-    Route::get('/pds/preview/{userId?}',  [PdsPdfController::class, 'preview'])->name('pds.preview');
-    Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');
+    Route::get('/pds/preview/{userToken?}',  [PdsPdfController::class, 'preview'])->name('pds.preview');
+    Route::get('/pds/download/{userToken?}', [PdsPdfController::class, 'download'])->name('pds.download');
     Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
     Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
 
-    // PDF Download
-    Route::get('/pds/download/{userId?}', [PdsPdfController::class, 'download'])->name('pds.download');
-
     // PDS Work Experience Sheet Section
-    Route::get('/pds/wes/preview/{userId?}',  [WesController::class, 'preview'])->name('pds.wes.preview');
-    Route::get('/pds/wes/download/{userId?}', [WesController::class, 'download'])->name('pds.wes.download');
+    Route::get('/pds/wes/preview/{userToken?}',  [WesController::class, 'preview'])->name('pds.wes.preview');
+    Route::get('/pds/wes/download/{userToken?}', [WesController::class, 'download'])->name('pds.wes.download');
 
     // Service Record PDF (AFD-HRMS-012-0)
-    Route::get('/service-records/pdf/preview/{userId?}',  [ServiceRecordPdfController::class, 'preview'])->name('service-records.pdf.preview');
-    Route::get('/service-records/pdf/download/{userId?}', [ServiceRecordPdfController::class, 'download'])->name('service-records.pdf.download');
+    Route::get('/service-records/pdf/preview/{userToken?}',  [ServiceRecordPdfController::class, 'preview'])->name('service-records.pdf.preview');
+    Route::get('/service-records/pdf/download/{userToken?}', [ServiceRecordPdfController::class, 'download'])->name('service-records.pdf.download');
 
     // Location Routes
     Route::prefix('api/locations')->group(function () {

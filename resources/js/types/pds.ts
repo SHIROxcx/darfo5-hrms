@@ -197,6 +197,7 @@ export interface PdsData {
 
 export interface User {
     id: number;
+    public_token: string;
     name?: string;
     email: string;
     first_name?: string;

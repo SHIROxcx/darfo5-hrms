@@ -27,6 +27,7 @@ interface EmployeeProfile {
 
 interface Employee {
     id: number;
+    public_token: string;
     first_name: string | null;
     last_name: string | null;
     name_ext: string | null;
@@ -223,9 +224,21 @@ export default function Index({ employees, filters, divisions }: Props) {
     const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees.data);
     const [localTotal, setLocalTotal]         = useState<number>(employees.total);
 
+    // Accumulates id -> public_token across every page visited, since
+    // localEmployees only holds the current page but bulk selection
+    // (selectedIds) persists across pagination.
+    const [tokenById, setTokenById] = useState<Record<number, string>>(() =>
+        Object.fromEntries(employees.data.map(e => [e.id, e.public_token]))
+    );
+
     useEffect(() => {
         setLocalEmployees(employees.data);
         setLocalTotal(employees.total);
+        setTokenById(prev => {
+            const next = { ...prev };
+            employees.data.forEach(e => { next[e.id] = e.public_token; });
+            return next;
+        });
     }, [employees.data]);
 
     useEffect(() => {
@@ -233,6 +246,7 @@ export default function Index({ employees, filters, divisions }: Props) {
             const data = (e as CustomEvent<Employee>).detail;
             setLocalEmployees(prev => prev.some(emp => emp.id === data.id) ? prev : [data, ...prev]);
             setLocalTotal(prev => prev + 1);
+            setTokenById(prev => ({ ...prev, [data.id]: data.public_token }));
         }
         function onEmployeeApproved(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
@@ -315,9 +329,12 @@ export default function Index({ employees, filters, divisions }: Props) {
         if (selectedIds.size === 0 || generatingPdf) return;
         setGeneratingPdf(true);
         try {
+            const userTokens = Array.from(selectedIds)
+                .map(id => tokenById[id])
+                .filter((token): token is string => Boolean(token));
             const response = await axios.post(
                 '/admin/service-records/pdf/bulk',
-                { user_ids: Array.from(selectedIds) },
+                { user_tokens: userTokens },
                 { responseType: 'blob' }
             );
             const blob = new Blob([response.data], { type: 'application/zip' });
@@ -448,25 +465,25 @@ export default function Index({ employees, filters, divisions }: Props) {
             )}
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
-                <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
                         <p className="text-sm text-gray-500 mt-1">
                             {localTotal} total employee{localTotal !== 1 ? 's' : ''}
                         </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex flex-col sm:flex-row md:shrink-0 items-stretch sm:items-center gap-2">
                         <button
                             onClick={generateBulkPdf}
                             disabled={selectedIds.size === 0 || generatingPdf}
-                            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                         >
                             {generatingPdf ? <Spinner className="h-4 w-4" /> : <FileDown className="h-4 w-4" />}
                             Generate Service Records{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
                         </button>
                         <button
                             onClick={() => setImportOpen(true)}
-                            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition"
+                            className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition"
                         >
                             <Upload className="h-4 w-4" /> Import Service Records
                         </button>

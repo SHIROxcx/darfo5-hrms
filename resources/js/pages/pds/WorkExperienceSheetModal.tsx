@@ -33,10 +33,10 @@ const formatDateShort = (val?: string | null): string => {
     }
 };
 
-function buildWesUrl(userId: number, selectedIds: number[], action: 'preview' | 'download'): string {
+function buildWesUrl(userToken: string, selectedIds: number[], action: 'preview' | 'download'): string {
     const params = new URLSearchParams();
     selectedIds.forEach(id => params.append('ids[]', String(id)));
-    return `/pds/wes/${action}/${userId}?${params.toString()}`;
+    return `/pds/wes/${action}/${userToken}?${params.toString()}`;
 }
 
 // ── Selection Card ────────────────────────────────────────────────────────────
@@ -208,18 +208,18 @@ function SelectionScreen({
 // ── Full-Screen PDF Viewer ─────────
 
 function WesFullScreenViewer({
-    userId,
+    userToken,
     selectedIds,
     onBack,
     onClose,
 }: {
-    userId:      number;
+    userToken:   string;
     selectedIds: number[];
     onBack:      () => void;
     onClose:     () => void;
 }) {
-    const previewUrl  = buildWesUrl(userId, selectedIds, 'preview');
-    const downloadUrl = buildWesUrl(userId, selectedIds, 'download');
+    const previewUrl  = buildWesUrl(userToken, selectedIds, 'preview');
+    const downloadUrl = buildWesUrl(userToken, selectedIds, 'download');
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -356,7 +356,7 @@ export default function WorkExperienceSheetModal({ open, onClose, user, pdsData 
     if (stage === 'preview' && selectedIds.length > 0) {
         return createPortal(
             <WesFullScreenViewer
-                userId={user.id!}
+                userToken={user.public_token}
                 selectedIds={selectedIds}
                 onBack={() => setStage('select')}
                 onClose={handleClose}

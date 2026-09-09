@@ -15,9 +15,9 @@ class WesController extends Controller
     /**
      * Download the Work Experience Sheet as a PDF attachment.
      */
-    public function download(Request $request, ?int $userId = null)
+    public function download(Request $request, ?string $userToken = null)
     {
-        [$user, $workExperiences, $govId] = $this->resolveData($request, $userId);
+        [$user, $workExperiences, $govId] = $this->resolveData($request, $userToken);
 
         $html     = $this->buildHtml($user, $workExperiences, $govId);
         $pdfBytes = $this->buildBrowsershot($html)->pdf();
@@ -35,9 +35,9 @@ class WesController extends Controller
     /**
      * Stream the Work Experience Sheet PDF inline for browser preview.
      */
-    public function preview(Request $request, ?int $userId = null)
+    public function preview(Request $request, ?string $userToken = null)
     {
-        [$user, $workExperiences, $govId] = $this->resolveData($request, $userId);
+        [$user, $workExperiences, $govId] = $this->resolveData($request, $userToken);
 
         $html     = $this->buildHtml($user, $workExperiences, $govId);
         $pdfBytes = $this->buildBrowsershot($html)->pdf();
@@ -50,18 +50,17 @@ class WesController extends Controller
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private function resolveData(Request $request, ?int $userId): array
+    private function resolveData(Request $request, ?string $userToken): array
     {
         $authUser = Auth::user();
-        $targetId = $userId ?? $authUser->id;
+        $user     = $userToken ? User::where('public_token', $userToken)->firstOrFail() : $authUser;
+        $targetId = $user->id;
 
         // Only admins / HR can view other users' WES
         if ($targetId !== $authUser->id
             && ! $authUser->hasAnyRole(['admin', 'superadmin'])) {
             abort(403);
         }
-
-        $user = User::findOrFail($targetId);
 
         $query = PdsWorkExperience::where('user_id', $targetId)
             ->orderBy('sort_order');
