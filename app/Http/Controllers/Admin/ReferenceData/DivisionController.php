@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\EmployeeProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -14,7 +15,18 @@ class DivisionController extends Controller
     public function index()
     {
         return Inertia::render('Admin/ReferenceData/DivisionsSections/Index', [
-            'divisions' => Division::with('sections')->orderBy('name')->get(),
+            // Section names are only unique within a division (e.g. "Office of
+            // the Chief" repeats under almost every division), so the employee
+            // count must be scoped to both division AND section name — matching
+            // on section name alone would double-count across divisions that
+            // happen to share a section name.
+            'divisions' => Division::with(['sections' => fn ($q) => $q->addSelect([
+                'employees_count' => EmployeeProfile::selectRaw('count(*)')
+                    ->whereColumn('employee_profiles.section', 'sections.name')
+                    ->whereRaw('employee_profiles.division = (select name from divisions where divisions.id = sections.division_id)'),
+            ])])
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -37,7 +49,16 @@ class DivisionController extends Controller
             'abbreviation' => 'nullable|string|max:50',
         ]);
 
-        $division->update($data);
+        DB::transaction(function () use ($division, $data) {
+            $oldName = $division->name;
+            $division->update($data);
+
+            // EmployeeProfile.division is a denormalized string snapshot, not a
+            // foreign key — a rename must cascade or every employee here goes stale.
+            if ($data['name'] !== $oldName) {
+                EmployeeProfile::where('division', $oldName)->update(['division' => $data['name']]);
+            }
+        });
 
         return back()->with('success', 'Division updated.');
     }

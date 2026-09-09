@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
 
         Route::post('/divisions/{division}/sections', [SectionController::class, 'store'])->name('sections.store');
         Route::put('/sections/{section}', [SectionController::class, 'update'])->name('sections.update');
+        Route::patch('/sections/{section}/move', [SectionController::class, 'move'])->name('sections.move');
         Route::delete('/sections/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
 
         Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');

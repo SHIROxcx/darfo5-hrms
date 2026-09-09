@@ -8,7 +8,7 @@ type Props = React.ComponentProps<'main'> & {
 export function AppContent({ variant = 'header', children, ...props }: Props) {
     if (variant === 'sidebar') {
         return (
-            <SidebarInset {...props} style={{ overflow: 'unset' }} className="overflow-x-hidden">
+            <SidebarInset {...props} style={{ overflowY: 'visible' }} className="overflow-x-hidden">
                 {children}
             </SidebarInset>
         );
