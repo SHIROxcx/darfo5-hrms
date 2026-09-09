@@ -30,9 +30,9 @@ class AccountApprovedNotification extends Notification implements ShouldQueue
             ->subject('Your HRIS Account Has Been Approved')
             ->greeting("Hello, {$notifiable->first_name}!")
             ->line('The HR Administrator has reviewed and approved your account.')
-            ->line('You can now log in to the HR Management System using your registered email and password.')
+            ->line('You can now log in to the HRIS using your registered email and password.')
             ->action('Log In Now', url('/login'))
             ->line('If you did not register for this account, please ignore this email.')
-            ->salutation('HRIS');
+            ->salutation('DA RFO 5 - HRIS');
     }
 }

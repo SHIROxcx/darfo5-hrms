@@ -702,7 +702,7 @@ function CompletionDonut({ percent, isOwn }: { percent: number; isOwn: boolean }
 // Nav
 
 type Section = 'personal' | 'company' | 'education' | 'eligibility' | 'service-record';
-const navItems: { id: Section; label: string }[] = [
+const ALL_NAV_ITEMS: { id: Section; label: string }[] = [
     { id: 'personal',       label: 'About' },
     { id: 'company',        label: 'Agency' },
     { id: 'education',      label: 'Education' },
@@ -722,6 +722,11 @@ export default function ProfileShow() {
     const name     = fullName(user);
     const avatar   = user.photo ? '/storage/' + user.photo : null;
     const progress = calculatePdsCompletion(pdsData);
+
+    // Service Record only applies to permanent employees.
+    const navItems = ALL_NAV_ITEMS.filter(
+        item => item.id !== 'service-record' || ep?.employment_type === 'Permanent'
+    );
 
     const avatarRef = useRef<HTMLButtonElement>(null);
 

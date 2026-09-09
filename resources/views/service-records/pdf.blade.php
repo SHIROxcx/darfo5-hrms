@@ -133,10 +133,6 @@
         font-weight: 700;
         text-align: center;
         color: #000;
-    }
-    /* Thick rule separating the merged header block (rows 1-3) from the body,
-       so the header reads as one bold-bordered unit. */
-    table.service-table thead tr:last-child th {
         border-bottom: 2px solid #000;
     }
     table.service-table td.col-station {
@@ -148,13 +144,18 @@
         font-weight: 700;
         letter-spacing: 1px;
     }
-
+    .top-th {
+        border-bottom: 1px solid black !important;
+    }
+    .inclusive_dates {
+        border-bottom: 1px solid black !important;
+    }
     .legal {
         margin-top: 10px;
         font-size: 7.5pt;
         line-height: 1.4;
+        font-family: "Times New Roman";
     }
-
     .signoff {
         display: flex;
         justify-content: space-between;
@@ -251,15 +252,15 @@
         </colgroup>
         <thead>
             <tr>
-                <th colspan="2">SERVICE</th>
-                <th colspan="3">RECORD OF APPOINTMENT</th>
-                <th colspan="2">OFFICE ENTITY/DIVISION</th>
-                <th>LEAVE</th>
-                <th colspan="2">SEPARATION</th>
+                <th colspan="2" class="top-th">SERVICE</th>
+                <th colspan="3" class="top-th">RECORD OF APPOINTMENT</th>
+                <th colspan="2" class="top-th">OFFICE ENTITY/DIVISION</th>
+                <th class="top-th">LEAVE</th>
+                <th colspan="2" class="top-th">SEPARATION</th>
                 <th rowspan="3">REMARKS</th>
             </tr>
             <tr>
-                <th colspan="2">(Inclusive dates)</th>
+                <th colspan="2" class="inclusive_dates">(Inclusive dates)</th>
                 <th rowspan="2">Designation</th>
                 <th rowspan="2">Employment<br>Status</th>
                 <th rowspan="2">Salary</th>

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
@@ -41,7 +40,7 @@ class RoleAndPermissionSeeder extends Seeder
             'name'              => 'Super Admin User',
             'first_name'        => 'Super Admin',
             'last_name'         => 'User',
-            'email'             => 'superadmin@hrms.com',
+            'email'             => 'superadmin@hris.com',
             'password'          => Hash::make('password'),
             'email_verified_at' => now(),
             'is_approved'       => true,
@@ -52,7 +51,7 @@ class RoleAndPermissionSeeder extends Seeder
             'name'              => 'HR Admin User',
             'first_name'        => 'HR Admin',
             'last_name'         => 'User',
-            'email'             => 'admin@hrms.com',
+            'email'             => 'admin@hris.com',
             'password'          => Hash::make('password'),
             'email_verified_at' => now(),
             'is_approved'       => true,

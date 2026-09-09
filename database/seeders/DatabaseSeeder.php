@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PhilippineLocationSeeder::class,
             PhilippineBarangaySeeder::class,
             LeaveTypeSeeder::class,
+            PermanentEmployeeSeeder::class,
         ]);
     }
 }
