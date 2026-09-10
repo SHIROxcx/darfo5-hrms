@@ -1,56 +1,95 @@
-import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import {
-    Calendar, CheckCircle2, XCircle, Clock, Users,
-    ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-    X, Check, Ban, Info,
+    Search, ChevronLeft, ChevronRight, Check, X, Clock,
+    CheckCircle2, XCircle, Ban, CalendarDays,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
+import { Spinner } from '@/components/ui/spinner';
+import AppLayout from '@/layouts/app-layout';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface LeaveBar {
+interface LeaveTypeOption { id: number; name: string; code: string; }
+
+interface TodayStats {
+    on_leave_today: number;
+}
+
+interface Scoreboard {
+    pending: number;
+    approved: number;
+    completed: number;
+    denied: number;
+}
+
+interface WeekDay { date: string; label: string; count: number; is_today: boolean; }
+
+interface DayLeaveEntry { employee: string; photo: string | null; leave_type: string; type_code: string; }
+
+interface CalendarData {
+    month: string;
+    monthLabel: string;
+    leavesByDate: Record<string, DayLeaveEntry[]>;
+    holidays: Record<string, string>;
+}
+
+interface UpcomingLeave {
+    id: number; employee: string; photo: string | null;
+    leave_type: string; type_code: string; start_date: string; end_date: string;
+}
+
+type LeaveStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
+
+interface ActivityRow {
     id: number;
-    type: string;
+    employee: string;
+    email: string;
+    photo: string | null;
+    employee_number: string | null;
+    job_title: string | null;
+    leave_type: string;
     type_code: string;
+    submit_date: string;
     start_date: string;
     end_date: string;
     days: number;
     reason: string | null;
-    status: 'pending' | 'approved' | 'denied' | 'cancelled';
     remarks: string | null;
-    created_at: string;
+    status: LeaveStatus;
 }
 
-interface Employee {
-    id: number;
-    name: string;
-    email: string;
-    avatar: string | null;
-    leaves: LeaveBar[];
+interface PaginatedActivity {
+    data: ActivityRow[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 }
 
-interface LeaveType { id: number; name: string; code: string; }
+interface Filters { search?: string; leave_type_id?: string; status?: string; sort?: string; month?: string; }
 
 interface Props {
-    employees: Employee[];
-    leaveTypes: LeaveType[];
-    weekStart: string;
-    weekEnd: string;
-    filters: { leave_type_id?: string; status?: string; search?: string; week_start?: string; };
-    stats: { pending: number; approved: number; denied: number; on_leave_today: number; };
+    stats: TodayStats;
+    scoreboard: Scoreboard;
+    weekOverview: WeekDay[];
+    calendar: CalendarData;
+    upcomingLeaves: UpcomingLeave[];
+    activity: PaginatedActivity;
+    leaveTypes: LeaveTypeOption[];
+    filters: Filters;
+    totalEmployees: number;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-// Color palette keyed by leave type code — maps to Tailwind bg + text classes
 const TYPE_COLORS: Record<string, { bar: string; label: string; dot: string }> = {
-    VL:    { bar: 'bg-amber-400',   label: 'text-amber-700',   dot: 'bg-amber-400' },
+    VL:    { bar: 'bg-green-500',   label: 'text-green-700',   dot: 'bg-green-500' },
     SL:    { bar: 'bg-sky-400',     label: 'text-sky-700',     dot: 'bg-sky-400' },
     ML:    { bar: 'bg-pink-400',    label: 'text-pink-700',    dot: 'bg-pink-400' },
-    PL:    { bar: 'bg-indigo-400',  label: 'text-indigo-700',  dot: 'bg-indigo-400' },
-    WL:   { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
+    PL:    { bar: 'bg-amber-400',   label: 'text-amber-700',   dot: 'bg-amber-400' },
+    WL:    { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
     SOLO:  { bar: 'bg-orange-400',  label: 'text-orange-700',  dot: 'bg-orange-400' },
     STUDY: { bar: 'bg-teal-400',    label: 'text-teal-700',    dot: 'bg-teal-400' },
     VAWC:  { bar: 'bg-red-400',     label: 'text-red-700',     dot: 'bg-red-400' },
@@ -76,131 +115,428 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
     cancelled: <Ban className="h-3 w-3" />,
 };
 
+const STATUS_PILL: Record<string, string> = {
+    approved:  'bg-green-600 text-white',
+    denied:    'bg-red-500 text-white',
+    cancelled: 'bg-gray-200 text-gray-600',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+    approved: 'Approved', denied: 'Denied', cancelled: 'Cancelled', pending: 'Pending',
+};
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 1800,
+    timerProgressBar: true,
+});
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function addDays(dateStr: string, n: number): string {
-    const d = new Date(dateStr); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10);
+function initials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
 }
 
-function buildDateRange(start: string, end: string): string[] {
-    const dates: string[] = [];
-    let cur = start;
-    while (cur <= end) { dates.push(cur); cur = addDays(cur, 1); }
-    return dates;
+function fmtDate(dateStr: string): string {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function fmt(dateStr: string, opts: Intl.DateTimeFormatOptions): string {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-PH', opts);
+function fmtDateShort(dateStr: string): string {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-function isWeekend(dateStr: string): boolean {
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.getDay() === 0 || d.getDay() === 6;
+function fmtPeriod(start: string, end: string): string {
+    if (start === end) return fmtDate(start);
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end + 'T00:00:00');
+    const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+    if (sameMonth) {
+        return `${s.getDate()}–${e.getDate()} ${e.toLocaleDateString('en-GB', { month: 'short' })} ${e.getFullYear()}`;
+    }
+    return `${fmtDateShort(start)} – ${fmtDate(end)}`;
 }
 
-function isToday(dateStr: string): boolean {
-    return dateStr === new Date().toISOString().slice(0, 10);
+function buildQuery(v: { search: string; leave_type_id: string; status: string; sort: string; month?: string }): Record<string, string> {
+    const q: Record<string, string> = {};
+    if (v.search) q.search = v.search;
+    if (v.leave_type_id) q.leave_type_id = v.leave_type_id;
+    if (v.status) q.status = v.status;
+    if (v.sort && v.sort !== 'newest') q.sort = v.sort;
+    if (v.month) q.month = v.month;
+    return q;
 }
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
+function getMonthGrid(monthStr: string): (string | null)[] {
+    const [year, month] = monthStr.split('-').map(Number);
+    const firstDay = new Date(year, month - 1, 1);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const cells: (string | null)[] = [];
+    for (let i = 0; i < firstDay.getDay(); i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+        cells.push(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+    }
+    return cells;
+}
 
-function StatCard({ label, value, icon, color, iconColor }: {
-    label: string; value: number;
-    icon: React.ReactNode; color: string; iconColor: string;
-}) {
+function todayStr(): string {
+    return new Date().toISOString().slice(0, 10);
+}
+
+// ─── Avatar ─────────────────────────────────────────────────────────────────
+
+function Avatar({ name, photo, className = 'h-9 w-9 text-[11px]' }: { name: string; photo?: string | null; className?: string }) {
+    if (photo) {
+        return <img src={`/storage/${photo}`} alt={name} className={`${className} rounded-full object-cover border border-gray-200 shrink-0`} />;
+    }
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-            <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 border ${color}`}>
-                <div className={iconColor}>{icon}</div>
+        <div className={`${className} rounded-full bg-green-700 text-white flex items-center justify-center font-semibold shrink-0`}>
+            {initials(name)}
+        </div>
+    );
+}
+
+// ─── Leave requests scoreboard ──────────────────────────────────────────────
+
+function LeaveScoreboard({ data }: { data: Scoreboard }) {
+    const total = data.pending + data.approved + data.completed + data.denied || 1;
+    const tiles: { key: keyof Scoreboard; label: string; value: number; digit: string }[] = [
+        { key: 'pending',   label: 'Pending',   value: data.pending,   digit: 'text-white' },
+        { key: 'approved',  label: 'Approved',  value: data.approved,  digit: 'text-white' },
+        { key: 'completed', label: 'Completed', value: data.completed, digit: 'text-white' },
+        { key: 'denied',    label: 'Denied',    value: data.denied,    digit: 'text-white' },
+    ];
+
+    return (
+        <div className="h-full rounded-2xl bg-green-600 border text-white border-green-600 shadow-sm overflow-hidden flex flex-col">
+            <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-white uppercase tracking-widest">Leave Requests Scoreboard</p>
+                <p className="text-[11px]">{total.toLocaleString()} total</p>
             </div>
-            <div>
-                <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">{label}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-white/60 flex-1">
+                {tiles.map(t => (
+                    <div key={t.key} className="px-4 py-5 flex flex-col items-center justify-center text-center">
+                        <span className={`text-4xl font-bold tabular-nums ${t.digit}`}>{t.value.toLocaleString()}</span>
+                        <span className="text-[11px] font-semibold text-white uppercase tracking-wide mt-1.5">{t.label}</span>
+                        <span className="text-[10px] text-white mt-0.5">{Math.round((t.value / total) * 100)}%</span>
+                    </div>
+                ))}
             </div>
         </div>
     );
 }
 
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
+// ─── Today stat card ────────────────────────────────────────────────────────
 
-interface DetailModalProps {
-    leave: LeaveBar & { employee: string; email: string };
+function StatCard({ label, value, sub, highlighted }: { label: string; value: number; sub: string; highlighted?: boolean }) {
+    return (
+        <div className={`rounded-2xl border shadow-sm p-5 flex flex-col gap-2 ${highlighted ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200'}`}>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${highlighted ? 'text-green-50' : 'text-gray-400'}`}>{label}</p>
+            <p className={`text-3xl font-bold ${highlighted ? 'text-white' : 'text-gray-900'}`}>{value.toLocaleString()}</p>
+            <p className={`text-xs ${highlighted ? 'text-green-100' : 'text-gray-400'}`}>{sub}</p>
+        </div>
+    );
+}
+
+// ─── Week overview chart ────────────────────────────────────────────────────
+
+function WeekOverviewChart({ days }: { days: WeekDay[] }) {
+    const max = Math.max(...days.map(d => d.count), 1);
+    const today = days.find(d => d.is_today);
+
+    // Point coordinates for the trend line, in a 0–100 view box aligned to the bars
+    const points = days.map((d, i) => {
+        const x = (i + 0.5) * (100 / days.length);
+        const y = 100 - (d.count / max) * 92 - 4;
+        return { x, y };
+    });
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Leave Overview</p>
+            {today && (
+                <p className="text-sm text-gray-700 mb-4">
+                    <span className="font-semibold">{new Date(today.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+                    <span className="text-gray-400"> · </span>
+                    <span className="font-semibold text-green-700">{today.count}</span> <span className="text-gray-500">on leave</span>
+                </p>
+            )}
+            <div className="relative flex-1" style={{ minHeight: 140 }}>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-[calc(100%-22px)] w-full">
+                    <path d={linePath} fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                </svg>
+                <div className="relative flex items-end gap-2 h-[calc(100%-22px)]">
+                    {days.map(d => {
+                        const pct = Math.max((d.count / max) * 92, d.count > 0 ? 10 : 4);
+                        return (
+                            <div key={d.date} className="flex-1 h-full flex items-end justify-center" title={`${d.label}: ${d.count} on leave`}>
+                                <div
+                                    className={`w-full max-w-8 rounded-t-md transition-all duration-700 ease-out ${d.is_today ? 'bg-green-600' : 'bg-gray-100'}`}
+                                    style={{ height: `${pct}%` }}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="flex gap-2 mt-1.5">
+                    {days.map(d => (
+                        <div key={d.date} className="flex-1 text-center">
+                            <span className={`text-[10px] font-medium ${d.is_today ? 'text-green-700' : 'text-gray-400'}`}>{d.label}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Day popover ────────────────────────────────────────────────────────────
+
+const DAY_POPOVER_MAX = 5;
+
+function DayPopover({ date, entries, holidayName, align, onClose }: {
+    date: string; entries: DayLeaveEntry[]; holidayName: string | null; align: 'left' | 'center' | 'right'; onClose: () => void;
+}) {
+    const visible = entries.slice(0, DAY_POPOVER_MAX);
+    const extra   = entries.length - visible.length;
+    const label   = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    // Anchor to whichever edge keeps the popover inside the card instead of
+    // always centering, which overflows into neighboring cards near the sides.
+    const position = align === 'left'
+        ? 'left-0'
+        : align === 'right'
+            ? 'right-0'
+            : 'left-1/2 -translate-x-1/2';
+
+    return (
+        <div
+            className={`absolute z-20 top-full mt-1.5 ${position} w-56 rounded-xl bg-white border border-gray-200 shadow-lg p-3 text-left`}
+            onClick={e => e.stopPropagation()}
+        >
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-700">{label}</p>
+                <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
+                    <X className="h-3.5 w-3.5" />
+                </button>
+            </div>
+            {holidayName && (
+                <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 rounded-lg bg-orange-50 border border-orange-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />
+                    <p className="text-xs font-medium text-orange-700 truncate">{holidayName}</p>
+                </div>
+            )}
+            {entries.length > 0 && (
+                <ul className="space-y-2">
+                    {visible.map((e, i) => {
+                        const color = TYPE_COLORS[e.type_code] ?? DEFAULT_COLOR;
+                        return (
+                            <li key={i} className="flex items-center gap-2">
+                                <Avatar name={e.employee} photo={e.photo} className="h-6 w-6 text-[9px]" />
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium text-gray-800 truncate">{e.employee}</p>
+                                    <p className={`text-[10px] truncate ${color.label}`}>{e.leave_type}</p>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+            {extra > 0 && <p className="text-[10px] text-gray-400 mt-2">+{extra} more</p>}
+        </div>
+    );
+}
+
+// ─── Month calendar ─────────────────────────────────────────────────────────
+
+function MonthCalendar({ calendar, onNavigate, isNavigating }: {
+    calendar: CalendarData; onNavigate: (dir: 'prev' | 'next') => void; isNavigating: boolean;
+}) {
+    const cells = getMonthGrid(calendar.month);
+    const today = todayStr();
+    const [openDate, setOpenDate] = useState<string | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Close the popover on month navigation, so it never lingers open pointing
+    // at a date from a month that's no longer shown.
+    const [renderedMonth, setRenderedMonth] = useState(calendar.month);
+    if (calendar.month !== renderedMonth) {
+        setRenderedMonth(calendar.month);
+        setOpenDate(null);
+    }
+
+    useEffect(() => {
+        function onDocClick(e: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpenDate(null);
+            }
+        }
+        document.addEventListener('mousedown', onDocClick);
+        return () => document.removeEventListener('mousedown', onDocClick);
+    }, []);
+
+    return (
+        <div ref={containerRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-800">{calendar.monthLabel}</p>
+                <div className="flex items-center gap-1">
+                    <button disabled={isNavigating} onClick={() => onNavigate('prev')}
+                        className="h-6 w-6 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-default">
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <button disabled={isNavigating} onClick={() => onNavigate('next')}
+                        className="h-6 w-6 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-default">
+                        <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                </div>
+            </div>
+            <div className="relative grid grid-cols-7 gap-y-1.5 text-center">
+                {isNavigating && (
+                    <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-6">
+                        <Spinner className="h-5 w-5 text-green-700" />
+                    </div>
+                )}
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <span key={i} className="text-[10px] font-semibold text-gray-400">{d}</span>
+                ))}
+                {cells.map((date, i) => {
+                    if (!date) return <span key={i} />;
+                    const day = Number(date.slice(-2));
+                    const isToday = date === today;
+                    const entries = calendar.leavesByDate[date] ?? [];
+                    const hasLeave = entries.length > 0;
+                    const holidayName = calendar.holidays[date] ?? null;
+                    const isHoliday = holidayName !== null;
+                    const isClickable = hasLeave || isHoliday;
+                    const isOpen = openDate === date;
+                    const col = i % 7;
+                    const align = col <= 1 ? 'left' : col >= 5 ? 'right' : 'center';
+                    return (
+                        <div key={date} className="relative flex flex-col items-center gap-0.5 py-0.5">
+                            <button
+                                type="button"
+                                onClick={() => isClickable && setOpenDate(isOpen ? null : date)}
+                                aria-label={[
+                                    String(day),
+                                    holidayName,
+                                    hasLeave ? `${entries.length} on leave` : null,
+                                ].filter(Boolean).join(', ')}
+                                className={`h-6 w-6 flex items-center justify-center rounded-full text-xs transition
+                                    ${isToday ? 'bg-green-600 text-white font-bold' : isHoliday ? 'text-orange-600 font-semibold' : 'text-gray-600'}
+                                    ${isClickable && !isToday ? 'hover:bg-gray-100 cursor-pointer' : isClickable ? 'cursor-pointer' : 'cursor-default'}`}>
+                                {day}
+                            </button>
+                            <span className="flex items-center gap-0.5 h-1">
+                                <span className={`h-1 w-1 rounded-full ${hasLeave && !isToday ? 'bg-green-500' : 'bg-transparent'}`} />
+                                <span className={`h-1 w-1 rounded-full ${isHoliday && !isToday ? 'bg-orange-500' : 'bg-transparent'}`} />
+                            </span>
+                            {isOpen && <DayPopover date={date} entries={entries} holidayName={holidayName} align={align} onClose={() => setOpenDate(null)} />}
+                        </div>
+                    );
+                })}
+            </div>
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-green-500" /> On leave</span>
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Holiday</span>
+                <span className="text-gray-400">— tap a date for details</span>
+            </div>
+        </div>
+    );
+}
+
+// ─── Upcoming leaves ────────────────────────────────────────────────────────
+
+function UpcomingLeavesCard({ items }: { items: UpcomingLeave[] }) {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee Leaves</p>
+            </div>
+            <ul className="divide-y divide-gray-50 flex-1">
+                {items.length === 0 ? (
+                    <li className="px-5 py-8 text-center text-xs text-gray-400 italic">No upcoming leave.</li>
+                ) : items.map(it => {
+                    const color = TYPE_COLORS[it.type_code] ?? DEFAULT_COLOR;
+                    return (
+                        <li key={it.id} className="flex items-center gap-3 px-5 py-2.5">
+                            <Avatar name={it.employee} photo={it.photo} />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-800 truncate">{it.employee}</p>
+                                <p className={`text-xs truncate ${color.label}`}>{it.leave_type} · {fmtPeriod(it.start_date, it.end_date)}</p>
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+        </div>
+    );
+}
+
+// ─── Detail modal ───────────────────────────────────────────────────────────
+
+function DetailModal({ leave, onClose, onApprove, onDeny }: {
+    leave: ActivityRow;
     onClose: () => void;
     onApprove: (id: number, remarks: string) => void;
     onDeny: (id: number, remarks: string) => void;
-}
-
-function DetailModal({ leave, onClose, onApprove, onDeny }: DetailModalProps) {
+}) {
     const [remarks, setRemarks] = useState('');
     const [acting, setActing]   = useState<'approve' | 'deny' | null>(null);
     const color = TYPE_COLORS[leave.type_code] ?? DEFAULT_COLOR;
 
-    function handleApprove() {
-        setActing('approve');
-        onApprove(leave.id, remarks);
-    }
-    function handleDeny() {
-        setActing('deny');
-        onDeny(leave.id, remarks);
-    }
+    function handleApprove() { setActing('approve'); onApprove(leave.id, remarks); }
+    function handleDeny()    { setActing('deny');    onDeny(leave.id, remarks); }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
             <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl flex flex-col">
 
-                {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                     <div className="flex items-center gap-2">
                         <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${color.dot}`} />
-                        <h3 className="font-semibold text-green-800 text-sm">{leave.type}</h3>
+                        <h3 className="font-semibold text-green-800 text-sm">{leave.leave_type}</h3>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                {/* Body */}
                 <div className="px-6 py-5 space-y-4">
-                    {/* Employee */}
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                        <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
-                            {leave.employee.charAt(0)}
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-gray-800">{leave.employee}</p>
-                            <p className="text-xs text-gray-500">{leave.email}</p>
+                        <Avatar name={leave.employee} photo={leave.photo} className="h-9 w-9 text-sm" />
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{leave.employee}</p>
+                            <p className="text-xs text-gray-500 truncate">{leave.job_title ?? leave.email}</p>
                         </div>
                     </div>
 
-                    {/* Dates */}
                     <div className="grid grid-cols-3 gap-3 text-center">
                         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">From</p>
-                            <p className="text-sm font-bold text-gray-800">{fmt(leave.start_date, { month: 'short', day: 'numeric' })}</p>
-                            <p className="text-[10px] text-gray-400">{fmt(leave.start_date, { year: 'numeric' })}</p>
+                            <p className="text-sm font-bold text-gray-800">{fmtDateShort(leave.start_date)}</p>
                         </div>
                         <div className="rounded-xl border border-green-100 bg-green-50 p-3 flex flex-col items-center justify-center">
                             <p className="text-xl font-bold text-green-700">{leave.days}</p>
-                            <p className="text-[10px] text-green-600">working days</p>
+                            <p className="text-[10px] text-green-600">day{leave.days === 1 ? '' : 's'}</p>
                         </div>
                         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">To</p>
-                            <p className="text-sm font-bold text-gray-800">{fmt(leave.end_date, { month: 'short', day: 'numeric' })}</p>
-                            <p className="text-[10px] text-gray-400">{fmt(leave.end_date, { year: 'numeric' })}</p>
+                            <p className="text-sm font-bold text-gray-800">{fmtDateShort(leave.end_date)}</p>
                         </div>
                     </div>
 
-                    {/* Status */}
                     <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[leave.status]}`}>
                             {STATUS_ICON[leave.status]}
-                            {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                            {STATUS_LABEL[leave.status]}
                         </span>
-                        <span className="text-xs text-gray-400">Filed: {leave.created_at}</span>
+                        <span className="text-xs text-gray-400">Filed: {fmtDate(leave.submit_date)}</span>
                     </div>
 
-                    {/* Reason */}
                     {leave.reason && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Reason</p>
@@ -208,7 +544,6 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: DetailModalProps) {
                         </div>
                     )}
 
-                    {/* Existing remarks */}
                     {leave.remarks && (
                         <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
                             <p className="text-xs font-semibold text-amber-600 mb-0.5">HR Remarks</p>
@@ -216,7 +551,6 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: DetailModalProps) {
                         </div>
                     )}
 
-                    {/* Action remarks input — only for pending */}
                     {leave.status === 'pending' && (
                         <div>
                             <label className="mb-1 block text-xs font-medium text-gray-500">
@@ -233,20 +567,19 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: DetailModalProps) {
                     )}
                 </div>
 
-                {/* Footer */}
                 {leave.status === 'pending' && (
                     <div className="flex justify-end gap-2 border-t px-6 py-4">
                         <button
                             disabled={acting !== null}
                             onClick={handleDeny}
-                            className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 transition disabled:opacity-50">
+                            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 transition disabled:opacity-50">
                             <XCircle className="h-3.5 w-3.5" />
                             {acting === 'deny' ? 'Denying…' : 'Deny'}
                         </button>
                         <button
                             disabled={acting !== null}
                             onClick={handleApprove}
-                            className="flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700 transition disabled:opacity-50">
+                            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700 transition disabled:opacity-50">
                             <Check className="h-3.5 w-3.5" />
                             {acting === 'approve' ? 'Approving…' : 'Approve'}
                         </button>
@@ -257,287 +590,306 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: DetailModalProps) {
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main page ───────────────────────────────────────────────────────────────
 
-export default function AdminLeaveIndex({ employees, leaveTypes, weekStart, weekEnd, filters, stats }: Props) {
-
-    const dates = buildDateRange(weekStart, weekEnd);
-
-    // Filters state
-    const [search,   setSearch]   = useState(filters.search ?? '');
-    const [typeId,   setTypeId]   = useState(filters.leave_type_id ?? '');
-    const [status,   setStatus]   = useState(filters.status ?? '');
-    const [viewing,  setViewing]  = useState<(LeaveBar & { employee: string; email: string }) | null>(null);
+export default function AdminLeaveIndex({
+    stats, scoreboard, weekOverview, calendar, upcomingLeaves,
+    activity, leaveTypes, filters, totalEmployees,
+}: Props) {
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [typeId, setTypeId] = useState(filters.leave_type_id ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+    const [sort,   setSort]   = useState(filters.sort ?? 'newest');
+    const [viewing, setViewing]   = useState<ActivityRow | null>(null);
+    const [actingId, setActingId] = useState<number | null>(null);
+    const [selected, setSelected] = useState<number[]>([]);
+    const [bulkBusy, setBulkBusy] = useState(false);
+    const [isNavigatingMonth, setIsNavigatingMonth] = useState(false);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    function navigate(direction: 'prev' | 'next') {
-        const d = new Date(weekStart + 'T00:00:00');
-        d.setDate(d.getDate() + (direction === 'next' ? 11 : -11));
-        applyFilters({ week_start: d.toISOString().slice(0, 10) });
-    }
-
-    function applyFilters(overrides: Record<string, string> = {}) {
-        router.get('/admin/leave', {
-            ...(search   ? { search }         : {}),
-            ...(typeId   ? { leave_type_id: typeId } : {}),
-            ...(status   ? { status }          : {}),
-            week_start: weekStart,
-            ...overrides,
-        }, { preserveState: true, preserveScroll: true });
-    }
-
-    useEffect(() => {
+    function onSearchChange(value: string) {
+        setSearch(value);
         if (searchTimeout.current) clearTimeout(searchTimeout.current);
-        searchTimeout.current = setTimeout(() => applyFilters(), 400);
-        return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-    }, [search, typeId, status]);
+        searchTimeout.current = setTimeout(() => {
+            router.get('/admin/leave', buildQuery({ search: value, leave_type_id: typeId, status, sort, month: filters.month }), {
+                preserveState: true, preserveScroll: true, replace: true,
+            });
+        }, 400);
+    }
+
+    function updateSelect(patch: Partial<{ leave_type_id: string; status: string; sort: string }>) {
+        const next = { search, leave_type_id: typeId, status, sort, ...patch };
+        if (patch.leave_type_id !== undefined) setTypeId(patch.leave_type_id);
+        if (patch.status !== undefined) setStatus(patch.status);
+        if (patch.sort !== undefined) setSort(patch.sort);
+        router.get('/admin/leave', buildQuery({ ...next, month: filters.month }), {
+            preserveState: true, preserveScroll: true, replace: true,
+        });
+    }
+
+    function navigateMonth(direction: 'prev' | 'next') {
+        const [year, month] = calendar.month.split('-').map(Number);
+        const d = new Date(year, month - 1 + (direction === 'next' ? 1 : -1), 1);
+        const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        router.get('/admin/leave', buildQuery({ search, leave_type_id: typeId, status, sort, month: newMonth }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            // Only the calendar prop changes when switching months — everything else
+            // on this page (scoreboard, activity table, etc.) is wrapped in a closure
+            // on the backend, so Inertia skips those queries entirely for this request.
+            only: ['calendar'],
+            // Suppress the global top-loading bar; a small in-place spinner over just
+            // the calendar (below) gives feedback without implying a full page reload.
+            showProgress: false,
+            onStart: () => setIsNavigatingMonth(true),
+            onFinish: () => setIsNavigatingMonth(false),
+        });
+    }
+
+    function quickAct(id: number, action: 'approve' | 'deny') {
+        setActingId(id);
+        router.post(`/admin/leave/${id}/${action}`, {}, {
+            preserveScroll: true, preserveState: true,
+            onSuccess: () => Toast.fire({ icon: 'success', title: action === 'approve' ? 'Leave request approved' : 'Leave request denied' }),
+            onFinish: () => setActingId(null),
+        });
+    }
 
     function handleApprove(id: number, remarks: string) {
-        router.post(`/admin/leave/${id}/approve`, { remarks }, {
-            preserveScroll: true,
-            onSuccess: () => setViewing(null),
-        });
+        router.post(`/admin/leave/${id}/approve`, { remarks }, { preserveScroll: true, onSuccess: () => setViewing(null) });
     }
-
     function handleDeny(id: number, remarks: string) {
-        router.post(`/admin/leave/${id}/deny`, { remarks }, {
-            preserveScroll: true,
-            onSuccess: () => setViewing(null),
-        });
+        router.post(`/admin/leave/${id}/deny`, { remarks }, { preserveScroll: true, onSuccess: () => setViewing(null) });
     }
 
-    function openLeave(leave: LeaveBar, employee: string, email: string) {
-        setViewing({ ...leave, employee, email });
+    const pendingIdsOnPage = activity.data.filter(r => r.status === 'pending').map(r => r.id);
+    const allPendingSelected = pendingIdsOnPage.length > 0 && pendingIdsOnPage.every(id => selected.includes(id));
+
+    function toggleSelectAll() {
+        setSelected(allPendingSelected ? [] : pendingIdsOnPage);
+    }
+    function toggleRow(id: number) {
+        setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     }
 
-    // Compute bar position and width (in grid columns) for a leave bar
-    function barStyle(leave: LeaveBar) {
-        const start = leave.start_date < weekStart ? weekStart : leave.start_date;
-        const end   = leave.end_date   > weekEnd   ? weekEnd   : leave.end_date;
-        const colStart = dates.indexOf(start);
-        const colEnd   = dates.indexOf(end);
-        if (colStart === -1 || colEnd === -1) return null;
-        return { colStart, colSpan: colEnd - colStart + 1 };
+    async function bulkAct(action: 'approve' | 'deny') {
+        setBulkBusy(true);
+        for (const id of selected) {
+            await new Promise<void>(resolve => {
+                router.post(`/admin/leave/${id}/${action}`, {}, {
+                    preserveScroll: true, preserveState: true, onFinish: () => resolve(),
+                });
+            });
+        }
+        setSelected([]);
+        setBulkBusy(false);
+        Toast.fire({ icon: 'success', title: action === 'approve' ? 'Selected requests approved' : 'Selected requests denied' });
     }
 
-    const COL_W = 64; // px per day column
+    const totalPct = totalEmployees > 0 ? ((stats.on_leave_today / totalEmployees) * 100).toFixed(1) : '0';
 
     return (
         <AppLayout>
             <Head title="Leave Management" />
 
             {viewing && (
-                <DetailModal
-                    leave={viewing}
-                    onClose={() => setViewing(null)}
-                    onApprove={handleApprove}
-                    onDeny={handleDeny}
-                />
+                <DetailModal leave={viewing} onClose={() => setViewing(null)} onApprove={handleApprove} onDeny={handleDeny} />
             )}
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8 w-full">
+            <div className="py-6 px-4 sm:px-6 lg:px-8 w-full space-y-5">
 
-                {/* Page header */}
-                <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-                    <div>
-                        <h1 className="text-2xl font-bold text-green-700 flex items-center gap-2">
-                            Leave Management
-                        </h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-green-700">Leave Management</h1>
+                    <p className="text-sm text-gray-500 mt-1">See who's out today and review requests.</p>
+                </div>
+
+                {/* Today's snapshot */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <StatCard highlighted label="On Leave Today" value={stats.on_leave_today} sub={`${totalPct}% of ${totalEmployees} employees`} />
+                    <div className="lg:col-span-2">
+                        <LeaveScoreboard data={scoreboard} />
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-6">
-                    <StatCard label="Pending requests"  value={stats.pending}        icon={<Clock className="h-6 w-6" />}       color="bg-green-50 border-green-200"  iconColor="text-green-600" />
-                    <StatCard label="On leave today"    value={stats.on_leave_today} icon={<Users className="h-6 w-6" />}       color="bg-green-50 border-green-200"      iconColor="text-green-600" />
-                    <StatCard label="Approved"    value={stats.approved}       icon={<CheckCircle2 className="h-6 w-6"/>} color="bg-green-50 border-green-200"  iconColor="text-green-600" />
-                    <StatCard label="Denied"      value={stats.denied}         icon={<XCircle className="h-6 w-6" />}     color="bg-green-50 border-green-200"      iconColor="text-green-600" />
+                {/* Overview + calendar + upcoming */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <WeekOverviewChart days={weekOverview} />
+                    <MonthCalendar calendar={calendar} onNavigate={navigateMonth} isNavigating={isNavigatingMonth} />
+                    <UpcomingLeavesCard items={upcomingLeaves} />
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-4 px-4 py-3 flex flex-wrap items-center gap-3">
-                    {/* Search */}
-                    <div className="relative flex-1 min-w-48">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Search Employee"
-                            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-                        />
-                    </div>
+                {/* Leave activity */}
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                    <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3">
+                        <p className="text-sm font-semibold text-gray-800 mr-auto flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-green-700" /> Leave Activity
+                        </p>
 
-                    {/* Leave type */}
-                    <select
-                        value={typeId}
-                        onChange={e => setTypeId(e.target.value)}
-                        className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
-                        <option value="">All Leave Types</option>
-                        {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-
-                    {/* Status */}
-                    <select
-                        value={status}
-                        onChange={e => setStatus(e.target.value)}
-                        className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="denied">Denied</option>
-                    </select>
-
-                    {/* Week navigation */}
-                    <div className="flex items-center gap-1 ml-auto">
-                        <button onClick={() => navigate('prev')}
-                            className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition">
-                            <ChevronLeft className="h-4 w-4" />
-                        </button>
-                        <span className="text-sm font-medium text-gray-700 px-2 whitespace-nowrap">
-                            {fmt(weekStart, { month: 'short', day: 'numeric' })} – {fmt(weekEnd, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <button onClick={() => navigate('next')}
-                            className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition">
-                            <ChevronRight className="h-4 w-4" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Legend */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {leaveTypes.map(t => {
-                        const c = TYPE_COLORS[t.code] ?? DEFAULT_COLOR;
-                        return (
-                            <span key={t.id} className="flex items-center gap-1.5 text-xs text-gray-600">
-                                <span className={`h-2 w-4 rounded-sm ${c.bar}`} />
-                                {t.name}
-                            </span>
-                        );
-                    })}
-                </div>
-
-                {/* Gantt Table */}
-                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <div style={{ minWidth: `${200 + dates.length * COL_W}px` }}>
-
-                            {/* Date header row */}
-                            <div className="flex border-b border-gray-200 bg-gray-50">
-                                {/* Employee column header */}
-                                <div className="shrink-0 w-48 px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide border-r border-gray-200">
-                                    Employee
-                                </div>
-                                {/* Date columns */}
-                                {dates.map(date => (
-                                    <div
-                                        key={date}
-                                        style={{ width: COL_W }}
-                                        className={`shrink-0 flex flex-col items-center justify-center py-2 border-r border-gray-100 last:border-0
-                                            ${isWeekend(date) ? 'bg-gray-100' : ''}
-                                            ${isToday(date) ? 'bg-green-50' : ''}`}>
-                                        <span className={`text-[10px] font-medium uppercase ${isToday(date) ? 'text-green-600' : 'text-gray-400'}`}>
-                                            {fmt(date, { weekday: 'short' })}
-                                        </span>
-                                        <span className={`text-sm font-bold ${isToday(date) ? 'text-green-700' : isWeekend(date) ? 'text-gray-400' : 'text-gray-700'}`}>
-                                            {fmt(date, { day: 'numeric' })}
-                                        </span>
-                                        <span className={`text-[9px] ${isToday(date) ? 'text-green-500' : 'text-gray-400'}`}>
-                                            {fmt(date, { month: 'short' })}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Employee rows */}
-                            {employees.length === 0 ? (
-                                <div className="flex items-center justify-center py-16 text-sm text-gray-400 italic">
-                                    No employees with leave requests found for this period.
-                                </div>
-                            ) : (
-                                employees.map(emp => (
-                                    <div key={emp.id} className="flex border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors min-h-14">
-
-                                        {/* Employee info */}
-                                        <div className="shrink-0 w-48 px-4 py-3 flex items-center gap-2 border-r border-gray-200">
-                                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs shrink-0">
-                                                {emp.avatar
-                                                    ? <img src={emp.avatar} className="h-8 w-8 rounded-full object-cover" alt="" />
-                                                    : emp.name.charAt(0)
-                                                }
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-gray-800 truncate">{emp.name}</p>
-                                                <p className="text-[10px] text-gray-400 truncate">{emp.email}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Date grid + leave bars */}
-                                        <div className="relative flex flex-1">
-                                            {/* Grid lines */}
-                                            {dates.map(date => (
-                                                <div
-                                                    key={date}
-                                                    style={{ width: COL_W }}
-                                                    className={`shrink-0 border-r border-gray-100 last:border-0
-                                                        ${isWeekend(date) ? 'bg-gray-50' : ''}
-                                                        ${isToday(date) ? 'bg-green-50/40' : ''}`}
-                                                />
-                                            ))}
-
-                                            {/* Absolute-positioned leave bars */}
-                                            {emp.leaves.map(leave => {
-                                                const pos = barStyle(leave);
-                                                if (!pos) return null;
-                                                const color = TYPE_COLORS[leave.type_code] ?? DEFAULT_COLOR;
-                                                const isPending = leave.status === 'pending';
-
-                                                return (
-                                                    <button
-                                                        key={leave.id}
-                                                        title={`${leave.type} — ${leave.status}`}
-                                                        onClick={() => openLeave(leave, emp.name, emp.email)}
-                                                        style={{
-                                                            position: 'absolute',
-                                                            left: `${pos.colStart * COL_W + 3}px`,
-                                                            width: `${pos.colSpan * COL_W - 6}px`,
-                                                            top: '50%',
-                                                            transform: 'translateY(-50%)',
-                                                        }}
-                                                        className={`
-                                                            h-7 rounded-md flex items-center px-2 gap-1.5 text-white
-                                                            text-[10px] font-semibold truncate cursor-pointer
-                                                            hover:brightness-95 active:scale-[0.98] transition-all shadow-sm
-                                                            ${color.bar}
-                                                            ${isPending ? 'opacity-80 border-2 border-dashed border-white/60' : ''}
-                                                        `}>
-                                                        {isPending && <Clock className="h-2.5 w-2.5 shrink-0" />}
-                                                        <span className="truncate">{leave.type_code}</span>
-                                                        <span className="ml-auto shrink-0 opacity-80">{leave.days}d</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                value={search}
+                                onChange={e => onSearchChange(e.target.value)}
+                                placeholder="Search employee, ID…"
+                                className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 w-48"
+                            />
                         </div>
-                    </div>
-                </div>
 
-                {/* Legend for status patterns */}
-                <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-3 w-6 rounded bg-amber-400 border-2 border-dashed border-white/60 opacity-80" />
-                        Pending approval
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-3 w-6 rounded bg-green-400" />
-                        Approved
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-3 w-6 rounded bg-red-300" />
-                        Denied
-                    </span>
+                        <select
+                            value={typeId}
+                            onChange={e => updateSelect({ leave_type_id: e.target.value })}
+                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
+                            <option value="">All Types</option>
+                            {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+
+                        <select
+                            value={status}
+                            onChange={e => updateSelect({ status: e.target.value })}
+                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="denied">Denied</option>
+                        </select>
+
+                        <select
+                            value={sort}
+                            onChange={e => updateSelect({ sort: e.target.value })}
+                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                            <option value="duration">Longest duration</option>
+                            <option value="name">Name (A–Z)</option>
+                        </select>
+                    </div>
+
+                    {selected.length > 0 && (
+                        <div className="flex items-center justify-between bg-green-50 border-b border-green-100 px-5 py-2.5">
+                            <p className="text-sm text-green-800 font-medium">{selected.length} request{selected.length === 1 ? '' : 's'} selected</p>
+                            <div className="flex gap-2">
+                                <button disabled={bulkBusy} onClick={() => bulkAct('deny')}
+                                    className="cursor-pointer rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50">
+                                    Deny selected
+                                </button>
+                                <button disabled={bulkBusy} onClick={() => bulkAct('approve')}
+                                    className="cursor-pointer rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition disabled:opacity-50">
+                                    {bulkBusy ? 'Working…' : 'Approve selected'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-[11px] text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                                    <th className="pl-5 pr-2 py-2.5 font-semibold w-8">
+                                        <input type="checkbox" checked={allPendingSelected} onChange={toggleSelectAll}
+                                            disabled={pendingIdsOnPage.length === 0}
+                                            className="h-3.5 w-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer disabled:opacity-30" />
+                                    </th>
+                                    <th className="px-3 py-2.5 font-semibold">Name</th>
+                                    <th className="px-3 py-2.5 font-semibold">Job Title</th>
+                                    <th className="px-3 py-2.5 font-semibold">Type</th>
+                                    <th className="px-3 py-2.5 font-semibold">Submit Date</th>
+                                    <th className="px-3 py-2.5 font-semibold">Period</th>
+                                    <th className="px-3 py-2.5 font-semibold">Duration</th>
+                                    <th className="px-3 py-2.5 font-semibold">Reason</th>
+                                    <th className="px-5 py-2.5 font-semibold text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {activity.data.length === 0 ? (
+                                    <tr><td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400 italic">No leave requests match these filters.</td></tr>
+                                ) : activity.data.map(row => {
+                                    const color = TYPE_COLORS[row.type_code] ?? DEFAULT_COLOR;
+                                    const isPending = row.status === 'pending';
+                                    return (
+                                        <tr key={row.id} className={`border-t border-gray-50 hover:bg-gray-50/60 transition-colors ${selected.includes(row.id) ? 'bg-green-50/40' : ''}`}>
+                                            <td className="pl-5 pr-2 py-2.5">
+                                                <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggleRow(row.id)}
+                                                    disabled={!isPending}
+                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer disabled:opacity-20" />
+                                            </td>
+                                            <td className="px-3 py-2.5 cursor-pointer" onClick={() => setViewing(row)}>
+                                                <div className="flex items-center gap-2.5">
+                                                    <Avatar name={row.employee} photo={row.photo} className="h-8 w-8 text-[10px]" />
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-gray-800 truncate">{row.employee}</p>
+                                                        {row.employee_number && <p className="text-[11px] text-gray-400">{row.employee_number}</p>}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                                {row.job_title ?? '—'}
+                                            </td>
+                                            <td className="px-3 py-2.5 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                                <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${color.label}`}>
+                                                    <span className={`h-2 w-2 rounded-full ${color.dot}`} />
+                                                    {row.leave_type}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                                {fmtDate(row.submit_date)}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                                {fmtPeriod(row.start_date, row.end_date)}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                                {row.days} Day{row.days === 1 ? '' : 's'}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-gray-500 max-w-40 truncate cursor-pointer" onClick={() => setViewing(row)}>
+                                                {row.reason ?? '—'}
+                                            </td>
+                                            <td className="px-5 py-2.5">
+                                                {isPending ? (
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            disabled={actingId === row.id}
+                                                            onClick={() => quickAct(row.id, 'deny')}
+                                                            title="Deny"
+                                                            className="h-6 w-6 cursor-pointer rounded-full border border-red-200 bg-white text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition disabled:opacity-50">
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            disabled={actingId === row.id}
+                                                            onClick={() => quickAct(row.id, 'approve')}
+                                                            className="flex cursor-pointer items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-600 hover:text-white transition disabled:opacity-50">
+                                                            <Check className="h-3 w-3" /> Approve
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex justify-end">
+                                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_PILL[row.status]}`}>
+                                                            {STATUS_LABEL[row.status]}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {activity.last_page > 1 && (
+                        <div className="flex items-center justify-between text-sm text-gray-500 px-5 py-3.5 border-t border-gray-100">
+                            <p>Page {activity.current_page} of {activity.last_page} · {activity.total} requests</p>
+                            <div className="flex gap-2">
+                                {activity.prev_page_url && (
+                                    <button onClick={() => router.get(activity.prev_page_url!, {}, { preserveScroll: true, preserveState: true })}
+                                        className="cursor-pointer px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Previous</button>
+                                )}
+                                {activity.next_page_url && (
+                                    <button onClick={() => router.get(activity.next_page_url!, {}, { preserveScroll: true, preserveState: true })}
+                                        className="cursor-pointer px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Next</button>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>

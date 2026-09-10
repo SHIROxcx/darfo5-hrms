@@ -23,11 +23,12 @@ const referenceDataNavItem: NavItem = {
     href: '/admin/reference-data/divisions',
     icon: Settings,
     items: [
-        { title: 'Divisions & Sections', href: '/admin/reference-data/divisions' },
+        { title: 'Holidays', href: '/admin/reference-data/holidays' },
         { title: 'Positions', href: '/admin/reference-data/positions' },
         { title: 'Eligibilities', href: '/admin/reference-data/eligibilities' },
-        { title: 'Graduate Programs', href: '/admin/reference-data/graduate-programs' },
         { title: "Bachelor's Degrees", href: '/admin/reference-data/bachelors-degrees' },
+        { title: 'Graduate Programs', href: '/admin/reference-data/graduate-programs' },
+        { title: 'Divisions & Sections', href: '/admin/reference-data/divisions' },
     ],
 };
 

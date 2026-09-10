@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { Spinner } from '@/components/ui/spinner';
+import { StatusDot } from '@/components/status-dot';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import ServiceRecordImportModal from './ServiceRecordImportModal';
 import EmployeeFilters, { type FilterValues } from './EmployeeFilters';
@@ -95,19 +96,19 @@ interface DetailModalProps {
 function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         {employee.photo ? (
-                            <img src={'/storage/' + employee.photo} className="h-12 w-12 rounded-full object-cover border" alt={getFullName(employee)} />
+                            <img src={'/storage/' + employee.photo} className="h-11 w-11 rounded-full object-cover border border-gray-200" alt={getFullName(employee)} />
                         ) : (
-                            <div className="h-12 w-12 rounded-full bg-green-600 text-white/90 flex items-center justify-center font-semibold">
+                            <div className="h-11 w-11 rounded-full bg-green-700 text-white flex items-center justify-center text-sm font-semibold">
                                 {getInitials(employee)}
                             </div>
                         )}
                         <div>
-                            <p className="font-semibold text-gray-900">{getFullName(employee)}</p>
-                            <p className="text-xs text-gray-400">{employee.email}</p>
+                            <p className="font-medium text-gray-900">{getFullName(employee)}</p>
+                            <p className="text-xs text-gray-500">{employee.email}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
@@ -115,68 +116,68 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                     </button>
                 </div>
 
-                <div className="px-6 py-5 space-y-4">
-                    <div className="flex gap-3">
-                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
-                            <p className="text-xs text-gray-400 mb-1">Email</p>
+                <div className="px-6 py-5 space-y-5">
+                    <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-md border border-gray-200">
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Email</p>
                             {employee.email_verified_at
-                                ? <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
-                                : <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Unverified</span>}
+                                ? <StatusDot tone="green">Verified</StatusDot>
+                                : <StatusDot tone="gray">Unverified</StatusDot>}
                         </div>
-                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
-                            <p className="text-xs text-gray-400 mb-1">Approval</p>
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Approval</p>
                             {employee.is_approved
-                                ? <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Approved</span>
-                                : <span className="text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-full">Pending</span>}
+                                ? <StatusDot tone="green">Approved</StatusDot>
+                                : <StatusDot tone="amber">Pending</StatusDot>}
                         </div>
-                        <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
-                            <p className="text-xs text-gray-400 mb-1">Active</p>
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Employment</p>
                             {employee.employee_profile?.is_active
-                                ? <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Active</span>
-                                : <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Inactive</span>}
+                                ? <StatusDot tone="green">Active</StatusDot>
+                                : <StatusDot tone="gray">Inactive</StatusDot>}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <p className="text-xs text-gray-400">Employee No.</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.employee_number ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Employee No.</p>
+                            <p className="font-medium text-gray-900 tabular-nums">{employee.employee_profile?.employee_number ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Employment Type</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.employment_type ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Employment Type</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.employment_type ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Position</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.position ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Position</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.position ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Salary Grade</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.salary_grade ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Salary Grade</p>
+                            <p className="font-medium text-gray-900 tabular-nums">{employee.employee_profile?.salary_grade ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-xs text-gray-400">Agency</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.place_assign ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Agency</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.place_assign ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-xs text-gray-400">Division</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.division ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Division</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.division ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-xs text-gray-400">Section/Unit</p>
-                            <p className="font-medium text-gray-700">{employee.employee_profile?.section ?? <span className="italic text-gray-300">Not set</span>}</p>
+                            <p className="text-xs text-gray-500">Section/Unit</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.section ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer — shows View Profile for approved, Approve for pending */}
-                <div className="px-6 py-4 border-t flex items-center justify-end gap-2">
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
                     {/* Left side: approve button only if pending + verified */}
                     <div>
                         {employee.email_verified_at && !employee.is_approved && (
                             <button
                                 onClick={() => { onApprove(employee); onClose(); }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-pointer bg-green-700 text-white rounded-md hover:bg-green-800 transition"
                             >
                                 <Check className="h-4 w-4" />
                                 Approve Account
@@ -191,7 +192,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                                 onClose();
                                 router.visit(`/admin/employees/${employee.id}/view`);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition ml-auto"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-pointer border border-green-700 text-green-800 rounded-md hover:bg-green-50 transition ml-auto"
                         >
                             <ExternalLink className="h-4 w-4" />
                             View Profile
@@ -370,7 +371,7 @@ export default function Index({ employees, filters, divisions }: Props) {
             html: 'Approve <strong>' + getFullName(emp) + '</strong>? They will receive an email notification.',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#16a34a',
+            confirmButtonColor: '#15803d',
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, Approve',
             cancelButtonText: 'Cancel',
@@ -397,7 +398,7 @@ export default function Index({ employees, filters, divisions }: Props) {
                 : 'This will <strong>grant access</strong> to <strong>' + getFullName(emp) + '</strong>.',
             icon: isRevoking ? 'warning' : 'question',
             showCancelButton: true,
-            confirmButtonColor: isRevoking ? '#d97706' : '#16a34a',
+            confirmButtonColor: isRevoking ? '#d97706' : '#15803d',
             cancelButtonColor: '#6b7280',
             confirmButtonText: isRevoking ? 'Yes, Revoke' : 'Yes, Approve',
             cancelButtonText: 'Cancel',
@@ -445,6 +446,8 @@ export default function Index({ employees, filters, divisions }: Props) {
         });
     };
 
+    const selectionActive = selectedIds.size > 0;
+
     return (
         <AppLayout>
             <Head title="Employees" />
@@ -465,176 +468,195 @@ export default function Index({ employees, filters, divisions }: Props) {
             )}
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 w-full mx-auto">
-                <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {localTotal} total employee{localTotal !== 1 ? 's' : ''}
+                        <h1 className="text-xl font-semibold text-gray-900">Employees</h1>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                            {localTotal} on record
                         </p>
                     </div>
-                    <div className="flex flex-col sm:flex-row md:shrink-0 items-stretch sm:items-center gap-2">
-                        <button
-                            onClick={generateBulkPdf}
-                            disabled={selectedIds.size === 0 || generatingPdf}
-                            className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-                        >
-                            {generatingPdf ? <Spinner className="h-4 w-4" /> : <FileDown className="h-4 w-4" />}
-                            Generate Service Records{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
-                        </button>
-                        <button
-                            onClick={() => setImportOpen(true)}
-                            className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 transition"
-                        >
-                            <Upload className="h-4 w-4" /> Import Service Records
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setImportOpen(true)}
+                        className="flex w-full md:w-auto shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                        <Upload className="h-4 w-4" /> Import Service Records
+                    </button>
                 </div>
 
-                {/* Filters */}
-                <div className="mb-4 flex gap-3 flex-wrap items-start">
-                    <div className="relative flex-1 min-w-50">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search name, email, employee no., position..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
-                    <EmployeeFilters
-                        values={filterValues}
-                        divisions={divisions}
-                        onChange={handleFilterChange}
-                    />
-                </div>
-
-                {/* Table */}
-                <div className="relative bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 overflow-x-auto border-collapse">
-                    {isSearching && (
-                        <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-10">
-                            <Spinner className="h-6 w-6 text-green-600" />
-                        </div>
-                    )}
-                    <table className="w-full text-sm">
-                        <thead className="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs tracking-wider">
-                            <tr>
-                                <th className="px-4 py-5 text-left w-10">
-                                    <input
-                                        type="checkbox"
-                                        checked={allOnPageSelected}
-                                        onChange={toggleSelectAllOnPage}
-                                        className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                                        aria-label="Select all on this page"
-                                    />
-                                </th>
-                                <th className="px-4 py-5 text-left">Employee</th>
-                                <th className="px-4 py-5 text-left">Employee No.</th>
-                                <th className="px-4 py-5 text-left">Position</th>
-                                <th className="px-4 py-5 text-left">Division</th>
-                                <th className="px-4 py-5 text-left">Type</th>
-                                <th className="px-4 py-5 text-center">Status</th>
-                                <th className="px-4 py-5 text-center">Approved</th>
-                                <th className="px-4 py-5 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {localEmployees.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="text-center py-12 text-gray-400 italic">No employees found.</td>
-                                </tr>
-                            ) : (
-                                localEmployees.map(emp => (
-                                    <tr
-                                        key={emp.id}
-                                        onClick={() => setDetailModal(emp)}
-                                        className="hover:bg-gray-50 cursor-pointer transition"
+                {/* Registry */}
+                <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                    {/* Toolbar — search/filters normally; swaps to a contextual bar once rows are selected */}
+                    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 px-4 py-3">
+                        {selectionActive ? (
+                            <>
+                                <p className="text-sm font-medium text-gray-700">
+                                    {selectedIds.size} selected
+                                </p>
+                                <div className="flex items-center gap-3 ml-auto">
+                                    <button
+                                        onClick={generateBulkPdf}
+                                        disabled={generatingPdf}
+                                        className="flex cursor-pointer items-center justify-center gap-1.5 rounded-md bg-green-700 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-green-800 transition disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.has(emp.id)}
-                                                onChange={() => toggleSelected(emp.id)}
-                                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                                                aria-label={`Select ${getFullName(emp)}`}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                {emp.photo ? (
-                                                    <img src={'/storage/' + emp.photo} alt={getFullName(emp)} className="h-9 w-9 rounded-full object-cover border" />
-                                                ) : (
-                                                    <div className="h-9 w-9 rounded-full bg-green-600 text-white/90 flex items-center justify-center font-semibold text-xs">
-                                                        {getInitials(emp)}
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{getFullName(emp)}</p>
-                                                    <p className="text-xs text-gray-400">{emp.email}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600">
-                                            {emp.employee_profile?.employee_number ?? <span className="text-gray-300 italic">Not set</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600">
-                                            {emp.employee_profile?.position ?? <span className="text-gray-300 italic">Not set</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600">
-                                            {emp.employee_profile?.division ?? <span className="text-gray-300 italic">Not set</span>}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {emp.employee_profile?.employment_type ? (
-                                                <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
-                                                    {emp.employee_profile.employment_type}
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-300 italic text-xs">Not set</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {emp.employee_profile ? (
-                                                emp.employee_profile.is_active
-                                                    ? <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">Active</span>
-                                                    : <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-xs font-medium">Inactive</span>
-                                            ) : (
-                                                <span className="text-gray-300 italic text-xs">—</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {emp.is_approved
-                                                ? <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">Approved</span>
-                                                : <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-full text-xs font-medium">Pending</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                                            <div className="flex items-center justify-center gap-2">
-                                                {emp.email_verified_at ? (
-                                                    <button
-                                                        onClick={() => toggleApproval(emp)}
-                                                        className={'p-1.5 rounded-lg transition cursor-pointer ' + (emp.is_approved ? 'hover:bg-yellow-50 text-yellow-600' : 'hover:bg-green-50 text-green-600')}
-                                                        title={emp.is_approved ? 'Revoke Access' : 'Approve Account'}
-                                                    >
-                                                        {emp.is_approved ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                                                    </button>
-                                                ) : (
-                                                    <span className="p-1.5 text-gray-300 cursor-not-allowed" title="Email not yet verified">
-                                                        <Lock className="h-4 w-4" />
-                                                    </span>
-                                                )}
-                                                <button
-                                                    onClick={() => deleteEmployee(emp)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-50 cursor-pointer text-red-500 transition"
-                                                    title="Delete Employee"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        {generatingPdf ? <Spinner className="h-4 w-4" /> : <FileDown className="h-4 w-4" />}
+                                        Generate Service Records
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedIds(new Set())}
+                                        className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 transition"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="relative flex-1 min-w-50">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search name, email, employee no., position..."
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700"
+                                    />
+                                </div>
+                                <EmployeeFilters
+                                    values={filterValues}
+                                    divisions={divisions}
+                                    onChange={handleFilterChange}
+                                />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Table */}
+                    <div className="relative overflow-x-auto">
+                        {isSearching && (
+                            <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-10">
+                                <Spinner className="h-6 w-6 text-green-700" />
+                            </div>
+                        )}
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-50 text-gray-500 border-b border-gray-200 text-xs">
+                                <tr>
+                                    <th className="px-4 py-3 text-left w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={allOnPageSelected}
+                                            onChange={toggleSelectAllOnPage}
+                                            className="h-4 w-4 rounded border-gray-300 accent-green-600 focus:ring-green-600 cursor-pointer"
+                                            aria-label="Select all on this page"
+                                        />
+                                    </th>
+                                    <th className="px-4 py-3 text-left font-medium">Employee</th>
+                                    <th className="px-4 py-3 text-left font-medium">Employee No.</th>
+                                    <th className="px-4 py-3 text-left font-medium">Position</th>
+                                    <th className="px-4 py-3 text-left font-medium">Division</th>
+                                    <th className="px-4 py-3 text-left font-medium">Type</th>
+                                    <th className="px-4 py-3 text-left font-medium">Status</th>
+                                    <th className="px-4 py-3 text-left font-medium">Approval</th>
+                                    <th className="px-4 py-3 text-center font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {localEmployees.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="text-center py-12 text-gray-400 italic">No employees found.</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    localEmployees.map(emp => (
+                                        <tr
+                                            key={emp.id}
+                                            onClick={() => setDetailModal(emp)}
+                                            className="hover:bg-gray-50 cursor-pointer transition"
+                                        >
+                                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(emp.id)}
+                                                    onChange={() => toggleSelected(emp.id)}
+                                                    className="h-4 w-4 rounded border-gray-300 accent-green-600 focus:ring-green-600 cursor-pointer"
+                                                    aria-label={`Select ${getFullName(emp)}`}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    {emp.photo ? (
+                                                        <img src={'/storage/' + emp.photo} alt={getFullName(emp)} className="h-9 w-9 rounded-full object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <div className="h-9 w-9 rounded-full bg-green-700 text-white flex items-center justify-center font-medium text-xs">
+                                                            {getInitials(emp)}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{getFullName(emp)}</p>
+                                                        <p className="text-xs text-gray-500">{emp.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 tabular-nums">
+                                                {emp.employee_profile?.employee_number ?? <span className="text-gray-400 italic">Not set</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700">
+                                                {emp.employee_profile?.position ?? <span className="text-gray-400 italic">Not set</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700">
+                                                {emp.employee_profile?.division ?? <span className="text-gray-400 italic">Not set</span>}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {emp.employee_profile?.employment_type ? (
+                                                    <span className="px-2 py-0.5 rounded-md border border-gray-200 text-gray-600 text-xs">
+                                                        {emp.employee_profile.employment_type}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 italic text-xs">Not set</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {emp.employee_profile ? (
+                                                    emp.employee_profile.is_active
+                                                        ? <StatusDot tone="green">Active</StatusDot>
+                                                        : <StatusDot tone="gray">Inactive</StatusDot>
+                                                ) : (
+                                                    <span className="text-gray-300">—</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {emp.is_approved
+                                                    ? <StatusDot tone="green">Approved</StatusDot>
+                                                    : <StatusDot tone="amber">Pending</StatusDot>}
+                                            </td>
+                                            <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    {emp.email_verified_at ? (
+                                                        <button
+                                                            onClick={() => toggleApproval(emp)}
+                                                            className={'p-1.5 rounded-md transition cursor-pointer ' + (emp.is_approved ? 'hover:bg-amber-50 text-amber-600' : 'hover:bg-green-50 text-green-700')}
+                                                            title={emp.is_approved ? 'Revoke Access' : 'Approve Account'}
+                                                        >
+                                                            {emp.is_approved ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                                                        </button>
+                                                    ) : (
+                                                        <span className="p-1.5 text-gray-300 cursor-not-allowed" title="Email not yet verified">
+                                                            <Lock className="h-4 w-4" />
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        onClick={() => deleteEmployee(emp)}
+                                                        className="p-1.5 rounded-md hover:bg-red-50 cursor-pointer text-red-600 transition"
+                                                        title="Delete Employee"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Pagination */}
@@ -643,10 +665,10 @@ export default function Index({ employees, filters, divisions }: Props) {
                         <p>Page {employees.current_page} of {employees.last_page}</p>
                         <div className="flex gap-2">
                             {employees.prev_page_url && (
-                                <Link href={employees.prev_page_url} preserveScroll className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Previous</Link>
+                                <Link href={employees.prev_page_url} preserveScroll className="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Previous</Link>
                             )}
                             {employees.next_page_url && (
-                                <Link href={employees.next_page_url} preserveScroll className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition">Next</Link>
+                                <Link href={employees.next_page_url} preserveScroll className="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Next</Link>
                             )}
                         </div>
                     </div>

@@ -3,6 +3,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { Check, X, UserCheck, Clock, Bell, Megaphone } from 'lucide-react';
+import { StatusDot } from '@/components/status-dot';
 import type { AppNotification, PendingUser, AnnouncementNotifData } from '@/types/notification';
 
 // Helpers
@@ -56,16 +57,16 @@ function UserDetailModal({
 
     return (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         {user.photo
-                            ? <img src={'/storage/' + user.photo} className="h-12 w-12 rounded-full object-cover border" alt={fullName(user)} />
-                            : <div className="h-12 w-12 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold">{initials}</div>
+                            ? <img src={'/storage/' + user.photo} className="h-11 w-11 rounded-full object-cover border border-gray-200" alt={fullName(user)} />
+                            : <div className="h-11 w-11 rounded-full bg-green-700 text-white flex items-center justify-center text-sm font-semibold">{initials}</div>
                         }
                         <div>
-                            <p className="font-semibold text-gray-900">{fullName(user)}</p>
-                            <p className="text-xs text-gray-400">{user.email}</p>
+                            <p className="font-medium text-gray-900">{fullName(user)}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
@@ -73,21 +74,25 @@ function UserDetailModal({
                     </button>
                 </div>
 
-                <div className="px-6 py-5 space-y-4">
-                    <div className="flex gap-3">
-                        {[
-                            { label: 'Email',    value: 'Verified',  cls: 'text-green-700 bg-green-50' },
-                            { label: 'Approval', value: 'Pending',   cls: 'text-yellow-700 bg-yellow-50' },
-                            { label: 'Status',   value: ep?.is_active ? 'Active' : 'Inactive', cls: ep?.is_active ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50' },
-                        ].map(({ label, value, cls }) => (
-                            <div key={label} className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
-                                <p className="text-xs text-gray-400 mb-1">{label}</p>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>{value}</span>
-                            </div>
-                        ))}
+                <div className="px-6 py-5 space-y-5">
+                    <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-md border border-gray-200">
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Email</p>
+                            <StatusDot tone="green">Verified</StatusDot>
+                        </div>
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Approval</p>
+                            <StatusDot tone="amber">Pending</StatusDot>
+                        </div>
+                        <div className="p-3 text-center">
+                            <p className="text-xs text-gray-500 mb-1.5">Employment</p>
+                            {ep?.is_active
+                                ? <StatusDot tone="green">Active</StatusDot>
+                                : <StatusDot tone="gray">Inactive</StatusDot>}
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                         {[
                             ['Employee No.',    ep?.employee_number],
                             ['Employment Type', ep?.employment_type],
@@ -95,8 +100,8 @@ function UserDetailModal({
                             ['Salary Grade',    ep?.salary_grade],
                         ].map(([label, val]) => (
                             <div key={label as string}>
-                                <p className="text-xs text-gray-400">{label}</p>
-                                <p className="font-medium text-gray-700">{val ?? <span className="italic text-gray-300">Not set</span>}</p>
+                                <p className="text-xs text-gray-500">{label}</p>
+                                <p className="font-medium text-gray-900 tabular-nums">{val ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                             </div>
                         ))}
                         {[
@@ -105,22 +110,23 @@ function UserDetailModal({
                             ['Section/Unit/Office', ep?.section],
                         ].map(([label, val]) => (
                             <div key={label as string} className="col-span-2">
-                                <p className="text-xs text-gray-400">{label}</p>
-                                <p className="font-medium text-gray-700">{val ?? <span className="italic text-gray-300">Not set</span>}</p>
+                                <p className="text-xs text-gray-500">{label}</p>
+                                <p className="font-medium text-gray-900">{val ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
                             </div>
                         ))}
                         <div className="col-span-2">
-                            <p className="text-xs text-gray-400">Registered</p>
-                            <p className="font-medium text-gray-700">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                            <p className="text-xs text-gray-500">Registered</p>
+                            <p className="font-medium text-gray-900">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t flex justify-end gap-2">
-                    <button onClick={() => { onDeny(user); onClose(); }} className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition">
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
+                    <button onClick={() => { onDeny(user); onClose(); }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-pointer border border-red-200 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition">
                         Decline
                     </button>
-                    <button onClick={() => { onApprove(user); onClose(); }} className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                    <button onClick={() => { onApprove(user); onClose(); }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-pointer bg-green-700 text-white rounded-md hover:bg-green-800 transition">
+                        <Check className="h-4 w-4" />
                         Approve
                     </button>
                 </div>

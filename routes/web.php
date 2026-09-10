@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ReferenceData\BachelorsDegreeController;
 use App\Http\Controllers\Admin\ReferenceData\DivisionController;
 use App\Http\Controllers\Admin\ReferenceData\EligibilityController;
 use App\Http\Controllers\Admin\ReferenceData\GraduateProgramController;
+use App\Http\Controllers\Admin\ReferenceData\HolidayController;
 use App\Http\Controllers\Admin\ReferenceData\PositionController;
 use App\Http\Controllers\Admin\ReferenceData\SectionController;
 use App\Http\Controllers\Admin\ServiceRecordBulkPdfController;
@@ -116,6 +117,14 @@ Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
         Route::post('/bachelors-degrees', [BachelorsDegreeController::class, 'store'])->name('bachelors-degrees.store');
         Route::put('/bachelors-degrees/{bachelorsDegree}', [BachelorsDegreeController::class, 'update'])->name('bachelors-degrees.update');
         Route::delete('/bachelors-degrees/{bachelorsDegree}', [BachelorsDegreeController::class, 'destroy'])->name('bachelors-degrees.destroy');
+
+        Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays.index');
+        Route::post('/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+        Route::put('/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
+        Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+        Route::post('/holidays/{holiday}/exceptions', [HolidayController::class, 'storeException'])->name('holidays.exceptions.store');
+        Route::delete('/holidays/{holiday}/exceptions/{year}', [HolidayController::class, 'destroyException'])->name('holidays.exceptions.destroy');
+        Route::post('/holidays/prefill', [HolidayController::class, 'prefill'])->name('holidays.prefill');
     });
 
 // Service Records — HR admin and superadmin
