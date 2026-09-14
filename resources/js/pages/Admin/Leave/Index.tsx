@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
-import { Spinner } from '@/components/ui/spinner';
 import AppLayout from '@/layouts/app-layout';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -22,8 +21,6 @@ interface Scoreboard {
     completed: number;
     denied: number;
 }
-
-interface WeekDay { date: string; label: string; count: number; is_today: boolean; }
 
 interface DayLeaveEntry { employee: string; photo: string | null; leave_type: string; type_code: string; }
 
@@ -73,7 +70,6 @@ interface Filters { search?: string; leave_type_id?: string; status?: string; so
 interface Props {
     stats: TodayStats;
     scoreboard: Scoreboard;
-    weekOverview: WeekDay[];
     calendar: CalendarData;
     upcomingLeaves: UpcomingLeave[];
     activity: PaginatedActivity;
@@ -200,94 +196,35 @@ function Avatar({ name, photo, className = 'h-9 w-9 text-[11px]' }: { name: stri
 
 // ─── Leave requests scoreboard ──────────────────────────────────────────────
 
-function LeaveScoreboard({ data }: { data: Scoreboard }) {
-    const total = data.pending + data.approved + data.completed + data.denied || 1;
-    const tiles: { key: keyof Scoreboard; label: string; value: number; digit: string }[] = [
-        { key: 'pending',   label: 'Pending',   value: data.pending,   digit: 'text-white' },
-        { key: 'approved',  label: 'Approved',  value: data.approved,  digit: 'text-white' },
-        { key: 'completed', label: 'Completed', value: data.completed, digit: 'text-white' },
-        { key: 'denied',    label: 'Denied',    value: data.denied,    digit: 'text-white' },
+function LeaveScoreboard({ stats, scoreboard, totalEmployees }: {
+    stats: TodayStats; scoreboard: Scoreboard; totalEmployees: number;
+}) {
+    const requestTotal = scoreboard.pending + scoreboard.approved + scoreboard.completed + scoreboard.denied;
+    const requestTotalSafe = requestTotal || 1;
+    const onLeavePct = totalEmployees > 0 ? Math.round((stats.on_leave_today / totalEmployees) * 100) : 0;
+
+    const tiles = [
+        { key: 'on_leave_today', label: 'On Leave Today', value: stats.on_leave_today, pct: onLeavePct },
+        { key: 'pending',   label: 'Pending',   value: scoreboard.pending,   pct: Math.round((scoreboard.pending / requestTotalSafe) * 100) },
+        { key: 'approved',  label: 'Approved',  value: scoreboard.approved,  pct: Math.round((scoreboard.approved / requestTotalSafe) * 100) },
+        { key: 'completed', label: 'Completed', value: scoreboard.completed, pct: Math.round((scoreboard.completed / requestTotalSafe) * 100) },
+        { key: 'denied',    label: 'Denied',    value: scoreboard.denied,    pct: Math.round((scoreboard.denied / requestTotalSafe) * 100) },
     ];
 
     return (
-        <div className="h-full rounded-2xl bg-green-600 border text-white border-green-600 shadow-sm overflow-hidden flex flex-col">
+        <div className="rounded-2xl bg-green-600 border border-green-600 text-white shadow-sm overflow-hidden">
             <div className="px-5 pt-4 pb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold text-white uppercase tracking-widest">Leave Requests Scoreboard</p>
-                <p className="text-[11px]">{total.toLocaleString()} total</p>
+                <p className="text-[11px]">{requestTotal.toLocaleString()} total requests</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-white/60 flex-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-white/60">
                 {tiles.map(t => (
                     <div key={t.key} className="px-4 py-5 flex flex-col items-center justify-center text-center">
-                        <span className={`text-4xl font-bold tabular-nums ${t.digit}`}>{t.value.toLocaleString()}</span>
+                        <span className="text-4xl font-bold tabular-nums text-white">{t.value.toLocaleString()}</span>
                         <span className="text-[11px] font-semibold text-white uppercase tracking-wide mt-1.5">{t.label}</span>
-                        <span className="text-[10px] text-white mt-0.5">{Math.round((t.value / total) * 100)}%</span>
+                        <span className="text-[10px] text-white mt-0.5">{t.pct}%</span>
                     </div>
                 ))}
-            </div>
-        </div>
-    );
-}
-
-// ─── Today stat card ────────────────────────────────────────────────────────
-
-function StatCard({ label, value, sub, highlighted }: { label: string; value: number; sub: string; highlighted?: boolean }) {
-    return (
-        <div className={`rounded-2xl border shadow-sm p-5 flex flex-col gap-2 ${highlighted ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200'}`}>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${highlighted ? 'text-green-50' : 'text-gray-400'}`}>{label}</p>
-            <p className={`text-3xl font-bold ${highlighted ? 'text-white' : 'text-gray-900'}`}>{value.toLocaleString()}</p>
-            <p className={`text-xs ${highlighted ? 'text-green-100' : 'text-gray-400'}`}>{sub}</p>
-        </div>
-    );
-}
-
-// ─── Week overview chart ────────────────────────────────────────────────────
-
-function WeekOverviewChart({ days }: { days: WeekDay[] }) {
-    const max = Math.max(...days.map(d => d.count), 1);
-    const today = days.find(d => d.is_today);
-
-    // Point coordinates for the trend line, in a 0–100 view box aligned to the bars
-    const points = days.map((d, i) => {
-        const x = (i + 0.5) * (100 / days.length);
-        const y = 100 - (d.count / max) * 92 - 4;
-        return { x, y };
-    });
-    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Leave Overview</p>
-            {today && (
-                <p className="text-sm text-gray-700 mb-4">
-                    <span className="font-semibold">{new Date(today.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
-                    <span className="text-gray-400"> · </span>
-                    <span className="font-semibold text-green-700">{today.count}</span> <span className="text-gray-500">on leave</span>
-                </p>
-            )}
-            <div className="relative flex-1" style={{ minHeight: 140 }}>
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-[calc(100%-22px)] w-full">
-                    <path d={linePath} fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                </svg>
-                <div className="relative flex items-end gap-2 h-[calc(100%-22px)]">
-                    {days.map(d => {
-                        const pct = Math.max((d.count / max) * 92, d.count > 0 ? 10 : 4);
-                        return (
-                            <div key={d.date} className="flex-1 h-full flex items-end justify-center" title={`${d.label}: ${d.count} on leave`}>
-                                <div
-                                    className={`w-full max-w-8 rounded-t-md transition-all duration-700 ease-out ${d.is_today ? 'bg-green-600' : 'bg-gray-100'}`}
-                                    style={{ height: `${pct}%` }}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className="flex gap-2 mt-1.5">
-                    {days.map(d => (
-                        <div key={d.date} className="flex-1 text-center">
-                            <span className={`text-[10px] font-medium ${d.is_today ? 'text-green-700' : 'text-gray-400'}`}>{d.label}</span>
-                        </div>
-                    ))}
-                </div>
             </div>
         </div>
     );
@@ -297,8 +234,9 @@ function WeekOverviewChart({ days }: { days: WeekDay[] }) {
 
 const DAY_POPOVER_MAX = 5;
 
-function DayPopover({ date, entries, holidayName, align, onClose }: {
+function DayPopover({ date, entries, holidayName, align, onClose, innerRef }: {
     date: string; entries: DayLeaveEntry[]; holidayName: string | null; align: 'left' | 'center' | 'right'; onClose: () => void;
+    innerRef: React.RefObject<HTMLDivElement | null>;
 }) {
     const visible = entries.slice(0, DAY_POPOVER_MAX);
     const extra   = entries.length - visible.length;
@@ -314,6 +252,7 @@ function DayPopover({ date, entries, holidayName, align, onClose }: {
 
     return (
         <div
+            ref={innerRef}
             className={`absolute z-20 top-full mt-1.5 ${position} w-56 rounded-xl bg-white border border-gray-200 shadow-lg p-3 text-left`}
             onClick={e => e.stopPropagation()}
         >
@@ -358,10 +297,11 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
     const cells = getMonthGrid(calendar.month);
     const today = todayStr();
     const [openDate, setOpenDate] = useState<string | null>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+    // Attached to whichever DayPopover is currently open (only one at a time),
+    // so the outside-click check below is scoped to the popup itself — not the
+    // whole calendar card — and closes it on any click that isn't inside it.
+    const popoverRef = useRef<HTMLDivElement>(null);
 
-    // Close the popover on month navigation, so it never lingers open pointing
-    // at a date from a month that's no longer shown.
     const [renderedMonth, setRenderedMonth] = useState(calendar.month);
     if (calendar.month !== renderedMonth) {
         setRenderedMonth(calendar.month);
@@ -370,7 +310,7 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
 
     useEffect(() => {
         function onDocClick(e: MouseEvent) {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
                 setOpenDate(null);
             }
         }
@@ -379,7 +319,7 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
     }, []);
 
     return (
-        <div ref={containerRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
             <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-gray-800">{calendar.monthLabel}</p>
                 <div className="flex items-center gap-1">
@@ -393,14 +333,9 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
                     </button>
                 </div>
             </div>
-            <div className="relative grid grid-cols-7 gap-y-1.5 text-center">
-                {isNavigating && (
-                    <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-6">
-                        <Spinner className="h-5 w-5 text-green-700" />
-                    </div>
-                )}
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-center">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                    <span key={i} className="text-[10px] font-semibold text-gray-400">{d}</span>
+                    <span key={i} className="text-[10px] sm:text-xs lg:text-sm font-semibold text-gray-400">{d}</span>
                 ))}
                 {cells.map((date, i) => {
                     if (!date) return <span key={i} />;
@@ -415,7 +350,7 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
                     const col = i % 7;
                     const align = col <= 1 ? 'left' : col >= 5 ? 'right' : 'center';
                     return (
-                        <div key={date} className="relative flex flex-col items-center gap-0.5 py-0.5">
+                        <div key={date} className="relative flex flex-col items-center gap-0.5 sm:gap-1 py-0.5">
                             <button
                                 type="button"
                                 onClick={() => isClickable && setOpenDate(isOpen ? null : date)}
@@ -424,23 +359,23 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
                                     holidayName,
                                     hasLeave ? `${entries.length} on leave` : null,
                                 ].filter(Boolean).join(', ')}
-                                className={`h-6 w-6 flex items-center justify-center rounded-full text-xs transition
+                                className={`flex aspect-square w-full max-w-9 sm:max-w-10 lg:max-w-11 xl:max-w-12 items-center justify-center rounded-full text-xs sm:text-sm transition
                                     ${isToday ? 'bg-green-600 text-white font-bold' : isHoliday ? 'text-orange-600 font-semibold' : 'text-gray-600'}
                                     ${isClickable && !isToday ? 'hover:bg-gray-100 cursor-pointer' : isClickable ? 'cursor-pointer' : 'cursor-default'}`}>
                                 {day}
                             </button>
-                            <span className="flex items-center gap-0.5 h-1">
-                                <span className={`h-1 w-1 rounded-full ${hasLeave && !isToday ? 'bg-green-500' : 'bg-transparent'}`} />
-                                <span className={`h-1 w-1 rounded-full ${isHoliday && !isToday ? 'bg-orange-500' : 'bg-transparent'}`} />
+                            <span className="flex items-center gap-0.5 h-1.5 sm:h-2">
+                                <span className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${hasLeave && !isToday ? 'bg-green-500' : 'bg-transparent'}`} />
+                                <span className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${isHoliday && !isToday ? 'bg-orange-500' : 'bg-transparent'}`} />
                             </span>
-                            {isOpen && <DayPopover date={date} entries={entries} holidayName={holidayName} align={align} onClose={() => setOpenDate(null)} />}
+                            {isOpen && <DayPopover date={date} entries={entries} holidayName={holidayName} align={align} onClose={() => setOpenDate(null)} innerRef={popoverRef} />}
                         </div>
                     );
                 })}
             </div>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-green-500" /> On leave</span>
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Holiday</span>
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500" /> On leave</span>
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-orange-500" /> Holiday</span>
                 <span className="text-gray-400">— tap a date for details</span>
             </div>
         </div>
@@ -455,7 +390,7 @@ function UpcomingLeavesCard({ items }: { items: UpcomingLeave[] }) {
             <div className="px-5 py-4 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee Leaves</p>
             </div>
-            <ul className="divide-y divide-gray-50 flex-1">
+            <ul className="divide-y divide-gray-50 flex-1 min-h-0 max-h-96 overflow-y-auto">
                 {items.length === 0 ? (
                     <li className="px-5 py-8 text-center text-xs text-gray-400 italic">No upcoming leave.</li>
                 ) : items.map(it => {
@@ -593,7 +528,7 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: {
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function AdminLeaveIndex({
-    stats, scoreboard, weekOverview, calendar, upcomingLeaves,
+    stats, scoreboard, calendar, upcomingLeaves,
     activity, leaveTypes, filters, totalEmployees,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
@@ -687,8 +622,6 @@ export default function AdminLeaveIndex({
         Toast.fire({ icon: 'success', title: action === 'approve' ? 'Selected requests approved' : 'Selected requests denied' });
     }
 
-    const totalPct = totalEmployees > 0 ? ((stats.on_leave_today / totalEmployees) * 100).toFixed(1) : '0';
-
     return (
         <AppLayout>
             <Head title="Leave Management" />
@@ -705,16 +638,10 @@ export default function AdminLeaveIndex({
                 </div>
 
                 {/* Today's snapshot */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <StatCard highlighted label="On Leave Today" value={stats.on_leave_today} sub={`${totalPct}% of ${totalEmployees} employees`} />
-                    <div className="lg:col-span-2">
-                        <LeaveScoreboard data={scoreboard} />
-                    </div>
-                </div>
+                <LeaveScoreboard stats={stats} scoreboard={scoreboard} totalEmployees={totalEmployees} />
 
-                {/* Overview + calendar + upcoming */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <WeekOverviewChart days={weekOverview} />
+                {/* Calendar + upcoming */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <MonthCalendar calendar={calendar} onNavigate={navigateMonth} isNavigating={isNavigatingMonth} />
                     <UpcomingLeavesCard items={upcomingLeaves} />
                 </div>

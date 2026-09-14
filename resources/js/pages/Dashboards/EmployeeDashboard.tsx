@@ -23,14 +23,6 @@ interface Announcement {
     delete_after: string | null;
 }
 
-interface LeaveCredit {
-    leave_type: string;
-    code: string;
-    available: number;
-    total: number;
-    used: number;
-    pending: number;
-}
 
 interface Props {
     user: {
@@ -39,7 +31,6 @@ interface Props {
         roles: string[];
     };
     announcements: Announcement[];
-    leaveCredits: LeaveCredit[];
 }
 
 // ── Greeting ─────────────────────────────────────────────────────────────────
@@ -56,20 +47,6 @@ function getGreeting(): string {
     const pool = hour < 12 ? MORNING_GREETINGS : hour < 18 ? AFTERNOON_GREETINGS : EVENING_GREETINGS;
     return pool[now.getTime() % pool.length];
 }
-
-// ── Leave icon map by code ────────────────────────────────────────────────────
-
-const LEAVE_ICONS: Record<string, React.ReactNode> = {
-    VL:   <TicketsPlane className="h-7 w-7" />,
-    SL:   <BriefcaseMedical className="h-7 w-7" />,
-    PL:   <Award className="h-7 w-7" />,
-    WL:   <Heart className="h-7 w-7" />,
-    ML:   <Activity className="h-7 w-7" />,
-    SPL:  <Award className="h-7 w-7" />,
-    SOLO: <Activity className="h-7 w-7" />,
-    CL:   <Activity className="h-7 w-7" />,
-    FL:   <Activity className="h-7 w-7" />,
-};
 
 // ── Static mock data (DTR + Properties) ───────────────────────────────────────
 
@@ -88,37 +65,6 @@ const properties = [
     { number: 'PE-004', description: 'Office Chair – Ergonomic',   acquired: '2023-01-02', status: 'Serviceable' },
     { number: 'PE-005', description: 'Projector – Acer',           acquired: '2023-02-18', status: 'Not Serviceable' },
 ];
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function LeaveCard({ credit }: { credit: LeaveCredit }) {
-    const icon = LEAVE_ICONS[credit.code] ?? <Activity className="h-7 w-7" />;
-    const usedPct    = credit.total > 0 ? Math.min(100, (credit.used / credit.total) * 100) : 0;
-    const pendingPct = credit.total > 0 ? Math.min(100 - usedPct, (credit.pending / credit.total) * 100) : 0;
-
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-            <span className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 border border-green-200 bg-green-50 text-green-600">
-                {icon}
-            </span>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-end justify-between">
-                    <p className="text-2xl font-bold text-gray-900">{credit.available}</p>
-                    <p className="text-xs text-gray-400 mb-0.5">/ {credit.total} days</p>
-                </div>
-                <p className="text-sm text-gray-500 truncate">{credit.leave_type}</p>
-                {/* Mini progress bar */}
-                <div className="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden flex">
-                    <div className="h-full bg-green-400 transition-all" style={{ width: `${usedPct}%` }} />
-                    <div className="h-full bg-amber-300 transition-all" style={{ width: `${pendingPct}%` }} />
-                </div>
-                {credit.pending > 0 && (
-                    <p className="text-[10px] text-amber-500 mt-0.5">{credit.pending} day{credit.pending !== 1 ? 's' : ''} pending</p>
-                )}
-            </div>
-        </div>
-    );
-}
 
 function TimeInBadge({ time, late }: { time: string; late: boolean }) {
     return (
@@ -267,7 +213,7 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
-export default function EmployeeDashboard({ user, announcements: initialAnnouncements, leaveCredits }: Props) {
+export default function EmployeeDashboard({ user, announcements: initialAnnouncements }: Props) {
     const firstName  = user.name.split(' ')[0];
     const greeting   = getGreeting();
     const hour       = new Date().getHours();
@@ -341,19 +287,6 @@ export default function EmployeeDashboard({ user, announcements: initialAnnounce
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-
-                    {/* Leave Credit Cards — dynamic from DB */}
-                    <div className="lg:col-span-4">
-                        {leaveCredits.length === 0 ? (
-                            <p className="text-sm text-gray-400 italic">No leave credits found for this year.</p>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                {leaveCredits.map(credit => (
-                                    <LeaveCard key={credit.code} credit={credit} />
-                                ))}
-                            </div>
-                        )}
-                    </div>
 
                     {/* Left: DTR + Properties */}
                     <div className="flex flex-col gap-4 lg:col-span-3">

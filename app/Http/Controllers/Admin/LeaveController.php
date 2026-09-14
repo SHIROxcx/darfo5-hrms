@@ -74,26 +74,6 @@ class LeaveController extends Controller
                 'denied' => LeaveRequest::where('status', 'denied')->count(),
             ],
 
-            // Current week (Mon–Sun): how many employees are on approved leave each day.
-            'weekOverview' => function () {
-                $weekStart = now()->startOfWeek();
-                $days = [];
-                for ($i = 0; $i < 7; $i++) {
-                    $day = $weekStart->copy()->addDays($i);
-                    $days[] = [
-                        'date' => $day->toDateString(),
-                        'label' => $day->format('D'),
-                        'count' => LeaveRequest::where('status', 'approved')
-                            ->where('start_date', '<=', $day)
-                            ->where('end_date', '>=', $day)
-                            ->count(),
-                        'is_today' => $day->isToday(),
-                    ];
-                }
-
-                return $days;
-            },
-
             'calendar' => [
                 'month' => $monthDate->format('Y-m'),
                 'monthLabel' => $monthDate->format('F Y'),
@@ -108,7 +88,7 @@ class LeaveController extends Controller
                 ->where('status', 'approved')
                 ->where('end_date', '>=', $today)
                 ->orderBy('start_date')
-                ->take(6)
+                ->take(8)
                 ->get()
                 ->map(fn (LeaveRequest $lr) => [
                     'id' => $lr->id,

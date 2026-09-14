@@ -20,7 +20,7 @@ const commonNavItems: NavItem[] = [
 
 const referenceDataNavItem: NavItem = {
     title: 'Settings',
-    href: '/admin/reference-data/divisions',
+    href: '/admin/reference-data/holidays',
     icon: Settings,
     items: [
         { title: 'Holidays', href: '/admin/reference-data/holidays' },
