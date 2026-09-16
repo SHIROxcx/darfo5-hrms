@@ -22,7 +22,7 @@ interface Scoreboard {
     denied: number;
 }
 
-interface DayLeaveEntry { employee: string; photo: string | null; leave_type: string; type_code: string; }
+interface DayLeaveEntry { id: number; employee: string; photo: string | null; leave_type: string; type_code: string; }
 
 interface CalendarData {
     month: string;
@@ -45,6 +45,7 @@ interface ActivityRow {
     photo: string | null;
     employee_number: string | null;
     job_title: string | null;
+    leave_type_id: number;
     leave_type: string;
     type_code: string;
     submit_date: string;
@@ -56,25 +57,13 @@ interface ActivityRow {
     status: LeaveStatus;
 }
 
-interface PaginatedActivity {
-    data: ActivityRow[];
-    current_page: number;
-    last_page: number;
-    total: number;
-    prev_page_url: string | null;
-    next_page_url: string | null;
-}
-
-interface Filters { search?: string; leave_type_id?: string; status?: string; sort?: string; month?: string; }
-
 interface Props {
     stats: TodayStats;
     scoreboard: Scoreboard;
     calendar: CalendarData;
     upcomingLeaves: UpcomingLeave[];
-    activity: PaginatedActivity;
+    activity: ActivityRow[];
     leaveTypes: LeaveTypeOption[];
-    filters: Filters;
     totalEmployees: number;
 }
 
@@ -155,14 +144,8 @@ function fmtPeriod(start: string, end: string): string {
     return `${fmtDateShort(start)} – ${fmtDate(end)}`;
 }
 
-function buildQuery(v: { search: string; leave_type_id: string; status: string; sort: string; month?: string }): Record<string, string> {
-    const q: Record<string, string> = {};
-    if (v.search) q.search = v.search;
-    if (v.leave_type_id) q.leave_type_id = v.leave_type_id;
-    if (v.status) q.status = v.status;
-    if (v.sort && v.sort !== 'newest') q.sort = v.sort;
-    if (v.month) q.month = v.month;
-    return q;
+function buildQuery(month: string): Record<string, string> {
+    return { month };
 }
 
 function getMonthGrid(monthStr: string): (string | null)[] {
@@ -270,10 +253,10 @@ function DayPopover({ date, entries, holidayName, align, onClose, innerRef }: {
             )}
             {entries.length > 0 && (
                 <ul className="space-y-2">
-                    {visible.map((e, i) => {
+                    {visible.map(e => {
                         const color = TYPE_COLORS[e.type_code] ?? DEFAULT_COLOR;
                         return (
-                            <li key={i} className="flex items-center gap-2">
+                            <li key={e.id} className="flex items-center gap-2">
                                 <Avatar name={e.employee} photo={e.photo} className="h-6 w-6 text-[9px]" />
                                 <div className="min-w-0">
                                     <p className="text-xs font-medium text-gray-800 truncate">{e.employee}</p>
@@ -348,6 +331,7 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
                     const isClickable = hasLeave || isHoliday;
                     const isOpen = openDate === date;
                     const col = i % 7;
+                    const isWeekend = col === 0 || col === 6;
                     const align = col <= 1 ? 'left' : col >= 5 ? 'right' : 'center';
                     return (
                         <div key={date} className="relative flex flex-col items-center gap-0.5 sm:gap-1 py-0.5">
@@ -365,7 +349,7 @@ function MonthCalendar({ calendar, onNavigate, isNavigating }: {
                                 {day}
                             </button>
                             <span className="flex items-center gap-0.5 h-1.5 sm:h-2">
-                                <span className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${hasLeave && !isToday ? 'bg-green-500' : 'bg-transparent'}`} />
+                                <span className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${hasLeave && !isToday && !isWeekend ? 'bg-green-500' : 'bg-transparent'}`} />
                                 <span className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${isHoliday && !isToday ? 'bg-orange-500' : 'bg-transparent'}`} />
                             </span>
                             {isOpen && <DayPopover date={date} entries={entries} holidayName={holidayName} align={align} onClose={() => setOpenDate(null)} innerRef={popoverRef} />}
@@ -388,7 +372,7 @@ function UpcomingLeavesCard({ items }: { items: UpcomingLeave[] }) {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee Leaves</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide py-3">Employee Leaves</p>
             </div>
             <ul className="divide-y divide-gray-50 flex-1 min-h-0 max-h-96 overflow-y-auto">
                 {items.length === 0 ? (
@@ -529,44 +513,169 @@ function DetailModal({ leave, onClose, onApprove, onDeny }: {
 
 export default function AdminLeaveIndex({
     stats, scoreboard, calendar, upcomingLeaves,
-    activity, leaveTypes, filters, totalEmployees,
+    activity, leaveTypes, totalEmployees,
 }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [typeId, setTypeId] = useState(filters.leave_type_id ?? '');
-    const [status, setStatus] = useState(filters.status ?? '');
-    const [sort,   setSort]   = useState(filters.sort ?? 'newest');
+    const [search, setSearch] = useState('');
+    const [typeId, setTypeId] = useState('');
+    const [status, setStatus] = useState('');
+    const [sort,   setSort]   = useState('newest');
     const [viewing, setViewing]   = useState<ActivityRow | null>(null);
-    const [actingId, setActingId] = useState<number | null>(null);
     const [selected, setSelected] = useState<number[]>([]);
     const [bulkBusy, setBulkBusy] = useState(false);
     const [isNavigatingMonth, setIsNavigatingMonth] = useState(false);
-    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    function onSearchChange(value: string) {
-        setSearch(value);
-        if (searchTimeout.current) clearTimeout(searchTimeout.current);
-        searchTimeout.current = setTimeout(() => {
-            router.get('/admin/leave', buildQuery({ search: value, leave_type_id: typeId, status, sort, month: filters.month }), {
-                preserveState: true, preserveScroll: true, replace: true,
+    // Kept in local state (rather than read straight from the `calendar` prop)
+    // so a `notif:leave-calendar-updated` broadcast — fired for every admin tab
+    // whenever anyone approves or cancels an approved leave — can patch it live,
+    // without an Inertia round-trip. Server-driven changes (month navigation,
+    // any other full page visit) simply overwrite it via the effect below,
+    // which stays authoritative.
+    const [localCalendar, setLocalCalendar] = useState<CalendarData>(calendar);
+
+    // Same idea as `localCalendar` above, but for the scoreboard tiles and the
+    // activity table: kept in local state so a new submission or a review (by
+    // this admin in another tab, or by a different admin altogether) can patch
+    // them live via broadcasts, without an Inertia round-trip.
+    const [localScoreboard, setLocalScoreboard] = useState<Scoreboard>(scoreboard);
+    const [localActivity,   setLocalActivity]   = useState<ActivityRow[]>(activity);
+
+    useEffect(() => {
+        setLocalCalendar(calendar);
+    }, [calendar]);
+
+    useEffect(() => {
+        setLocalScoreboard(scoreboard);
+    }, [scoreboard]);
+
+    useEffect(() => {
+        setLocalActivity(activity);
+    }, [activity]);
+
+    useEffect(() => {
+        function onLeaveCalendarUpdated(e: Event) {
+            const { action, dates, entry } = (e as CustomEvent<{
+                action: 'added' | 'removed'; dates: string[]; entry: DayLeaveEntry;
+            }>).detail;
+
+            setLocalCalendar(prev => {
+                const relevantDates = dates.filter(d => d.startsWith(prev.month));
+                if (relevantDates.length === 0) return prev;
+
+                const leavesByDate = { ...prev.leavesByDate };
+                for (const date of relevantDates) {
+                    const existing = leavesByDate[date] ?? [];
+                    if (action === 'added') {
+                        if (existing.some(entr => entr.id === entry.id)) continue;
+                        leavesByDate[date] = [...existing, entry];
+                    } else {
+                        leavesByDate[date] = existing.filter(entr => entr.id !== entry.id);
+                    }
+                }
+                return { ...prev, leavesByDate };
             });
-        }, 400);
-    }
+        }
+        window.addEventListener('notif:leave-calendar-updated', onLeaveCalendarUpdated);
+        return () => window.removeEventListener('notif:leave-calendar-updated', onLeaveCalendarUpdated);
+    }, []);
 
-    function updateSelect(patch: Partial<{ leave_type_id: string; status: string; sort: string }>) {
-        const next = { search, leave_type_id: typeId, status, sort, ...patch };
-        if (patch.leave_type_id !== undefined) setTypeId(patch.leave_type_id);
-        if (patch.status !== undefined) setStatus(patch.status);
-        if (patch.sort !== undefined) setSort(patch.sort);
-        router.get('/admin/leave', buildQuery({ ...next, month: filters.month }), {
-            preserveState: true, preserveScroll: true, replace: true,
-        });
-    }
+    // New leave request submitted (any employee, any tab) — prepend to the
+    // activity table and bump the pending tile.
+    useEffect(() => {
+        function onSubmitted(e: Event) {
+            const row = (e as CustomEvent<ActivityRow>).detail;
+            setLocalActivity(prev => prev.some(r => r.id === row.id) ? prev : [row, ...prev]);
+            setLocalScoreboard(prev => ({ ...prev, pending: prev.pending + 1 }));
+        }
+        window.addEventListener('notif:leave-request-submitted', onSubmitted);
+        return () => window.removeEventListener('notif:leave-request-submitted', onSubmitted);
+    }, []);
+
+    // A leave request was reviewed (by this admin or another) — patch its row's
+    // status/remarks in place and move it out of the pending tile.
+    useEffect(() => {
+        function onReviewed(e: Event) {
+            const { id, status: newStatus, remarks } = (e as CustomEvent<{
+                id: number; status: LeaveStatus; remarks: string | null;
+            }>).detail;
+
+            setLocalActivity(prev => prev.map(r => r.id === id ? { ...r, status: newStatus, remarks } : r));
+            setLocalScoreboard(prev => {
+                const next = { ...prev, pending: Math.max(0, prev.pending - 1) };
+                if (newStatus === 'approved') next.approved += 1;
+                else if (newStatus === 'denied') next.denied += 1;
+                return next;
+            });
+        }
+        window.addEventListener('notif:leave-request-reviewed-admin', onReviewed);
+        return () => window.removeEventListener('notif:leave-request-reviewed-admin', onReviewed);
+    }, []);
+
+    // Employee cancelled their own request — flip its row to "cancelled" in
+    // place (so it drops out of the pending tile and its Approve/Deny buttons
+    // disappear), and if an admin is mid-review of that exact request, patch
+    // the open modal too so it can't be approved/denied out from under the
+    // employee. This is the guard the real-time wiring exists for.
+    useEffect(() => {
+        function onCancelled(e: Event) {
+            const { id, previous_status, employee } = (e as CustomEvent<{
+                id: number; previous_status: 'pending' | 'approved'; employee: string;
+            }>).detail;
+
+            setLocalActivity(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
+            setLocalScoreboard(prev => {
+                const next = { ...prev };
+                if (previous_status === 'pending') next.pending = Math.max(0, prev.pending - 1);
+                else next.approved = Math.max(0, prev.approved - 1);
+                return next;
+            });
+
+            setViewing(prev => {
+                if (!prev || prev.id !== id) return prev;
+                Toast.fire({ icon: 'warning', title: `${employee} just cancelled this request.` });
+                return { ...prev, status: 'cancelled' };
+            });
+        }
+        window.addEventListener('notif:leave-request-cancelled', onCancelled);
+        return () => window.removeEventListener('notif:leave-request-cancelled', onCancelled);
+    }, []);
+
+    // Deep link from a "new leave request" notification: /admin/leave?highlight={id}
+    // opens the review modal for that request straight away.
+    useEffect(() => {
+        const id = Number(new URLSearchParams(window.location.search).get('highlight'));
+        if (!id) return;
+        const row = localActivity.find(r => r.id === id);
+        if (row) setViewing(row);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Pure client-side search/filter/sort over the full `activity` list — same
+    // instant, no-debounce, no-reload pattern as the employee registry and the
+    // reference-data tables. `activity` already arrives newest-first from the
+    // server, so "Newest first" needs no re-sort.
+    const filteredActivity = localActivity.filter(row => {
+        const term = search.trim().toLowerCase();
+        const matchesSearch = !term
+            || row.employee.toLowerCase().includes(term)
+            || (row.employee_number ?? '').toLowerCase().includes(term);
+        const matchesType = !typeId || row.leave_type_id === Number(typeId);
+        const matchesStatus = !status || row.status === status;
+        return matchesSearch && matchesType && matchesStatus;
+    });
+    const sortedActivity = (() => {
+        switch (sort) {
+            case 'oldest':   return [...filteredActivity].reverse();
+            case 'duration': return [...filteredActivity].sort((a, b) => b.days - a.days);
+            case 'name':     return [...filteredActivity].sort((a, b) => a.employee.localeCompare(b.employee));
+            default:         return filteredActivity;
+        }
+    })();
 
     function navigateMonth(direction: 'prev' | 'next') {
         const [year, month] = calendar.month.split('-').map(Number);
         const d = new Date(year, month - 1 + (direction === 'next' ? 1 : -1), 1);
         const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        router.get('/admin/leave', buildQuery({ search, leave_type_id: typeId, status, sort, month: newMonth }), {
+        router.get('/admin/leave', buildQuery(newMonth), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -582,15 +691,6 @@ export default function AdminLeaveIndex({
         });
     }
 
-    function quickAct(id: number, action: 'approve' | 'deny') {
-        setActingId(id);
-        router.post(`/admin/leave/${id}/${action}`, {}, {
-            preserveScroll: true, preserveState: true,
-            onSuccess: () => Toast.fire({ icon: 'success', title: action === 'approve' ? 'Leave request approved' : 'Leave request denied' }),
-            onFinish: () => setActingId(null),
-        });
-    }
-
     function handleApprove(id: number, remarks: string) {
         router.post(`/admin/leave/${id}/approve`, { remarks }, { preserveScroll: true, onSuccess: () => setViewing(null) });
     }
@@ -598,11 +698,11 @@ export default function AdminLeaveIndex({
         router.post(`/admin/leave/${id}/deny`, { remarks }, { preserveScroll: true, onSuccess: () => setViewing(null) });
     }
 
-    const pendingIdsOnPage = activity.data.filter(r => r.status === 'pending').map(r => r.id);
-    const allPendingSelected = pendingIdsOnPage.length > 0 && pendingIdsOnPage.every(id => selected.includes(id));
+    const pendingIdsVisible = sortedActivity.filter(r => r.status === 'pending').map(r => r.id);
+    const allPendingSelected = pendingIdsVisible.length > 0 && pendingIdsVisible.every(id => selected.includes(id));
 
     function toggleSelectAll() {
-        setSelected(allPendingSelected ? [] : pendingIdsOnPage);
+        setSelected(allPendingSelected ? [] : pendingIdsVisible);
     }
     function toggleRow(id: number) {
         setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -638,11 +738,11 @@ export default function AdminLeaveIndex({
                 </div>
 
                 {/* Today's snapshot */}
-                <LeaveScoreboard stats={stats} scoreboard={scoreboard} totalEmployees={totalEmployees} />
+                <LeaveScoreboard stats={stats} scoreboard={localScoreboard} totalEmployees={totalEmployees} />
 
                 {/* Calendar + upcoming */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <MonthCalendar calendar={calendar} onNavigate={navigateMonth} isNavigating={isNavigatingMonth} />
+                    <MonthCalendar calendar={localCalendar} onNavigate={navigateMonth} isNavigating={isNavigatingMonth} />
                     <UpcomingLeavesCard items={upcomingLeaves} />
                 </div>
 
@@ -657,7 +757,7 @@ export default function AdminLeaveIndex({
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                                 value={search}
-                                onChange={e => onSearchChange(e.target.value)}
+                                onChange={e => setSearch(e.target.value)}
                                 placeholder="Search employee, ID…"
                                 className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 w-48"
                             />
@@ -665,7 +765,7 @@ export default function AdminLeaveIndex({
 
                         <select
                             value={typeId}
-                            onChange={e => updateSelect({ leave_type_id: e.target.value })}
+                            onChange={e => setTypeId(e.target.value)}
                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
                             <option value="">All Types</option>
                             {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -673,7 +773,7 @@ export default function AdminLeaveIndex({
 
                         <select
                             value={status}
-                            onChange={e => updateSelect({ status: e.target.value })}
+                            onChange={e => setStatus(e.target.value)}
                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
                             <option value="">All Statuses</option>
                             <option value="pending">Pending</option>
@@ -683,7 +783,7 @@ export default function AdminLeaveIndex({
 
                         <select
                             value={sort}
-                            onChange={e => updateSelect({ sort: e.target.value })}
+                            onChange={e => setSort(e.target.value)}
                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 bg-white">
                             <option value="newest">Newest first</option>
                             <option value="oldest">Oldest first</option>
@@ -708,13 +808,13 @@ export default function AdminLeaveIndex({
                         </div>
                     )}
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto overflow-y-auto max-h-72">
                         <table className="w-full text-sm">
-                            <thead>
+                            <thead className="sticky top-0 z-10 bg-white">
                                 <tr className="text-left text-[11px] text-gray-400 uppercase tracking-wide border-b border-gray-100">
                                     <th className="pl-5 pr-2 py-2.5 font-semibold w-8">
                                         <input type="checkbox" checked={allPendingSelected} onChange={toggleSelectAll}
-                                            disabled={pendingIdsOnPage.length === 0}
+                                            disabled={pendingIdsVisible.length === 0}
                                             className="h-3.5 w-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer disabled:opacity-30" />
                                     </th>
                                     <th className="px-3 py-2.5 font-semibold">Name</th>
@@ -728,9 +828,9 @@ export default function AdminLeaveIndex({
                                 </tr>
                             </thead>
                             <tbody>
-                                {activity.data.length === 0 ? (
+                                {sortedActivity.length === 0 ? (
                                     <tr><td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400 italic">No leave requests match these filters.</td></tr>
-                                ) : activity.data.map(row => {
+                                ) : sortedActivity.map(row => {
                                     const color = TYPE_COLORS[row.type_code] ?? DEFAULT_COLOR;
                                     const isPending = row.status === 'pending';
                                     return (
@@ -774,16 +874,15 @@ export default function AdminLeaveIndex({
                                                 {isPending ? (
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <button
-                                                            disabled={actingId === row.id}
-                                                            onClick={() => quickAct(row.id, 'deny')}
-                                                            title="Deny"
-                                                            className="h-6 w-6 cursor-pointer rounded-full border border-red-200 bg-white text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition disabled:opacity-50">
+                                                            onClick={() => setViewing(row)}
+                                                            title="Review to deny"
+                                                            className="h-6 w-6 cursor-pointer rounded-full border border-red-200 bg-white text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition">
                                                             <X className="h-3.5 w-3.5" />
                                                         </button>
                                                         <button
-                                                            disabled={actingId === row.id}
-                                                            onClick={() => quickAct(row.id, 'approve')}
-                                                            className="flex cursor-pointer items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-600 hover:text-white transition disabled:opacity-50">
+                                                            onClick={() => setViewing(row)}
+                                                            title="Review to approve"
+                                                            className="flex cursor-pointer items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-600 hover:text-white transition">
                                                             <Check className="h-3 w-3" /> Approve
                                                         </button>
                                                     </div>
@@ -802,19 +901,9 @@ export default function AdminLeaveIndex({
                         </table>
                     </div>
 
-                    {activity.last_page > 1 && (
-                        <div className="flex items-center justify-between text-sm text-gray-500 px-5 py-3.5 border-t border-gray-100">
-                            <p>Page {activity.current_page} of {activity.last_page} · {activity.total} requests</p>
-                            <div className="flex gap-2">
-                                {activity.prev_page_url && (
-                                    <button onClick={() => router.get(activity.prev_page_url!, {}, { preserveScroll: true, preserveState: true })}
-                                        className="cursor-pointer px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Previous</button>
-                                )}
-                                {activity.next_page_url && (
-                                    <button onClick={() => router.get(activity.next_page_url!, {}, { preserveScroll: true, preserveState: true })}
-                                        className="cursor-pointer px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Next</button>
-                                )}
-                            </div>
+                    {sortedActivity.length > 0 && (
+                        <div className="text-sm text-gray-500 px-5 py-3.5 border-t border-gray-100">
+                            <p>{sortedActivity.length} request{sortedActivity.length === 1 ? '' : 's'}</p>
                         </div>
                     )}
                 </div>

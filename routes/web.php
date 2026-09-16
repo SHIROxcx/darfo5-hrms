@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/employees/{user}/view', [EmployeeController::class, 'show'])->name('employees.show');
         Route::post('/employees/{user}/approve', [EmployeeController::class, 'approve'])->name('employees.approve');
         Route::post('/employees/{user}/toggle-approval', [EmployeeController::class, 'toggleApproval'])->name('employees.toggle-approval');
+        Route::post('/employees/{user}/toggle-active', [EmployeeController::class, 'toggleActive'])->name('employees.toggle-active');
         Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
         Route::get('/employees/{user}/profile', [EmployeeController::class, 'show'])->name('employees.profile');
         Route::get('/leave', [AdminLeaveController::class, 'index'])->name('leave.index');

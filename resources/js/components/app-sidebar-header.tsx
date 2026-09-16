@@ -76,6 +76,45 @@ export function AppSidebarHeader({
                     setUnreadCount(function(prev) { return prev + 1; });
                     window.dispatchEvent(new CustomEvent('notif:new-pending', { detail: data }));
                     window.dispatchEvent(new CustomEvent('notif:employee-added', { detail: data }));
+                })
+                // Pure data-sync signal (no badge/drawer entry) — lets the Employee
+                // Management table's Approval column and action icons update live
+                // across every admin tab the instant anyone approves or revokes
+                // access, from any entry point (the table, its detail modal, the
+                // notification drawer, or the SuperAdmin Users page).
+                .listen('.employee-approval-updated', function(data: { id: number; is_approved: boolean; access_revoked_at: string | null }) {
+                    window.dispatchEvent(new CustomEvent('notif:employee-approval-updated', { detail: data }));
+                })
+                // Pure data-sync signal (no badge/drawer entry) — lets the leave
+                // calendar patch itself live across every admin tab whenever an
+                // approved leave starts/stops occupying its date range.
+                .listen('.leave-calendar-updated', function(data: {
+                    action: 'added' | 'removed';
+                    dates: string[];
+                    entry: { id: number; employee: string; photo: string | null; leave_type: string; type_code: string };
+                }) {
+                    window.dispatchEvent(new CustomEvent('notif:leave-calendar-updated', { detail: data }));
+                })
+                // New leave request — drawer entry + badge, plus the full activity
+                // row so AdminLeaveIndex.tsx can prepend it without a reload.
+                .listen('.leave-request-submitted', function(data: { message: string; url: string; row: Record<string, unknown> }) {
+                    setUnreadCount(function(prev) { return prev + 1; });
+                    window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: { message: data.message, url: data.url } }));
+                    window.dispatchEvent(new CustomEvent('notif:leave-request-submitted', { detail: data.row }));
+                })
+                // A leave request was reviewed by (possibly) another admin — pure
+                // data-sync signal so every admin tab's scoreboard/activity table
+                // stay in sync. No badge/drawer entry here (that only goes to the
+                // employee themself, below).
+                .listen('.leave-request-reviewed', function(data: { request: { id: number; status: string; remarks: string | null } }) {
+                    window.dispatchEvent(new CustomEvent('notif:leave-request-reviewed-admin', { detail: data.request }));
+                })
+                // Employee cancelled their own request — pure data-sync signal so
+                // every admin tab flips the row to "cancelled" immediately. This is
+                // what stops an admin from approving/denying a request the employee
+                // just pulled back out from under them.
+                .listen('.leave-request-cancelled', function(data: { id: number; previous_status: 'pending' | 'approved'; employee: string }) {
+                    window.dispatchEvent(new CustomEvent('notif:leave-request-cancelled', { detail: data }));
                 });
         }
 
@@ -84,6 +123,18 @@ export function AppSidebarHeader({
             .listen('.account-approved', function(data: { message: string; url: string }) {
                 setUnreadCount(function(prev) { return prev + 1; });
                 window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: data }));
+            })
+            // A leave request of mine was approved/denied — drawer entry + badge,
+            // plus the updated request/credit so EmployeeLeaveIndex.tsx can patch
+            // its status badge, remarks and credit bar live.
+            .listen('.leave-request-reviewed', function(data: {
+                message: string; url: string;
+                request: { id: number; status: string; remarks: string | null; leave_type: string; type_code: string };
+                credit: { type_code: string; total: number; used: number; pending: number; available: number };
+            }) {
+                setUnreadCount(function(prev) { return prev + 1; });
+                window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: { message: data.message, url: data.url } }));
+                window.dispatchEvent(new CustomEvent('notif:leave-request-reviewed', { detail: data }));
             });
 
         return function() {

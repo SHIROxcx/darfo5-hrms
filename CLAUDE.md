@@ -9,7 +9,7 @@ DARFO5 HRMS — a Human Resource Information System built on the Laravel + React
 ## Commands
 
 ### PHP / Laravel
-- `composer dev` — run server + queue listener + Vite + Reverb concurrently (primary local dev command)
+- `composer dev` — run server + queue listener + Vite + Reverb + scheduler (`schedule:work`, drives `notifications:prune` and `announcements:delete-expired`) concurrently (primary local dev command)
 - `composer dev:ssr` — same, but with Inertia SSR build/serve
 - `php artisan serve` — Laravel dev server alone
 - `composer lint` — format PHP with Pint (`pint --parallel`)

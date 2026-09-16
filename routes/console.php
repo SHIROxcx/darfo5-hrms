@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('announcements:delete-expired')->dailyAt('00:05');
+Schedule::command('notifications:prune')->dailyAt('00:10');

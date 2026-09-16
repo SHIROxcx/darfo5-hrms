@@ -54,6 +54,7 @@ function FilterSelects({ values, divisions, onChange }: Props) {
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
                 <option value="pending">Pending Approval</option>
+                <option value="revoked">Revoked</option>
             </select>
             <select
                 value={values.employment_type}
@@ -140,6 +141,7 @@ export default function EmployeeFilters({ values, divisions, onChange }: Props) 
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="pending">Pending Approval</option>
+                                <option value="revoked">Revoked</option>
                             </select>
                             <select
                                 value={draft.employment_type}

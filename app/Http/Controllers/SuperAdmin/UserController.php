@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\SuperAdmin;
 
+use App\Events\EmployeeApprovalUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -22,8 +24,8 @@ class UserController extends Controller
                 // Filter by name or email if a search term is provided
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->when($request->role, function ($query, $role) {
@@ -40,8 +42,8 @@ class UserController extends Controller
         $roles = Role::whereIn('name', ['admin', 'employee'])->get();
 
         return Inertia::render('SuperAdmin/Users/Index', [
-            'users'   => $users,
-            'roles'   => $roles,
+            'users' => $users,
+            'roles' => $roles,
             'filters' => $request->only(['search', 'role']),
         ]);
     }
@@ -84,7 +86,21 @@ class UserController extends Controller
             return back()->with('error', 'The superadmin account cannot be modified.');
         }
 
-        $user->update(['is_approved' => ! $user->is_approved]);
+        $willApprove = ! $user->is_approved;
+
+        $user->update([
+            'is_approved' => $willApprove,
+            // Distinguishes "revoked" from "never yet approved" so this never
+            // re-flags the user as a new pending approval — see User::isRevoked().
+            'access_revoked_at' => $willApprove ? null : now(),
+        ]);
+
+        if (! $user->is_approved) {
+            // Revoked — drop any active session immediately.
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        EmployeeApprovalUpdated::dispatch($user);
 
         $status = $user->is_approved ? 'approved' : 'revoked';
 

@@ -23,20 +23,20 @@ class AnnouncementController extends Controller
         // Build public URLs for attachments
         $attachments = collect($a->attachments ?? [])->map(fn ($path) => [
             'path' => $path,
-            'url'  => Storage::url($path),
+            'url' => Storage::url($path),
             'name' => basename($path),
         ])->values()->toArray();
 
         return [
-            'id'          => $a->id,
-            'title'       => $a->title,
-            'body'        => $a->body,
-            'date'        => $dateFormatted,
-            'tag'         => $a->tag,
-            'tagColor'    => self::tagColor($a->tag),
+            'id' => $a->id,
+            'title' => $a->title,
+            'body' => $a->body,
+            'date' => $dateFormatted,
+            'tag' => $a->tag,
+            'tagColor' => self::tagColor($a->tag),
             'attachments' => $attachments,
             'auto_delete' => $a->auto_delete,
-            'delete_after'=> $a->delete_after ? Carbon::parse($a->delete_after)->format('M d, Y') : null,
+            'delete_after' => $a->delete_after ? Carbon::parse($a->delete_after)->format('M d, Y') : null,
         ];
     }
 
@@ -50,17 +50,21 @@ class AnnouncementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'        => ['required', 'string', 'max:255'],
-            'body'         => ['required', 'string', 'max:200'],
-            'date'         => ['required', 'date'],
-            'tag'          => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
-            'auto_delete'  => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true'],
-            'attachments.*'=> ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:200'],
+            'date' => ['required', 'date'],
+            'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
+            'auto_delete' => ['nullable', 'boolean'],
+            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date'],
+            'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
+        ], [
+            'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
         ]);
 
         $user = $request->user();
-        if (! $user->hasAnyRole(['admin', 'superadmin'])) abort(403);
+        if (! $user->hasAnyRole(['admin', 'superadmin'])) {
+            abort(403);
+        }
 
         // Handle file uploads
         $paths = [];
@@ -71,13 +75,13 @@ class AnnouncementController extends Controller
         }
 
         $announcement = Announcement::create([
-            'title'        => $validated['title'],
-            'body'         => $validated['body'],
-            'date'         => $validated['date'],
-            'tag'          => $validated['tag'],
-            'created_by'   => $user->id,
-            'attachments'  => $paths ?: null,
-            'auto_delete'  => $validated['auto_delete'] ?? false,
+            'title' => $validated['title'],
+            'body' => $validated['body'],
+            'date' => $validated['date'],
+            'tag' => $validated['tag'],
+            'created_by' => $user->id,
+            'attachments' => $paths ?: null,
+            'auto_delete' => $validated['auto_delete'] ?? false,
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
 
@@ -87,15 +91,16 @@ class AnnouncementController extends Controller
 
         $notification = new AnnouncementNotification(
             announcementId: $announcement->id,
-            title:          $announcement->title,
-            body:           $announcement->body,
-            date:           $payload['date'],
-            tag:            $announcement->tag,
-            tagColor:       $payload['tagColor'],
+            title: $announcement->title,
+            body: $announcement->body,
+            date: $payload['date'],
+            tag: $announcement->tag,
+            tagColor: $payload['tagColor'],
         );
 
         User::where('is_approved', true)
             ->whereNotNull('email_verified_at')
+            ->where('id', '!=', $user->id)
             ->select('id')
             ->chunk(100, fn ($users) => $users->each->notify($notification));
 
@@ -106,22 +111,26 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement)
     {
-        if (! $request->user()->hasAnyRole(['admin', 'superadmin'])) abort(403);
+        if (! $request->user()->hasAnyRole(['admin', 'superadmin'])) {
+            abort(403);
+        }
 
         $validated = $request->validate([
-            'title'        => ['required', 'string', 'max:255'],
-            'body'         => ['required', 'string', 'max:200'],
-            'date'         => ['required', 'date'],
-            'tag'          => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
-            'auto_delete'  => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true'],
-            'attachments.*'=> ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:200'],
+            'date' => ['required', 'date'],
+            'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
+            'auto_delete' => ['nullable', 'boolean'],
+            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date'],
+            'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
             'removed_attachments' => ['nullable', 'string'], // JSON array of paths to remove
+        ], [
+            'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
         ]);
 
         // Handle removed attachments
         $existingPaths = $announcement->attachments ?? [];
-        if (!empty($validated['removed_attachments'])) {
+        if (! empty($validated['removed_attachments'])) {
             $toRemove = json_decode($validated['removed_attachments'], true) ?? [];
             foreach ($toRemove as $path) {
                 Storage::disk('public')->delete($path);
@@ -136,17 +145,17 @@ class AnnouncementController extends Controller
             }
         }
         $announcement->update([
-            'title'        => $validated['title'],
-            'body'         => $validated['body'],
-            'date'         => $validated['date'],
-            'tag'          => $validated['tag'],
-            'attachments'  => $existingPaths ?: null,
-            'auto_delete'  => $validated['auto_delete'] ?? false,
+            'title' => $validated['title'],
+            'body' => $validated['body'],
+            'date' => $validated['date'],
+            'tag' => $validated['tag'],
+            'attachments' => $existingPaths ?: null,
+            'auto_delete' => $validated['auto_delete'] ?? false,
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
 
-        $payload = self::formatPayload($announcement); 
-        broadcast(new AnnouncementUpdated($payload));  
+        $payload = self::formatPayload($announcement);
+        broadcast(new AnnouncementUpdated($payload));
 
         return back()->with('success', 'Announcement updated.');
     }
@@ -155,7 +164,9 @@ class AnnouncementController extends Controller
 
     public function destroy(Request $request, Announcement $announcement)
     {
-        if (! $request->user()->hasAnyRole(['admin', 'superadmin'])) abort(403);
+        if (! $request->user()->hasAnyRole(['admin', 'superadmin'])) {
+            abort(403);
+        }
 
         // Delete stored files
         foreach ($announcement->attachments ?? [] as $path) {
@@ -164,7 +175,7 @@ class AnnouncementController extends Controller
 
         $id = $announcement->id;
 
-         // Delete all notifications referencing this announcement
+        // Delete all notifications referencing this announcement
         \DB::table('notifications')
             ->whereJsonContains('data->announcement_id', $id)
             ->delete();

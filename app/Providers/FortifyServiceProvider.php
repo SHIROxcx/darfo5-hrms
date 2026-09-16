@@ -62,14 +62,29 @@ class FortifyServiceProvider extends ServiceProvider
             }
 
             // Employees must be approved
+            if ($user->isRevoked()) {
+                throw ValidationException::withMessages([
+                    'email' => 'Your access has been revoked. Please contact the HR Administrator.',
+                ]);
+            }
+
             if (! $user->is_approved) {
                 throw ValidationException::withMessages([
                     'email' => 'Your account is pending approval by the HR Administrator. You will receive an email once approved.',
                 ]);
             }
 
-        return $user;
-    });
+            // Inactive employees (no longer working / retired) are blocked, even
+            // if they were previously approved. A missing profile is NOT treated
+            // as inactive — only an explicit is_active === false blocks login.
+            if ($user->employeeProfile && ! $user->employeeProfile->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => 'This account is inactive. Please contact the HR Administrator.',
+                ]);
+            }
+
+            return $user;
+        });
     }
 
     /**

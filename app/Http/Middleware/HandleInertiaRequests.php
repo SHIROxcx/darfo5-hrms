@@ -36,7 +36,6 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        
 
         // Build full name — fallback to email if all name fields are empty
         $fullName = $user ? trim(implode(' ', array_filter([
@@ -55,18 +54,20 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? [
                     ...$user->toArray(),
-                    'name'        => $fullName,    
-                    'first_name'  => $user->first_name ?? '',
-                    'last_name'   => $user->last_name ?? '',
-                    'email'       => $user->email,
-                    'roles'       => $user->getRoleNames()->values()->toArray(),
+                    'name' => $fullName,
+                    'first_name' => $user->first_name ?? '',
+                    'last_name' => $user->last_name ?? '',
+                    'email' => $user->email,
+                    'roles' => $user->getRoleNames()->values()->toArray(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->values()->toArray(),
-                    'avatar'      => $user->photo ? '/storage/' . $user->photo : null,
+                    'avatar' => $user->photo ? '/storage/'.$user->photo : null,
                 ] : null,
             ],
             'unreadNotificationsCount' => function () use ($request) {
                 $user = $request->user();
-                if (! $user) return 0;
+                if (! $user) {
+                    return 0;
+                }
 
                 $unreadNotifs = $user->unreadNotifications()->count();
 
@@ -74,7 +75,7 @@ class HandleInertiaRequests extends Middleware
                 $pendingCount = 0;
                 if ($user->hasRole('admin')) {
                     $pendingCount = \App\Models\User::role('employee')
-                        ->where('is_approved', false)
+                        ->pendingApproval()
                         ->whereNotNull('email_verified_at')
                         ->count();
                 }

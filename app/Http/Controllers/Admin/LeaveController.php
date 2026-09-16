@@ -48,6 +48,7 @@ class LeaveController extends Controller
                 $start = $lr->start_date->greaterThan($monthStart) ? $lr->start_date : $monthStart;
                 $end = $lr->end_date->lessThan($monthEnd) ? $lr->end_date : $monthEnd;
                 $entry = [
+                    'id' => $lr->id,
                     'employee' => $lr->user->full_name,
                     'photo' => $lr->user->photo,
                     'leave_type' => $lr->leaveType->name,
@@ -78,8 +79,8 @@ class LeaveController extends Controller
                 'month' => $monthDate->format('Y-m'),
                 'monthLabel' => $monthDate->format('F Y'),
                 // Cast to object: an empty (or gap-free-but-associative) PHP array serializes
-                // as a JSON array, not {} — see the identical `filters` fix below for why that
-                // silently breaks a JS Record<string, ...> lookup.
+                // as a JSON array, not {} — which would silently break the JS
+                // Record<string, ...> lookup on the frontend.
                 'leavesByDate' => (object) $leavesByDate,
                 'holidays' => (object) $this->holidays->holidayMapForRange($monthStart, $monthEnd),
             ],
@@ -100,45 +101,25 @@ class LeaveController extends Controller
                     'end_date' => $lr->end_date->toDateString(),
                 ]),
 
-            // Leave activity table: filterable, sortable, paginated.
-            'activity' => function () use ($request) {
-                $query = LeaveRequest::with([
-                    'user:id,first_name,last_name,name_ext,photo,email',
-                    'user.employeeProfile:user_id,position,employee_number',
-                    'leaveType:id,name,code',
-                ]);
-
-                if ($request->filled('search')) {
-                    $search = $request->input('search');
-                    $query->whereHas('user', function ($q) use ($search) {
-                        $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhereHas('employeeProfile', fn ($q2) => $q2->where('employee_number', 'like', "%{$search}%"));
-                    });
-                }
-                if ($request->filled('leave_type_id')) {
-                    $query->where('leave_type_id', $request->input('leave_type_id'));
-                }
-                if ($request->filled('status')) {
-                    $query->where('status', $request->input('status'));
-                }
-
-                match ($request->input('sort', 'newest')) {
-                    'oldest' => $query->orderBy('created_at'),
-                    'duration' => $query->orderByDesc('days_requested'),
-                    'name' => $query->join('users', 'users.id', '=', 'leave_requests.user_id')
-                        ->orderBy('users.last_name')
-                        ->select('leave_requests.*'),
-                    default => $query->orderByDesc('created_at'),
-                };
-
-                return $query->paginate(10)->withQueryString()->through(fn (LeaveRequest $lr) => [
+            // Leave activity table: loaded in full and filtered/sorted client-side
+            // (search, type, status, sort) — same instant, no-reload pattern as the
+            // employee registry and reference-data tables. Ordered newest-first so
+            // the frontend's "Newest first" sort can just use this array as-is.
+            'activity' => fn () => LeaveRequest::with([
+                'user:id,first_name,last_name,name_ext,photo,email',
+                'user.employeeProfile:user_id,position,employee_number',
+                'leaveType:id,name,code',
+            ])
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(fn (LeaveRequest $lr) => [
                     'id' => $lr->id,
                     'employee' => $lr->user->full_name,
                     'email' => $lr->user->email,
                     'photo' => $lr->user->photo,
                     'employee_number' => $lr->user->employeeProfile?->employee_number,
                     'job_title' => $lr->user->employeeProfile?->position,
+                    'leave_type_id' => $lr->leave_type_id,
                     'leave_type' => $lr->leaveType->name,
                     'type_code' => $lr->leaveType->code,
                     'submit_date' => $lr->created_at->toDateString(),
@@ -148,15 +129,9 @@ class LeaveController extends Controller
                     'reason' => $lr->reason,
                     'remarks' => $lr->remarks,
                     'status' => $lr->status,
-                ]);
-            },
+                ]),
 
             'leaveTypes' => fn () => LeaveType::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
-
-            // Cast to object: Request::only() returns [] when no filters are active, and
-            // json_encode([]) serializes as a JS array, not {} — an empty array's .sort
-            // would then resolve to Array.prototype.sort instead of undefined.
-            'filters' => (object) $request->only(['search', 'leave_type_id', 'status', 'sort', 'month']),
 
             'totalEmployees' => fn () => \App\Models\User::role('employee')->count(),
         ]);

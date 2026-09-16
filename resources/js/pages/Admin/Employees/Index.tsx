@@ -1,15 +1,14 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Check, Lock, ExternalLink, FileDown, Upload,
+    Ban, Check, Lock, ExternalLink, FileDown, RotateCcw, Upload,
     Search, Trash2, UserCheck, UserX, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { Spinner } from '@/components/ui/spinner';
 import { StatusDot } from '@/components/status-dot';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import ServiceRecordImportModal from './ServiceRecordImportModal';
 import EmployeeFilters, { type FilterValues } from './EmployeeFilters';
 
@@ -35,30 +34,13 @@ interface Employee {
     email: string;
     photo: string | null;
     is_approved: boolean;
+    access_revoked_at: string | null;
     email_verified_at: string | null;
     employee_profile: EmployeeProfile | null;
 }
 
-interface PaginatedEmployees {
-    data: Employee[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-}
-
-interface Filters {
-    search?: string;
-    status?: string;
-    employment_type?: string;
-    division?: string;
-}
-
 interface Props {
-    employees: PaginatedEmployees;
-    filters: Filters;
+    employees: Employee[];
     divisions: string[];
 }
 
@@ -70,6 +52,17 @@ function getFullName(emp: Employee): string {
 
 function getInitials(emp: Employee): string {
     return `${emp.first_name?.[0] ?? ''}${emp.last_name?.[0] ?? ''}`.toUpperCase() || '??';
+}
+
+// Both a never-yet-approved registrant and a revoked employee share
+// is_approved === false — access_revoked_at is what tells them apart, so
+// every "Approval" display/filter should go through this instead of reading
+// is_approved directly.
+type ApprovalStatus = 'approved' | 'pending' | 'revoked';
+
+function getApprovalStatus(emp: Pick<Employee, 'is_approved' | 'access_revoked_at'>): ApprovalStatus {
+    if (emp.is_approved) return 'approved';
+    return emp.access_revoked_at ? 'revoked' : 'pending';
 }
 
 const Toast = Swal.mixin({
@@ -126,9 +119,11 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         </div>
                         <div className="p-3 text-center">
                             <p className="text-xs text-gray-500 mb-1.5">Approval</p>
-                            {employee.is_approved
+                            {getApprovalStatus(employee) === 'approved'
                                 ? <StatusDot tone="green">Approved</StatusDot>
-                                : <StatusDot tone="amber">Pending</StatusDot>}
+                                : getApprovalStatus(employee) === 'revoked'
+                                    ? <StatusDot tone="red">Revoked</StatusDot>
+                                    : <StatusDot tone="amber">Pending</StatusDot>}
                         </div>
                         <div className="p-3 text-center">
                             <p className="text-xs text-gray-500 mb-1.5">Employment</p>
@@ -206,102 +201,87 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
 
 // ── Main Page
 
-export default function Index({ employees, filters, divisions }: Props) {
-    const [search, setSearch]           = useState(filters.search ?? '');
+export default function Index({ employees, divisions }: Props) {
+    const [search, setSearch]           = useState('');
     const [filterValues, setFilterValues] = useState<FilterValues>({
-        status:          filters.status ?? '',
-        employment_type: filters.employment_type ?? '',
-        division:        filters.division ?? '',
+        status:          '',
+        employment_type: '',
+        division:        '',
     });
-    const [isSearching, setIsSearching] = useState(false);
     const [detailModal, setDetailModal] = useState<Employee | null>(null);
     const [importOpen, setImportOpen]   = useState(false);
     const [selectedIds, setSelectedIds]     = useState<Set<number>>(new Set());
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
-    const debouncedSearch = useDebouncedValue(search, 350);
-    const isFirstRun = useRef(true);
-
-    const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees.data);
-    const [localTotal, setLocalTotal]         = useState<number>(employees.total);
-
-    // Accumulates id -> public_token across every page visited, since
-    // localEmployees only holds the current page but bulk selection
-    // (selectedIds) persists across pagination.
-    const [tokenById, setTokenById] = useState<Record<number, string>>(() =>
-        Object.fromEntries(employees.data.map(e => [e.id, e.public_token]))
-    );
+    const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees);
 
     useEffect(() => {
-        setLocalEmployees(employees.data);
-        setLocalTotal(employees.total);
-        setTokenById(prev => {
-            const next = { ...prev };
-            employees.data.forEach(e => { next[e.id] = e.public_token; });
-            return next;
-        });
-    }, [employees.data]);
+        setLocalEmployees(employees);
+    }, [employees]);
 
     useEffect(() => {
         function onEmployeeAdded(e: Event) {
             const data = (e as CustomEvent<Employee>).detail;
             setLocalEmployees(prev => prev.some(emp => emp.id === data.id) ? prev : [data, ...prev]);
-            setLocalTotal(prev => prev + 1);
-            setTokenById(prev => ({ ...prev, [data.id]: data.public_token }));
         }
         function onEmployeeApproved(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
-            setLocalEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, is_approved: true } : emp));
-            setDetailModal(prev => prev && prev.id === id ? { ...prev, is_approved: true } : prev);
+            setLocalEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, is_approved: true, access_revoked_at: null } : emp));
+            setDetailModal(prev => prev && prev.id === id ? { ...prev, is_approved: true, access_revoked_at: null } : prev);
         }
         function onEmployeeRemoved(e: Event) {
             const { id } = (e as CustomEvent<{ id: number }>).detail;
             setLocalEmployees(prev => prev.filter(emp => emp.id !== id));
-            setLocalTotal(prev => Math.max(0, prev - 1));
             setDetailModal(prev => prev && prev.id === id ? null : prev);
+        }
+        // Real, cross-tab sync: fires for every admin viewing this page whenever
+        // anyone approves or revokes access, from any entry point (this table,
+        // the detail modal, the notification drawer, or the SuperAdmin Users
+        // page) — not just the tab that performed the action.
+        function onEmployeeApprovalUpdated(e: Event) {
+            const { id, is_approved, access_revoked_at } = (e as CustomEvent<{
+                id: number; is_approved: boolean; access_revoked_at: string | null;
+            }>).detail;
+            setLocalEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, is_approved, access_revoked_at } : emp));
+            setDetailModal(prev => prev && prev.id === id ? { ...prev, is_approved, access_revoked_at } : prev);
         }
         window.addEventListener('notif:employee-added',    onEmployeeAdded);
         window.addEventListener('notif:employee-approved', onEmployeeApproved);
         window.addEventListener('notif:employee-removed',  onEmployeeRemoved);
+        window.addEventListener('notif:employee-approval-updated', onEmployeeApprovalUpdated);
         return () => {
             window.removeEventListener('notif:employee-added',    onEmployeeAdded);
             window.removeEventListener('notif:employee-approved', onEmployeeApproved);
             window.removeEventListener('notif:employee-removed',  onEmployeeRemoved);
+            window.removeEventListener('notif:employee-approval-updated', onEmployeeApprovalUpdated);
         };
     }, []);
 
-    function runSearch(nextSearch: string, nextFilters: FilterValues) {
-        const params: Record<string, string> = {};
-        if (nextSearch) params.search = nextSearch;
-        if (nextFilters.status) params.status = nextFilters.status;
-        if (nextFilters.employment_type) params.employment_type = nextFilters.employment_type;
-        if (nextFilters.division) params.division = nextFilters.division;
+    // Pure client-side filter, same pattern as LookupCrudTable's `filtered`:
+    // derived from state already in memory, recomputed on every render, no
+    // server round-trip and no debounce — results update per keystroke.
+    const filteredEmployees = localEmployees.filter(emp => {
+        const term = search.trim().toLowerCase();
+        const matchesSearch = !term || [
+            emp.first_name, emp.last_name, emp.email,
+            emp.employee_profile?.employee_number, emp.employee_profile?.position,
+        ].some(v => String(v ?? '').toLowerCase().includes(term));
 
-        router.get('/admin/employees', params, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            only: ['employees'],
-            onStart: () => setIsSearching(true),
-            onFinish: () => setIsSearching(false),
-        });
-    }
+        const matchesStatus = !filterValues.status
+            || (filterValues.status === 'active'   ? emp.employee_profile?.is_active === true
+            :   filterValues.status === 'inactive' ? emp.employee_profile?.is_active === false
+            :   filterValues.status === 'pending'  ? getApprovalStatus(emp) === 'pending'
+            :   filterValues.status === 'revoked'  ? getApprovalStatus(emp) === 'revoked'
+            :   true);
 
-    // Debounced live search — skips the very first run so page-load doesn't
-    // immediately re-request itself with the same filters it was just given.
-    useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false;
-            return;
-        }
-        runSearch(debouncedSearch, filterValues);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearch]);
+        const matchesType     = !filterValues.employment_type || emp.employee_profile?.employment_type === filterValues.employment_type;
+        const matchesDivision = !filterValues.division || emp.employee_profile?.division === filterValues.division;
+
+        return matchesSearch && matchesStatus && matchesType && matchesDivision;
+    });
 
     function handleFilterChange(patch: Partial<FilterValues>) {
-        const next = { ...filterValues, ...patch };
-        setFilterValues(next);
-        runSearch(search, next);
+        setFilterValues(prev => ({ ...prev, ...patch }));
     }
 
     function toggleSelected(id: number) {
@@ -312,15 +292,15 @@ export default function Index({ employees, filters, divisions }: Props) {
         });
     }
 
-    const allOnPageSelected = localEmployees.length > 0 && localEmployees.every(e => selectedIds.has(e.id));
+    const allOnPageSelected = filteredEmployees.length > 0 && filteredEmployees.every(e => selectedIds.has(e.id));
 
     function toggleSelectAllOnPage() {
         setSelectedIds(prev => {
             const next = new Set(prev);
             if (allOnPageSelected) {
-                localEmployees.forEach(e => next.delete(e.id));
+                filteredEmployees.forEach(e => next.delete(e.id));
             } else {
-                localEmployees.forEach(e => next.add(e.id));
+                filteredEmployees.forEach(e => next.add(e.id));
             }
             return next;
         });
@@ -330,6 +310,7 @@ export default function Index({ employees, filters, divisions }: Props) {
         if (selectedIds.size === 0 || generatingPdf) return;
         setGeneratingPdf(true);
         try {
+            const tokenById = Object.fromEntries(localEmployees.map(e => [e.id, e.public_token]));
             const userTokens = Array.from(selectedIds)
                 .map(id => tokenById[id])
                 .filter((token): token is string => Boolean(token));
@@ -379,8 +360,13 @@ export default function Index({ employees, filters, divisions }: Props) {
             if (result.isConfirmed) {
                 router.post('/admin/employees/' + emp.id + '/approve', {}, {
                     preserveScroll: true,
+                    // Keep this component mounted (don't discard search/filter/selection
+                    // state) and skip the global top-loading bar — the table updates
+                    // instantly from the optimistic state set below.
+                    preserveState: true,
+                    showProgress: false,
                     onSuccess: () => {
-                        setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: true } : e));
+                        setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: true, access_revoked_at: null } : e));
                         Toast.fire({ icon: 'success', title: getFullName(emp) + ' has been approved.' });
                     },
                     onError: (errors) => Toast.fire({ icon: 'error', title: firstErrorMessage(errors, 'Something went wrong.') }),
@@ -406,13 +392,66 @@ export default function Index({ employees, filters, divisions }: Props) {
             if (result.isConfirmed) {
                 router.post('/admin/employees/' + emp.id + '/toggle-approval', {}, {
                     preserveScroll: true,
+                    preserveState: true,
+                    showProgress: false,
                     onSuccess: () => {
-                        setLocalEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, is_approved: !e.is_approved } : e));
+                        // Assign the target state (captured at click time) rather than
+                        // toggling whatever's currently in state — the real-time
+                        // `notif:employee-approval-updated` broadcast can land before
+                        // this callback runs (it's a separate, independent round-trip),
+                        // and toggling an already-correct value here would flip it right
+                        // back.
+                        setLocalEmployees(prev => prev.map(e => e.id === emp.id
+                            ? { ...e, is_approved: !isRevoking, access_revoked_at: isRevoking ? new Date().toISOString() : null }
+                            : e
+                        ));
                         Toast.fire({
                             icon: 'success',
                             title: isRevoking
                                 ? 'Access revoked for ' + getFullName(emp) + '.'
                                 : getFullName(emp) + ' has been approved.',
+                        });
+                    },
+                    onError: (errors) => Toast.fire({ icon: 'error', title: firstErrorMessage(errors, 'Something went wrong.') }),
+                });
+            }
+        });
+    };
+
+    const toggleActive = (emp: Employee) => {
+        if (!emp.employee_profile) return;
+        const isDeactivating = emp.employee_profile.is_active;
+        Swal.fire({
+            title: isDeactivating ? 'Mark as Inactive?' : 'Mark as Active?',
+            html: isDeactivating
+                ? 'This marks <strong>' + getFullName(emp) + '</strong> as <strong>inactive</strong> (no longer working / retired). They will no longer be able to log in.'
+                : 'This reactivates <strong>' + getFullName(emp) + '</strong>\'s employment status, allowing them to log in again.',
+            icon: isDeactivating ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isDeactivating ? '#d97706' : '#15803d',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: isDeactivating ? 'Yes, Mark Inactive' : 'Yes, Reactivate',
+            cancelButtonText: 'Cancel',
+        }).then(result => {
+            if (result.isConfirmed) {
+                router.post('/admin/employees/' + emp.id + '/toggle-active', {}, {
+                    preserveScroll: true,
+                    preserveState: true,
+                    showProgress: false,
+                    onSuccess: () => {
+                        // Assign the target state (captured at click time), not a toggle
+                        // of whatever's currently in state — see the identical note in
+                        // toggleApproval above.
+                        setLocalEmployees(prev => prev.map(e =>
+                            e.id === emp.id && e.employee_profile
+                                ? { ...e, employee_profile: { ...e.employee_profile, is_active: !isDeactivating } }
+                                : e
+                        ));
+                        Toast.fire({
+                            icon: 'success',
+                            title: isDeactivating
+                                ? getFullName(emp) + ' has been marked inactive.'
+                                : getFullName(emp) + ' has been reactivated.',
                         });
                     },
                     onError: (errors) => Toast.fire({ icon: 'error', title: firstErrorMessage(errors, 'Something went wrong.') }),
@@ -435,9 +474,10 @@ export default function Index({ employees, filters, divisions }: Props) {
             if (result.isConfirmed) {
                 router.delete('/admin/employees/' + emp.id, {
                     preserveScroll: true,
+                    preserveState: true,
+                    showProgress: false,
                     onSuccess: () => {
                         setLocalEmployees(prev => prev.filter(e => e.id !== emp.id));
-                        setLocalTotal(prev => Math.max(0, prev - 1));
                         Toast.fire({ icon: 'success', title: getFullName(emp) + ' has been deleted.' });
                     },
                     onError: () => Toast.fire({ icon: 'error', title: 'Something went wrong.' }),
@@ -450,7 +490,7 @@ export default function Index({ employees, filters, divisions }: Props) {
 
     return (
         <AppLayout>
-            <Head title="Employees" />
+            <Head title="Employee Management" />
 
             {detailModal && (
                 <DetailModal
@@ -472,7 +512,7 @@ export default function Index({ employees, filters, divisions }: Props) {
                     <div>
                         <h1 className="text-xl font-semibold text-gray-900">Employees</h1>
                         <p className="text-sm text-gray-500 mt-0.5">
-                            {localTotal} on record
+                            {localEmployees.length} on record
                         </p>
                     </div>
                     <button
@@ -532,11 +572,6 @@ export default function Index({ employees, filters, divisions }: Props) {
 
                     {/* Table */}
                     <div className="relative overflow-x-auto">
-                        {isSearching && (
-                            <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 pt-10">
-                                <Spinner className="h-6 w-6 text-green-700" />
-                            </div>
-                        )}
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 text-gray-500 border-b border-gray-200 text-xs">
                                 <tr>
@@ -546,7 +581,7 @@ export default function Index({ employees, filters, divisions }: Props) {
                                             checked={allOnPageSelected}
                                             onChange={toggleSelectAllOnPage}
                                             className="h-4 w-4 rounded border-gray-300 accent-green-600 focus:ring-green-600 cursor-pointer"
-                                            aria-label="Select all on this page"
+                                            aria-label="Select all visible employees"
                                         />
                                     </th>
                                     <th className="px-4 py-3 text-left font-medium">Employee</th>
@@ -560,12 +595,12 @@ export default function Index({ employees, filters, divisions }: Props) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {localEmployees.length === 0 ? (
+                                {filteredEmployees.length === 0 ? (
                                     <tr>
                                         <td colSpan={9} className="text-center py-12 text-gray-400 italic">No employees found.</td>
                                     </tr>
                                 ) : (
-                                    localEmployees.map(emp => (
+                                    filteredEmployees.map(emp => (
                                         <tr
                                             key={emp.id}
                                             onClick={() => setDetailModal(emp)}
@@ -616,16 +651,18 @@ export default function Index({ employees, filters, divisions }: Props) {
                                             <td className="px-4 py-3">
                                                 {emp.employee_profile ? (
                                                     emp.employee_profile.is_active
-                                                        ? <StatusDot tone="green">Active</StatusDot>
-                                                        : <StatusDot tone="gray">Inactive</StatusDot>
+                                                        ? <span className='text-xs font-medium text-green-800'>Active</span>
+                                                        : <span className='text-xs font-medium text-gray-500'>Inactive</span>
                                                 ) : (
                                                     <span className="text-gray-300">—</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {emp.is_approved
-                                                    ? <StatusDot tone="green">Approved</StatusDot>
-                                                    : <StatusDot tone="amber">Pending</StatusDot>}
+                                                {getApprovalStatus(emp) === 'approved'
+                                                    ? <span className='text-xs font-medium text-green-800'>Approved</span>
+                                                    : getApprovalStatus(emp) === 'revoked'
+                                                        ? <span className='text-xs font-medium text-red-600'>Revoked</span>
+                                                        : <span className='text-xs font-medium text-amber-600'>Pending</span>}
                                             </td>
                                             <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                                                 <div className="flex items-center justify-center gap-1">
@@ -641,6 +678,15 @@ export default function Index({ employees, filters, divisions }: Props) {
                                                         <span className="p-1.5 text-gray-300 cursor-not-allowed" title="Email not yet verified">
                                                             <Lock className="h-4 w-4" />
                                                         </span>
+                                                    )}
+                                                    {emp.employee_profile && (
+                                                        <button
+                                                            onClick={() => toggleActive(emp)}
+                                                            className={'p-1.5 rounded-md transition cursor-pointer ' + (emp.employee_profile.is_active ? 'hover:bg-amber-50 text-amber-600' : 'hover:bg-green-50 text-green-700')}
+                                                            title={emp.employee_profile.is_active ? 'Mark Inactive (Retired / No Longer Working)' : 'Reactivate Employment'}
+                                                        >
+                                                            {emp.employee_profile.is_active ? <Ban className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+                                                        </button>
                                                     )}
                                                     <button
                                                         onClick={() => deleteEmployee(emp)}
@@ -658,21 +704,6 @@ export default function Index({ employees, filters, divisions }: Props) {
                         </table>
                     </div>
                 </div>
-
-                {/* Pagination */}
-                {employees.last_page > 1 && (
-                    <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-                        <p>Page {employees.current_page} of {employees.last_page}</p>
-                        <div className="flex gap-2">
-                            {employees.prev_page_url && (
-                                <Link href={employees.prev_page_url} preserveScroll className="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Previous</Link>
-                            )}
-                            {employees.next_page_url && (
-                                <Link href={employees.next_page_url} preserveScroll className="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 transition">Next</Link>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
         </AppLayout>
     );

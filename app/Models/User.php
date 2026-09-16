@@ -15,7 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name', 'email', 'password', 'public_token',
         'photo', 'first_name', 'middle_name',
-        'last_name', 'name_ext', 'is_approved',
+        'last_name', 'name_ext', 'is_approved', 'access_revoked_at',
     ];
 
     protected static function booted(): void
@@ -58,8 +58,32 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'is_approved'       => 'boolean',
+            'is_approved' => 'boolean',
+            'access_revoked_at' => 'datetime',
         ];
+    }
+
+    /**
+     * True only for a genuinely new registrant awaiting their first review —
+     * false for an employee whose access was later revoked, even though both
+     * share is_approved === false. Anything that surfaces "pending approval"
+     * counts/lists/notifications should use this (or scopePendingApproval)
+     * rather than checking is_approved directly, so a revoke never re-flags
+     * someone as a new pending approval.
+     */
+    public function isPendingApproval(): bool
+    {
+        return ! $this->is_approved && $this->access_revoked_at === null;
+    }
+
+    public function isRevoked(): bool
+    {
+        return ! $this->is_approved && $this->access_revoked_at !== null;
+    }
+
+    public function scopePendingApproval($query)
+    {
+        return $query->where('is_approved', false)->whereNull('access_revoked_at');
     }
 
     // Computed full name
@@ -89,12 +113,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(\App\Models\PdsPersonalInfo::class, 'user_id');
     }
-    
+
     public function pdsEducation()
     {
         return $this->hasMany(\App\Models\PdsEducation::class, 'user_id');
     }
-    
+
     public function pdsEligibilities()
     {
         return $this->hasMany(\App\Models\PdsEligibility::class, 'user_id');
@@ -114,5 +138,4 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ServiceRecord::class)->orderBy('date_from');
     }
-
 }

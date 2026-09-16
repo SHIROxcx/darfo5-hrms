@@ -7,7 +7,7 @@ import {
     ArrowRight,
     Download,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -403,9 +403,39 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
     const [editing,   setEditing]   = useState<LeaveRequest | undefined>(undefined);
     const [filter,    setFilter]    = useState<string>('all');
 
+    // Kept in local state (rather than read straight from the `requests`/`credits`
+    // props) so a `notif:leave-request-reviewed` broadcast — fired the instant an
+    // admin approves/denies one of this employee's requests — can patch the
+    // status badge, remarks and credit bar live, without an Inertia round-trip.
+    // Server-driven changes (any full page visit) simply overwrite it via the
+    // effects below, which stay authoritative.
+    const [localRequests, setLocalRequests] = useState<LeaveRequest[]>(requests);
+    const [localCredits,  setLocalCredits]  = useState<LeaveCredit[]>(credits);
+
+    useEffect(() => { setLocalRequests(requests); }, [requests]);
+    useEffect(() => { setLocalCredits(credits); }, [credits]);
+
+    useEffect(() => {
+        function onLeaveReviewed(e: Event) {
+            const { request, credit } = (e as CustomEvent<{
+                request: { id: number; status: LeaveRequest['status']; remarks: string | null; leave_type: string; type_code: string };
+                credit: LeaveCredit;
+            }>).detail;
+
+            setLocalRequests(prev => prev.map(r =>
+                r.id === request.id ? { ...r, status: request.status, remarks: request.remarks } : r
+            ));
+            setLocalCredits(prev => prev.some(c => c.type_code === credit.type_code)
+                ? prev.map(c => c.type_code === credit.type_code ? credit : c)
+                : [...prev, credit]);
+        }
+        window.addEventListener('notif:leave-request-reviewed', onLeaveReviewed);
+        return () => window.removeEventListener('notif:leave-request-reviewed', onLeaveReviewed);
+    }, []);
+
     const filtered = filter === 'all'
-        ? requests
-        : requests.filter(r => r.status === filter);
+        ? localRequests
+        : localRequests.filter(r => r.status === filter);
 
     function openCreate() { setEditing(undefined); setShowModal(true); }
     function openEdit(req: LeaveRequest) { setEditing(req); setShowModal(true); }
@@ -569,10 +599,10 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                                 <h2 className="text-sm font-semibold text-green-800">Leave Credits — {year}</h2>
                             </div>
                             <div className="p-4 space-y-2">
-                                {credits.length === 0 ? (
+                                {localCredits.length === 0 ? (
                                     <p className="text-xs text-gray-400 italic text-center py-4">No credits allocated yet.</p>
                                 ) : (
-                                    credits.map(c => <CreditBar key={c.type_code} credit={c} />)
+                                    localCredits.map(c => <CreditBar key={c.type_code} credit={c} />)
                                 )}
                             </div>
                             {/* Legend */}

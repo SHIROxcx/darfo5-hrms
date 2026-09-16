@@ -2,12 +2,19 @@
 
 namespace App\Services;
 
+use App\Events\LeaveCalendarUpdated;
+use App\Events\LeaveRequestCancelled;
+use App\Events\LeaveRequestReviewed;
+use App\Events\LeaveRequestSubmitted;
 use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\User;
+use App\Notifications\LeaveRequestReviewedNotification;
+use App\Notifications\LeaveRequestSubmittedNotification;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Notification;
 
 class LeaveService
 {
@@ -92,6 +99,10 @@ class LeaveService
 
         $credit->increment('pending_credits', $days);
 
+        $request->loadMissing(['user:id,first_name,last_name,name_ext,photo,email', 'user.employeeProfile:user_id,position,employee_number', 'leaveType:id,name,code']);
+        Notification::send(User::role('admin')->get(), new LeaveRequestSubmittedNotification($request));
+        LeaveRequestSubmitted::dispatch($request);
+
         return $request;
     }
 
@@ -117,6 +128,12 @@ class LeaveService
         // Move days from pending → used
         $credit->decrement('pending_credits', $request->days_requested);
         $credit->increment('used_credits', $request->days_requested);
+
+        LeaveCalendarUpdated::dispatch($request, 'added');
+
+        $request->loadMissing(['user', 'leaveType']);
+        $request->user->notify(new LeaveRequestReviewedNotification($request));
+        LeaveRequestReviewed::dispatch($request, $credit->fresh());
     }
 
     /**
@@ -140,6 +157,10 @@ class LeaveService
 
         // Release pending hold
         $credit->decrement('pending_credits', $request->days_requested);
+
+        $request->loadMissing(['user', 'leaveType']);
+        $request->user->notify(new LeaveRequestReviewedNotification($request));
+        LeaveRequestReviewed::dispatch($request, $credit->fresh());
     }
 
     /**
@@ -155,6 +176,9 @@ class LeaveService
         $year = $request->start_date->year;
         $credit = $this->ensureCredit($request->user_id, $request->leave_type_id, $year);
 
+        $wasApproved = $request->isApproved();
+        $previousStatus = $request->status;
+
         if ($request->isPending()) {
             $credit->decrement('pending_credits', $request->days_requested);
         } else {
@@ -163,6 +187,12 @@ class LeaveService
         }
 
         $request->update(['status' => 'cancelled']);
+
+        if ($wasApproved) {
+            LeaveCalendarUpdated::dispatch($request, 'removed');
+        }
+
+        LeaveRequestCancelled::dispatch($request, $previousStatus);
     }
 
     /**

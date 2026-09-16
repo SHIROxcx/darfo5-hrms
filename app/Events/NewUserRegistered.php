@@ -20,15 +20,16 @@ class NewUserRegistered implements ShouldBroadcastNow
         $user->loadMissing('employeeProfile');
 
         $this->payload = [
-            'id'               => $user->id,
-            'first_name'       => $user->first_name,
-            'last_name'        => $user->last_name,
-            'name_ext'         => $user->name_ext ?? null,
-            'email'            => $user->email,
-            'photo'            => $user->photo,
-            'is_approved'      => $user->is_approved,
-            'email_verified_at'=> $user->email_verified_at,
-            'created_at'       => $user->created_at->toISOString(),
+            'id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'name_ext' => $user->name_ext ?? null,
+            'email' => $user->email,
+            'photo' => $user->photo,
+            'is_approved' => $user->is_approved,
+            'access_revoked_at' => $user->access_revoked_at,
+            'email_verified_at' => $user->email_verified_at,
+            'created_at' => $user->created_at->toISOString(),
             'employee_profile' => $user->employeeProfile,
         ];
     }
