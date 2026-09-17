@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler, useEffect, useRef } from 'react';
 import { Eye, EyeOff, Check, ChevronRight, ChevronLeft, TriangleAlert } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { EMPLOYMENT_TYPE_OPTIONS, employmentTypeLabel } from '@/lib/employment-type';
 
 // Types
 interface FormData {
@@ -545,10 +546,7 @@ export default function Register() {
                                             onChange={e => { setData('employment_type', e.target.value); clearError('employment_type'); }}
                                             className={inputCls(formErrors.employment_type)}>
                                             <option value="" disabled>Select Employment</option>
-                                            <option value="JO">Job Order</option>
-                                            <option value="COS">Contract of Service</option>
-                                            <option value="Pakyaw">Pakyaw</option>
-                                            <option value="Permanent">Permanent</option>
+                                            {EMPLOYMENT_TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                         </select>
                                     </Field>
 
@@ -646,7 +644,7 @@ export default function Register() {
                                 <ReviewRow label="Section / Unit"  value={data.section_unit} />
                                 <ReviewRow label="Position"        value={data.position} />
                                 <ReviewRow label="Salary Grade"    value={data.salary_grade ? `SG ${data.salary_grade}` : '—'} />
-                                <ReviewRow label="Employment Type" value={data.employment_type} />
+                                <ReviewRow label="Employment Type" value={employmentTypeLabel(data.employment_type)} />
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">Contact Details</h3>
                                 <ReviewRow label="Email"         value={data.email} />
                                 <ReviewRow label="Mobile Number" value={data.mobile_number} />

@@ -25,6 +25,7 @@ class EmployeeController extends Controller
         return Inertia::render('Admin/Employees/Index', [
             'employees' => $employees,
             'divisions' => \App\Models\Division::orderBy('name')->pluck('name'),
+            'divisionAbbreviations' => \App\Models\Division::pluck('abbreviation', 'name'),
         ]);
     }
 

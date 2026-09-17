@@ -9,20 +9,21 @@ import {
     EllipsisVertical
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
-import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
+import { Spinner } from '@/components/ui/spinner';
+import AppLayout from '@/layouts/app-layout';
+import { EMPLOYMENT_TYPE_OPTIONS } from '@/lib/employment-type';
 
-import type { PdsData } from '@/types/pds';
 import { calculatePdsCompletion } from '@/lib/pds-completion';
-import ServiceRecordSection, { type ServiceRecordRow } from '@/pages/Profile/sections/ServiceRecordSection';
-import PersonalSection from '@/pages/Profile/sections/PersonalSection';
+import { cn } from '@/lib/utils';
 import CompanySection from '@/pages/Profile/sections/CompanySection';
 import EducationSection from '@/pages/Profile/sections/EducationSection';
 import EligibilitySection from '@/pages/Profile/sections/EligibilitySection';
+import PersonalSection from '@/pages/Profile/sections/PersonalSection';
+import ServiceRecordSection, { type ServiceRecordRow } from '@/pages/Profile/sections/ServiceRecordSection';
 import type { ProfileUser } from '@/pages/Profile/types';
+import type { BreadcrumbItem } from '@/types';
+import type { PdsData } from '@/types/pds';
 
 // Types
 
@@ -635,10 +636,7 @@ function EditCompanyModal({ user, onClose }: { user: ProfileUser; onClose: () =>
                 <Field label="Employment Type">
                     <select value={form.employment_type} onChange={e => setForm(f => ({ ...f, employment_type: e.target.value }))} className={inputCls}>
                         <option value="">— Select —</option>
-                        <option value="JO">Job Order (JO)</option>
-                        <option value="COS">Contract of Service (COS)</option>
-                        <option value="Pakyaw">Pakyaw</option>
-                        <option value="Permanent">Permanent</option>
+                        {EMPLOYMENT_TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                 </Field>
             </div>
@@ -725,7 +723,7 @@ export default function ProfileShow() {
 
     // Service Record only applies to permanent employees.
     const navItems = ALL_NAV_ITEMS.filter(
-        item => item.id !== 'service-record' || ep?.employment_type === 'Permanent'
+        item => item.id !== 'service-record' || ep?.employment_type?.toLowerCase() === 'permanent'
     );
 
     const avatarRef = useRef<HTMLButtonElement>(null);

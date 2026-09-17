@@ -1,4 +1,5 @@
 import { Separator } from '@/components/ui/separator';
+import { employmentTypeLabel } from '@/lib/employment-type';
 import type { ProfileUser } from '@/pages/Profile/types';
 import { EditBtn, InfoGrid, lengthOfService } from './shared';
 
@@ -21,7 +22,7 @@ export default function CompanySection({ user, canEditCompany, onEdit }: Props) 
             <InfoGrid items={[
                 { label: 'Employee No.',      value: ep?.employee_number },
                 { label: 'Position',          value: ep?.position },
-                { label: 'Employment Type',   value: ep?.employment_type },
+                { label: 'Employment Type',   value: ep?.employment_type ? employmentTypeLabel(ep.employment_type) : null },
                 { label: 'Salary Grade',      value: ep?.salary_grade },
                 { label: 'Agency',            value: ep?.place_assign },
                 { label: 'Division / Office', value: ep?.division },

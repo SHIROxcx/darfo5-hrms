@@ -9,6 +9,7 @@ import {
 import Swal from 'sweetalert2';
 import { Spinner } from '@/components/ui/spinner';
 import { StatusDot } from '@/components/status-dot';
+import { employmentTypeLabel } from '@/lib/employment-type';
 import ServiceRecordImportModal from './ServiceRecordImportModal';
 import EmployeeFilters, { type FilterValues } from './EmployeeFilters';
 
@@ -42,6 +43,7 @@ interface Employee {
 interface Props {
     employees: Employee[];
     divisions: string[];
+    divisionAbbreviations: Record<string, string>;
 }
 
 // Helpers
@@ -82,11 +84,12 @@ function firstErrorMessage(errors: Record<string, string>, fallback: string): st
 
 interface DetailModalProps {
     employee: Employee;
+    divisionAbbreviations: Record<string, string>;
     onClose: () => void;
     onApprove: (emp: Employee) => void;
 }
 
-function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
+function DetailModal({ employee, divisionAbbreviations, onClose, onApprove }: DetailModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
             <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white">
@@ -140,7 +143,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Employment Type</p>
-                            <p className="font-medium text-gray-900">{employee.employee_profile?.employment_type ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
+                            <p className="font-medium text-gray-900">{employee.employee_profile?.employment_type ? employmentTypeLabel(employee.employee_profile.employment_type) : <span className="italic font-normal text-gray-400">Not set</span>}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Position</p>
@@ -156,7 +159,11 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         </div>
                         <div className="col-span-2">
                             <p className="text-xs text-gray-500">Division</p>
-                            <p className="font-medium text-gray-900">{employee.employee_profile?.division ?? <span className="italic font-normal text-gray-400">Not set</span>}</p>
+                            <p className="font-medium text-gray-900">
+                                {employee.employee_profile?.division
+                                    ? (divisionAbbreviations[employee.employee_profile.division] ?? employee.employee_profile.division)
+                                    : <span className="italic font-normal text-gray-400">Not set</span>}
+                            </p>
                         </div>
                         <div className="col-span-2">
                             <p className="text-xs text-gray-500">Section/Unit</p>
@@ -201,7 +208,7 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
 
 // ── Main Page
 
-export default function Index({ employees, divisions }: Props) {
+export default function Index({ employees, divisions, divisionAbbreviations }: Props) {
     const [search, setSearch]           = useState('');
     const [filterValues, setFilterValues] = useState<FilterValues>({
         status:          '',
@@ -488,6 +495,7 @@ export default function Index({ employees, divisions }: Props) {
             {detailModal && (
                 <DetailModal
                     employee={detailModal}
+                    divisionAbbreviations={divisionAbbreviations}
                     onClose={() => setDetailModal(null)}
                     onApprove={approve}
                 />
@@ -635,7 +643,7 @@ export default function Index({ employees, divisions }: Props) {
                                             <td className="px-4 py-3">
                                                 {emp.employee_profile?.employment_type ? (
                                                     <span className="px-2 py-0.5 rounded-md border border-gray-200 text-gray-600 text-xs">
-                                                        {emp.employee_profile.employment_type}
+                                                        {employmentTypeLabel(emp.employee_profile.employment_type)}
                                                     </span>
                                                 ) : (
                                                     <span className="text-gray-400 italic text-xs">Not set</span>

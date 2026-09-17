@@ -28,20 +28,28 @@ class LeaveController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($lr) => [
-                'id'         => $lr->id,
+                'id' => $lr->id,
                 'leave_type' => $lr->leaveType->name,
-                'type_code'  => $lr->leaveType->code,
+                'type_code' => $lr->leaveType->code,
                 'start_date' => $lr->start_date->toDateString(),
-                'end_date'   => $lr->end_date->toDateString(),
-                'days'       => $lr->days_requested,
-                'reason'     => $lr->reason,
-                'status'     => $lr->status,
-                'remarks'    => $lr->remarks,
+                'end_date' => $lr->end_date->toDateString(),
+                'days' => $lr->days_requested,
+                'reason' => $lr->reason,
+                'status' => $lr->status,
+                'remarks' => $lr->remarks,
                 'created_at' => $lr->created_at->toDateString(),
             ]);
 
-        // Load / seed credits for all active leave types
-        $leaveTypes = LeaveType::where('is_active', true)->orderBy('name')->get();
+        // Load / seed credits for whichever active leave types this employee
+        // may actually file — Wellness Leave only for JO/COS/Pakyaw, every
+        // active type for Permanent. Keeps the dropdown, the credit bars and
+        // LeaveService's own validation all reading from the same rule.
+        $leaveTypesQuery = LeaveType::where('is_active', true);
+        if ($this->leaveService->restrictedToWellnessOnly($user)) {
+            $leaveTypesQuery->where('code', 'WL');
+        }
+        $leaveTypes = $leaveTypesQuery->orderBy('name')->get();
+
         foreach ($leaveTypes as $type) {
             $this->leaveService->ensureCredit($user->id, $type->id, $year);
         }
@@ -49,32 +57,33 @@ class LeaveController extends Controller
         $credits = LeaveCredit::with('leaveType')
             ->where('user_id', $user->id)
             ->where('year', $year)
+            ->whereIn('leave_type_id', $leaveTypes->pluck('id'))
             ->get()
             ->map(fn ($c) => [
-                'leave_type'   => $c->leaveType->name,
-                'type_code'    => $c->leaveType->code,
-                'total'        => $c->total_credits,
-                'used'         => $c->used_credits,
-                'pending'      => $c->pending_credits,
-                'available'    => $c->available,
+                'leave_type' => $c->leaveType->name,
+                'type_code' => $c->leaveType->code,
+                'total' => $c->total_credits,
+                'used' => $c->used_credits,
+                'pending' => $c->pending_credits,
+                'available' => $c->available,
             ]);
 
         $stats = [
-            'pending'  => $requests->where('status', 'pending')->count(),
+            'pending' => $requests->where('status', 'pending')->count(),
             'approved' => $requests->where('status', 'approved')->count(),
-            'denied'   => $requests->where('status', 'denied')->count(),
+            'denied' => $requests->where('status', 'denied')->count(),
         ];
 
         return Inertia::render('Employee/Leave/Index', [
-            'requests'   => $requests,
-            'credits'    => $credits,
+            'requests' => $requests,
+            'credits' => $credits,
             'leaveTypes' => $leaveTypes->map(fn ($t) => [
-                'id'   => $t->id,
+                'id' => $t->id,
                 'name' => $t->name,
                 'code' => $t->code,
             ]),
             'stats' => $stats,
-            'year'  => $year,
+            'year' => $year,
         ]);
     }
 
@@ -85,9 +94,9 @@ class LeaveController extends Controller
     {
         $data = $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
-            'start_date'    => 'required|date|after_or_equal:today',
-            'end_date'      => 'required|date|after_or_equal:start_date',
-            'reason'        => 'nullable|string|max:1000',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -110,9 +119,9 @@ class LeaveController extends Controller
 
         $data = $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
-            'start_date'    => 'required|date',
-            'end_date'      => 'required|date|after_or_equal:start_date',
-            'reason'        => 'nullable|string|max:1000',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'nullable|string|max:1000',
         ]);
 
         try {

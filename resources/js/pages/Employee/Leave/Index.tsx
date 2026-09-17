@@ -236,6 +236,8 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
     const [leaveTypeId, setLeaveTypeId] = useState<string>(editTypeId ? String(editTypeId) : '');
 
     const workingDays = countWorkingDays(startDate, endDate);
+    const selectedType = leaveTypes.find(t => String(t.id) === leaveTypeId);
+    const isWellness = selectedType?.code === 'WL';
 
     function validate() {
         const e: Record<string, string> = {};
@@ -243,6 +245,12 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
         if (!startDate)   e.start_date    = 'Start date is required.';
         if (!endDate)     e.end_date      = 'End date is required.';
         if (workingDays < 1) e.days = 'Please select at least 1 working day.';
+        // Mirrors LeaveService's server-side rule so the employee sees this
+        // instantly instead of after a round trip — the server still enforces
+        // it authoritatively (along with the holiday-adjacency rule, which
+        // needs the admin-managed holiday calendar to check and so can only
+        // be validated server-side).
+        else if (isWellness && workingDays > 3) e.days = 'Wellness Leave is limited to a maximum of 3 consecutive days.';
         return e;
     }
 
@@ -298,6 +306,11 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
                             {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name} ({t.code})</option>)}
                         </select>
                         {errors.leave_type_id && <p className="mt-1 text-xs text-red-500">{errors.leave_type_id}</p>}
+                        {isWellness && (
+                            <p className="mt-1 text-xs text-gray-400">
+                                Max 3 consecutive days, and can't start or end right before or after a holiday.
+                            </p>
+                        )}
                     </div>
 
                     {/* Calendar */}

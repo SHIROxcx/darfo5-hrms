@@ -10,6 +10,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { EMPLOYMENT_TYPE_OPTIONS } from '@/lib/employment-type';
 
 export interface FilterValues {
     status: string;
@@ -24,13 +25,6 @@ interface Props {
 }
 
 const EMPTY_FILTERS: FilterValues = { status: '', employment_type: '', division: '' };
-
-const EMPLOYMENT_TYPE_OPTIONS = [
-    { value: 'JO', label: 'Job Order (JO)' },
-    { value: 'COS', label: 'Contract of Service (COS)' },
-    { value: 'Pakyaw', label: 'Pakyaw' },
-    { value: 'Permanent', label: 'Permanent' },
-];
 
 const selectCls = 'border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white';
 const desktopSelectCls = `${selectCls} min-w-40`;

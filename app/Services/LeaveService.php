@@ -18,7 +18,60 @@ use Illuminate\Support\Facades\Notification;
 
 class LeaveService
 {
+    /**
+     * Employment types limited to Wellness Leave (code `WL`) only — no
+     * access to Vacation/Sick/Privilege Leave. Matched case-insensitively
+     * since `employee_profiles.employment_type` is free text (`JO`, `COS`,
+     * `Pakyaw`, `Permanent`, inconsistently cased across entry points).
+     */
+    protected const WELLNESS_ONLY_EMPLOYMENT_TYPES = ['jo', 'cos', 'pakyaw'];
+
+    protected const WELLNESS_LEAVE_CODE = 'WL';
+
+    protected const WELLNESS_LEAVE_MAX_CONSECUTIVE_DAYS = 3;
+
     public function __construct(protected HolidayService $holidays) {}
+
+    /**
+     * Whether this user may only file Wellness Leave (JO / COS / Pakyaw),
+     * as opposed to having access to every active leave type (Permanent).
+     */
+    public function restrictedToWellnessOnly(User $user): bool
+    {
+        $user->loadMissing('employeeProfile');
+        $type = strtolower(trim($user->employeeProfile?->employment_type ?? ''));
+
+        return in_array($type, self::WELLNESS_ONLY_EMPLOYMENT_TYPES, true);
+    }
+
+    /**
+     * Enforce the employment-type gate and the Wellness-Leave-specific
+     * rules (max 3 consecutive days, can't abut a holiday) shared by
+     * submitRequest() and updateRequest(). Throws RuntimeException — same
+     * "business rule violation" convention as the credit-availability
+     * checks around it — on any failure.
+     */
+    protected function assertLeaveIsAllowed(User $user, LeaveType $leaveType, string $startDate, string $endDate, float $days): void
+    {
+        if ($this->restrictedToWellnessOnly($user) && $leaveType->code !== self::WELLNESS_LEAVE_CODE) {
+            throw new \RuntimeException('Only Wellness Leave is available for your employment type.');
+        }
+
+        if ($leaveType->code !== self::WELLNESS_LEAVE_CODE) {
+            return;
+        }
+
+        if ($days > self::WELLNESS_LEAVE_MAX_CONSECUTIVE_DAYS) {
+            throw new \RuntimeException('Wellness Leave is limited to a maximum of '.self::WELLNESS_LEAVE_MAX_CONSECUTIVE_DAYS.' consecutive days.');
+        }
+
+        $dayBefore = Carbon::parse($startDate)->subDay();
+        $dayAfter = Carbon::parse($endDate)->addDay();
+
+        if ($this->holidays->isHoliday($dayBefore) || $this->holidays->isHoliday($dayAfter)) {
+            throw new \RuntimeException('Wellness Leave cannot be filed immediately before or after a holiday.');
+        }
+    }
 
     /**
      * Count working days between two dates (Mon–Fri, excluding admin-managed holidays).
@@ -77,7 +130,10 @@ class LeaveService
      */
     public function submitRequest(User $user, array $data): LeaveRequest
     {
+        $leaveType = LeaveType::findOrFail($data['leave_type_id']);
         $days = $this->countWorkingDays($data['start_date'], $data['end_date']);
+        $this->assertLeaveIsAllowed($user, $leaveType, $data['start_date'], $data['end_date'], $days);
+
         $year = Carbon::parse($data['start_date'])->year;
         $credit = $this->ensureCredit($user->id, $data['leave_type_id'], $year);
 
@@ -204,7 +260,10 @@ class LeaveService
             throw new \RuntimeException('Only pending requests can be edited.');
         }
 
+        $leaveType = LeaveType::findOrFail($data['leave_type_id']);
         $newDays = $this->countWorkingDays($data['start_date'], $data['end_date']);
+        $this->assertLeaveIsAllowed($request->user, $leaveType, $data['start_date'], $data['end_date'], $newDays);
+
         $year = Carbon::parse($data['start_date'])->year;
         $credit = $this->ensureCredit($request->user_id, $data['leave_type_id'], $year);
 

@@ -4,6 +4,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { Check, X, UserCheck, Clock, Bell, Megaphone } from 'lucide-react';
 import { StatusDot } from '@/components/status-dot';
+import { employmentTypeLabel } from '@/lib/employment-type';
 import type { AppNotification, PendingUser, AnnouncementNotifData } from '@/types/notification';
 
 // Helpers
@@ -95,7 +96,7 @@ function UserDetailModal({
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         {[
                             ['Employee No.',    ep?.employee_number],
-                            ['Employment Type', ep?.employment_type],
+                            ['Employment Type', ep?.employment_type ? employmentTypeLabel(ep.employment_type) : null],
                             ['Position',        ep?.position],
                             ['Salary Grade',    ep?.salary_grade],
                         ].map(([label, val]) => (
