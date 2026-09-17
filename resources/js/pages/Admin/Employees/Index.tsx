@@ -114,22 +114,22 @@ function DetailModal({ employee, onClose, onApprove }: DetailModalProps) {
                         <div className="p-3 text-center">
                             <p className="text-xs text-gray-500 mb-1.5">Email</p>
                             {employee.email_verified_at
-                                ? <StatusDot tone="green">Verified</StatusDot>
-                                : <StatusDot tone="gray">Unverified</StatusDot>}
+                                ? <span className='text-green-700 text-xs font-semibold'>Verified</span>
+                                : <span className='text-gray-700 text-xs font-semibold'>Unverified</span>}
                         </div>
                         <div className="p-3 text-center">
-                            <p className="text-xs text-gray-500 mb-1.5">Approval</p>
+                            <p className="text-xs text-gray-500 mb-1.5">Account</p>
                             {getApprovalStatus(employee) === 'approved'
-                                ? <StatusDot tone="green">Approved</StatusDot>
+                                ? <span className='text-green-700 text-xs font-semibold'>Approved</span>
                                 : getApprovalStatus(employee) === 'revoked'
-                                    ? <StatusDot tone="red">Revoked</StatusDot>
-                                    : <StatusDot tone="amber">Pending</StatusDot>}
+                                    ? <span className='text-red-600 text-xs font-semibold'>Revoked</span>
+                                    : <span className="text-amber-600 text-xs font-semibold">Pending</span>}
                         </div>
                         <div className="p-3 text-center">
                             <p className="text-xs text-gray-500 mb-1.5">Employment</p>
                             {employee.employee_profile?.is_active
-                                ? <StatusDot tone="green">Active</StatusDot>
-                                : <StatusDot tone="gray">Inactive</StatusDot>}
+                                ? <span className='text-green-700 text-xs font-semibold'>Active</span>
+                                : <span className='text-gray-700 text-xs font-semibold'>Inactive</span>}
                         </div>
                     </div>
 
@@ -337,7 +337,6 @@ export default function Index({ employees, divisions }: Props) {
                     const json = JSON.parse(await err.response.data.text());
                     message = json.message ?? firstErrorMessage(json.errors ?? {}, message);
                 } catch {
-                    // response wasn't JSON — fall back to the generic message
                 }
             }
             Toast.fire({ icon: 'error', title: message });
@@ -360,9 +359,6 @@ export default function Index({ employees, divisions }: Props) {
             if (result.isConfirmed) {
                 router.post('/admin/employees/' + emp.id + '/approve', {}, {
                     preserveScroll: true,
-                    // Keep this component mounted (don't discard search/filter/selection
-                    // state) and skip the global top-loading bar — the table updates
-                    // instantly from the optimistic state set below.
                     preserveState: true,
                     showProgress: false,
                     onSuccess: () => {
@@ -439,9 +435,6 @@ export default function Index({ employees, divisions }: Props) {
                     preserveState: true,
                     showProgress: false,
                     onSuccess: () => {
-                        // Assign the target state (captured at click time), not a toggle
-                        // of whatever's currently in state — see the identical note in
-                        // toggleApproval above.
                         setLocalEmployees(prev => prev.map(e =>
                             e.id === emp.id && e.employee_profile
                                 ? { ...e, employee_profile: { ...e.employee_profile, is_active: !isDeactivating } }
@@ -589,8 +582,8 @@ export default function Index({ employees, divisions }: Props) {
                                     <th className="px-4 py-3 text-left font-medium">Position</th>
                                     <th className="px-4 py-3 text-left font-medium">Division</th>
                                     <th className="px-4 py-3 text-left font-medium">Type</th>
-                                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                                    <th className="px-4 py-3 text-left font-medium">Approval</th>
+                                    <th className="px-4 py-3 text-left font-medium">Employment</th>
+                                    <th className="px-4 py-3 text-left font-medium">Account</th>
                                     <th className="px-4 py-3 text-center font-medium">Actions</th>
                                 </tr>
                             </thead>
