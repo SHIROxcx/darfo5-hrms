@@ -1,9 +1,9 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 export interface LookupField {
     key: string;
@@ -190,52 +190,55 @@ export default function LookupCrudTable<T extends LookupItem>({
                     />
                 </div>
 
-                <div className="overflow-hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
-                            <tr>
-                                {fields.map(f => <th key={f.key} className="px-4 py-5 text-left">{f.label}</th>)}
-                                <th className="px-4 py-5 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filtered.length === 0 ? (
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                    {/* Caps the visible list to ~10 rows and scrolls for the rest, with the header pinned in place */}
+                    <div className="max-h-130 overflow-auto">
+                        <table className="w-full text-sm">
+                            <thead className="sticky top-0 z-10 border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
                                 <tr>
-                                    <td colSpan={fields.length + 1} className="py-12 text-center italic text-gray-400">
-                                        No {itemNoun.toLowerCase()}s found.
-                                    </td>
+                                    {fields.map(f => <th key={f.key} className="px-4 py-5 text-left">{f.label}</th>)}
+                                    <th className="px-4 py-5 text-center">Actions</th>
                                 </tr>
-                            ) : (
-                                filtered.map(item => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition">
-                                        {fields.map(f => (
-                                            <td key={f.key} className="px-4 py-3 text-gray-700">
-                                                {String(field(item, f.key) ?? '') || <span className="italic text-gray-300">—</span>}
-                                            </td>
-                                        ))}
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => openEdit(item)}
-                                                    className="cursor-pointer rounded-lg p-1.5 text-green-600 hover:bg-green-50 transition"
-                                                    title={`Edit ${itemNoun}`}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => remove(item)}
-                                                    className="cursor-pointer rounded-lg p-1.5 text-red-500 hover:bg-red-50 transition"
-                                                    title={`Delete ${itemNoun}`}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={fields.length + 1} className="py-12 text-center italic text-gray-400">
+                                            No {itemNoun.toLowerCase()}s found.
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    filtered.map(item => (
+                                        <tr key={item.id} className="hover:bg-gray-50 transition">
+                                            {fields.map(f => (
+                                                <td key={f.key} className="px-4 py-3 text-gray-700">
+                                                    {String(field(item, f.key) ?? '') || <span className="italic text-gray-300">—</span>}
+                                                </td>
+                                            ))}
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => openEdit(item)}
+                                                        className="cursor-pointer rounded-lg p-1.5 text-green-600 hover:bg-green-50 transition"
+                                                        title={`Edit ${itemNoun}`}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => remove(item)}
+                                                        className="cursor-pointer rounded-lg p-1.5 text-red-500 hover:bg-red-50 transition"
+                                                        title={`Delete ${itemNoun}`}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </AppLayout>

@@ -2,7 +2,7 @@ import AppLayout from "@/layouts/app-layout";
 import { Head, router, Link } from '@inertiajs/react';
 import {
     Users, ShieldCheck, Briefcase, SquareUserRound,
-    Megaphone, Zap, ChevronRight, Plus, X,
+    Megaphone, Plus, X,
     Paperclip, Trash2, ExternalLink, FileText, Image, File,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';

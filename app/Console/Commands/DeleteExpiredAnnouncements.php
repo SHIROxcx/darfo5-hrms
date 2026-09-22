@@ -34,8 +34,14 @@ class DeleteExpiredAnnouncements extends Command
             $id = $announcement->id;
             $announcement->delete();
 
-            // Broadcast so all open tabs/clients remove it in real time
-            broadcast(new AnnouncementDeleted($id));
+            // Broadcast so all open tabs/clients remove it in real time. Best
+            // effort only — if Reverb is down, the deletion above must still
+            // stand and the rest of the batch must still run.
+            try {
+                broadcast(new AnnouncementDeleted($id));
+            } catch (\Throwable $e) {
+                \Log::warning('Announcement broadcast failed: '.$e->getMessage());
+            }
         }
 
         $this->info("Deleted {$expired->count()} expired announcement(s).");

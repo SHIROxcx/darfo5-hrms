@@ -427,61 +427,64 @@ export default function HolidaysIndex({ year, holidays, hasAnyRecurring }: Props
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-left text-[11px] text-gray-400 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
-                                <th className="px-5 py-3 font-semibold">Date</th>
-                                <th className="px-3 py-3 font-semibold">Name</th>
-                                <th className="px-3 py-3 font-semibold">Type</th>
-                                <th className="px-3 py-3 font-semibold">Recurs</th>
-                                <th className="px-5 py-3 font-semibold text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {holidays.length === 0 ? (
-                                <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-gray-400 italic">No holidays set up for {year} yet.</td></tr>
-                            ) : holidays.map(h => (
-                                <tr key={h.id} className="border-t border-gray-50">
-                                    <td className="px-5 py-3 whitespace-nowrap">
-                                        {h.date ? (
-                                            <span className="text-gray-800 font-medium">{fmtDate(h.date)}</span>
-                                        ) : (
-                                            <span className="text-gray-400 italic">Skipped this year</span>
-                                        )}
-                                        {h.is_moved && <span className="ml-2 text-[10px] font-semibold text-amber-600">moved</span>}
-                                    </td>
-                                    <td className="px-3 py-3 text-gray-800">{h.name}</td>
-                                    <td className="px-3 py-3">
-                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${TYPE_BADGE[h.type]}`}>{TYPE_LABEL[h.type]}</span>
-                                    </td>
-                                    <td className="px-3 py-3 text-gray-500">{h.is_recurring ? 'Yearly' : 'One-off'}</td>
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            <button
-                                                onClick={() => h.is_recurring ? setEditingYear(h) : setEditingTemplate(h)}
-                                                title={h.is_recurring ? `Edit for ${year} only` : 'Edit'}
-                                                className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 transition cursor-pointer">
-                                                <Pencil className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => deleteOccurrence(h)}
-                                                title={h.is_recurring ? `Skip ${year}` : 'Delete'}
-                                                className="h-7 w-7 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition cursor-pointer">
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </button>
-                                            {h.is_recurring && (
-                                                <button
-                                                    onClick={() => setEditingTemplate(h)}
-                                                    className="text-[11px] text-gray-400 hover:text-gray-600 hover:underline cursor-pointer ml-1">
-                                                    All years
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                    {/* Caps the visible list to ~10 rows and scrolls for the rest, with the header pinned in place */}
+                    <div className="max-h-130 overflow-auto">
+                        <table className="w-full text-sm">
+                            <thead className="sticky top-0 z-10">
+                                <tr className="text-left text-[11px] text-gray-400 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
+                                    <th className="px-5 py-3 font-semibold">Date</th>
+                                    <th className="px-3 py-3 font-semibold">Name</th>
+                                    <th className="px-3 py-3 font-semibold">Type</th>
+                                    <th className="px-3 py-3 font-semibold">Recurs</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {holidays.length === 0 ? (
+                                    <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-gray-400 italic">No holidays set up for {year} yet.</td></tr>
+                                ) : holidays.map(h => (
+                                    <tr key={h.id} className="border-t border-gray-50">
+                                        <td className="px-5 py-3 whitespace-nowrap">
+                                            {h.date ? (
+                                                <span className="text-gray-800 font-medium">{fmtDate(h.date)}</span>
+                                            ) : (
+                                                <span className="text-gray-400 italic">Skipped this year</span>
+                                            )}
+                                            {h.is_moved && <span className="ml-2 text-[10px] font-semibold text-amber-600">moved</span>}
+                                        </td>
+                                        <td className="px-3 py-3 text-gray-800">{h.name}</td>
+                                        <td className="px-3 py-3">
+                                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${TYPE_BADGE[h.type]}`}>{TYPE_LABEL[h.type]}</span>
+                                        </td>
+                                        <td className="px-3 py-3 text-gray-500">{h.is_recurring ? 'Yearly' : 'One-off'}</td>
+                                        <td className="px-5 py-3">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={() => h.is_recurring ? setEditingYear(h) : setEditingTemplate(h)}
+                                                    title={h.is_recurring ? `Edit for ${year} only` : 'Edit'}
+                                                    className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 transition cursor-pointer">
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteOccurrence(h)}
+                                                    title={h.is_recurring ? `Skip ${year}` : 'Delete'}
+                                                    className="h-7 w-7 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition cursor-pointer">
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                                {h.is_recurring && (
+                                                    <button
+                                                        onClick={() => setEditingTemplate(h)}
+                                                        className="text-[11px] text-gray-400 hover:text-gray-600 hover:underline cursor-pointer ml-1">
+                                                        All years
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </AppLayout>

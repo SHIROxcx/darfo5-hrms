@@ -87,7 +87,7 @@ class AnnouncementController extends Controller
 
         $payload = self::formatPayload($announcement);
 
-        broadcast(new AnnouncementPosted($payload));
+        self::broadcastSafely(new AnnouncementPosted($payload));
 
         $notification = new AnnouncementNotification(
             announcementId: $announcement->id,
@@ -155,7 +155,7 @@ class AnnouncementController extends Controller
         ]);
 
         $payload = self::formatPayload($announcement);
-        broadcast(new AnnouncementUpdated($payload));
+        self::broadcastSafely(new AnnouncementUpdated($payload));
 
         return back()->with('success', 'Announcement updated.');
     }
@@ -182,7 +182,7 @@ class AnnouncementController extends Controller
 
         $announcement->delete();
 
-        broadcast(new AnnouncementDeleted($id));
+        self::broadcastSafely(new AnnouncementDeleted($id));
 
         return back()->with('success', 'Announcement deleted.');
     }
@@ -196,5 +196,20 @@ class AnnouncementController extends Controller
             ->get()
             ->map(fn ($a) => self::formatPayload($a))
             ->toArray();
+    }
+
+    /**
+     * Broadcasting is a best-effort real-time nicety (Reverb), not the source
+     * of truth — the database write it follows has already succeeded by the
+     * time this runs. If Reverb is unreachable, log it and move on instead of
+     * turning a successful create/update/delete into a 500 for the admin.
+     */
+    private static function broadcastSafely(object $event): void
+    {
+        try {
+            broadcast($event);
+        } catch (\Throwable $e) {
+            \Log::warning('Announcement broadcast failed: '.$e->getMessage());
+        }
     }
 }

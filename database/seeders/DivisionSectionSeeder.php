@@ -17,7 +17,6 @@ class DivisionSectionSeeder extends Seeder
                 'sections' => [
                     ['name' => 'Office of the Chief',                              'abbreviation' => 'Office of the Chief'],
                     ['name' => 'Disaster Risk Reduction and Management Unit',       'abbreviation' => 'DRRM Unit'],
-                    ['name' => 'Information and Communication Technology Unit',     'abbreviation' => 'ICT Unit'],
                     ['name' => 'ISO Unit',                                          'abbreviation' => 'ISO Unit'],
                     ['name' => 'Philippine Rural Development Project',              'abbreviation' => 'PRDP'],
                     ['name' => 'Regional Agriculture and Fisheries Information Section', 'abbreviation' => 'RAFIS'],
@@ -67,6 +66,7 @@ class DivisionSectionSeeder extends Seeder
                     ['name' => 'Special Concerns Unit',             'abbreviation' => 'Sepcial Concerns Unit'],
                     ['name' => 'Neutral Evaluation Unit',           'abbreviation' => 'Neutral Evaluation'],
                     ['name' => 'Admin and Technical Unit',          'abbreviation' => 'Admin and Technical'],
+                    ['name' => 'Information and Communication Technology Unit',     'abbreviation' => 'ICT Unit'],
                 ],
             ],
             [
