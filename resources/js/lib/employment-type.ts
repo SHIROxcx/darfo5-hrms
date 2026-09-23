@@ -12,7 +12,7 @@ export interface EmploymentTypeOption {
 
 export const EMPLOYMENT_TYPE_OPTIONS: EmploymentTypeOption[] = [
     { value: 'jo',        label: 'JO' },
-    { value: 'cos',       label: 'COS)' },
+    { value: 'cos',       label: 'COS' },
     { value: 'pakyaw',    label: 'Pakyaw' },
     { value: 'permanent', label: 'Permanent' },
 ];
