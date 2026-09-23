@@ -16,6 +16,7 @@ interface FormData {
     position: string;
     salary_grade: number;
     employment_type: string;
+    employee_number: string;
     email: string;
     mobile_number: string;
     password: string;
@@ -190,7 +191,7 @@ export default function Register() {
         first_name: '', middle_name: '', last_name: '', name_ext: '',
         agency: 'Department of Agriculture Regional Field Office 5',
         division: '', section_unit: '', position: '', salary_grade: 0,
-        employment_type: '', email: '', mobile_number: '',
+        employment_type: '', employee_number: '', email: '', mobile_number: '',
         password: '', password_confirmation: '',
     });
 
@@ -501,10 +502,6 @@ export default function Register() {
                                             )}
                                         </div>
                                     </Field>
-                                </div>
-
-                                {/* Position, Employment, Contact, Password */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-5">
 
                                     {/* Position — searchable */}
                                     <Field label="Position" required error={formErrors.position}>
@@ -539,6 +536,10 @@ export default function Register() {
                                             )}
                                         </div>
                                     </Field>
+                                </div>
+
+                                {/* Employment, Agency Employee No., Contact, Password */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-5">
 
                                     {/* Employment Type */}
                                     <Field label="Employment Type" required error={formErrors.employment_type}>
@@ -548,6 +549,15 @@ export default function Register() {
                                             <option value="" disabled>Select Employment</option>
                                             {EMPLOYMENT_TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                         </select>
+                                    </Field>
+
+                                    {/* Agency Employee No. */}
+                                    <Field label="Agency Employee No." error={formErrors.employee_number || errors.employee_number}>
+                                        <input value={data.employee_number}
+                                            onChange={e => { setData('employee_number', e.target.value); clearError('employee_number'); }}
+                                            placeholder="Leave blank if not yet assigned"
+                                            className={inputCls(formErrors.employee_number || errors.employee_number)}
+                                            autoComplete="off" />
                                     </Field>
 
                                     {/* Email */}
@@ -645,6 +655,7 @@ export default function Register() {
                                 <ReviewRow label="Position"        value={data.position} />
                                 <ReviewRow label="Salary Grade"    value={data.salary_grade ? `SG ${data.salary_grade}` : '—'} />
                                 <ReviewRow label="Employment Type" value={employmentTypeLabel(data.employment_type)} />
+                                <ReviewRow label="Agency Employee No." value={data.employee_number} />
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 mt-6 mb-4">Contact Details</h3>
                                 <ReviewRow label="Email"         value={data.email} />
                                 <ReviewRow label="Mobile Number" value={data.mobile_number} />

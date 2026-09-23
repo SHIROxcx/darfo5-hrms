@@ -25,6 +25,7 @@ class CreateNewUser implements CreatesNewUsers
             'position'      => ['required', 'string'],
             'salary_grade'  => ['required'],
             'employment_type' => ['required', 'string'],
+            'employee_number' => ['nullable', 'string', 'max:50', 'unique:employee_profiles,employee_number'],
             'password'      => ['required', 'confirmed'],
         ])->validate();
 
@@ -41,6 +42,7 @@ class CreateNewUser implements CreatesNewUsers
 
         $user->employeeProfile()->create([
             'employment_type' => $input['employment_type'],
+            'employee_number' => $input['employee_number'] ?? null,
             'position'        => $input['position'],
             'salary_grade'    => $input['salary_grade'],
             'division'        => $input['division'],
@@ -51,6 +53,8 @@ class CreateNewUser implements CreatesNewUsers
         PdsPersonalInfo::create([
             'user_id'      => $user->id,
             'mobile_number' => $input['mobile_number'],
+            // Kept in sync with employee_profiles.employee_number (see PdsController / UserProfileController)
+            'agency_employee_no' => $input['employee_number'] ?? null,
         ]);
 
         $user->assignRole('employee');
