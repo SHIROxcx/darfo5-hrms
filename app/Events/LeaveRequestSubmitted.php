@@ -32,7 +32,7 @@ class LeaveRequestSubmitted implements ShouldBroadcastNow
 
         $this->payload = [
             'message' => "{$leaveRequest->user->full_name} applied for {$leaveRequest->leaveType->name}.",
-            'url' => '/admin/leave?highlight='.$leaveRequest->id,
+            'url' => $leaveRequest->adminUrl(),
             'row' => [
                 'id' => $leaveRequest->id,
                 'employee' => $leaveRequest->user->full_name,
@@ -41,8 +41,11 @@ class LeaveRequestSubmitted implements ShouldBroadcastNow
                 'employee_number' => $leaveRequest->user->employeeProfile?->employee_number,
                 'job_title' => $leaveRequest->user->employeeProfile?->position,
                 'leave_type_id' => $leaveRequest->leave_type_id,
-                'leave_type' => $leaveRequest->leaveType->name,
+                'leave_type' => $leaveRequest->leaveType->code === 'OTH' && $leaveRequest->other_leave_type
+                    ? $leaveRequest->other_leave_type
+                    : $leaveRequest->leaveType->name,
                 'type_code' => $leaveRequest->leaveType->code,
+                'form_type' => $leaveRequest->form_type,
                 'submit_date' => $leaveRequest->created_at->toDateString(),
                 'start_date' => $leaveRequest->start_date->toDateString(),
                 'end_date' => $leaveRequest->end_date->toDateString(),

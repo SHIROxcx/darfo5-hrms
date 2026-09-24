@@ -55,10 +55,11 @@ class AnnouncementController extends Controller
             'date' => ['required', 'date'],
             'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
             'auto_delete' => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date'],
+            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date', 'after:today'],
             'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
         ], [
             'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
+            'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
         ]);
 
         $user = $request->user();
@@ -121,11 +122,12 @@ class AnnouncementController extends Controller
             'date' => ['required', 'date'],
             'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
             'auto_delete' => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date'],
+            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date', 'after:today'],
             'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
             'removed_attachments' => ['nullable', 'string'], // JSON array of paths to remove
         ], [
             'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
+            'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
         ]);
 
         // Handle removed attachments

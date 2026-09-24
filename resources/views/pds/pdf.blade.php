@@ -219,7 +219,7 @@
             
             <tr>
                 <td class="relative p-0.5 text-[6.5pt]">
-                    <p class="absolute italic font-bold text-[8pt]">CS Form No. 212<span class="block font-normal text-[7pt]">Revised 2025 <span/></p>
+                    <p class="absolute italic font-bold text-[8pt]">CS Form No. 212<span class="block font-normal text-[7pt]">Revised 2026 <span/></p>
                     <p class="pds_header text-center text-[22pt] font-black tracking-wide my-2">PERSONAL DATA SHEET</p>
                     <p class="text-[8pt] italic font-semibold mb-2"><span class="uppercase">WARNING:</span> Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
                     <p class="text-[8pt] font-semibold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
@@ -365,7 +365,7 @@
 
         {{-- 13-15 & 19-21: Final IDs and Contact Info --}}
         <tr style="height:17pt;">
-            <td colspan="3" class="{{ $lbl }} px-1 align-middle">13. PhilSys Number (PSN):</td>
+            <td colspan="3" class="{{ $lbl }} px-1 align-middle">13. PhilSys Card Number (PCN):</td>
             <td colspan="4" class="{{ $val }} px-1">{{ $pi?->philsys_number ?? 'N/A' }}</td>
             <td colspan="3" class="{{ $lbl }} px-1 align-middle">19. TELEPHONE NO.</td>
             <td colspan="9" class="{{ $val }} px-1 text-center">{{ $pi?->telephone ?? 'N/A' }}</td>
@@ -523,7 +523,7 @@
             </td>
         </tr>
         </table>
-        <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2025), Page 1 of 4</p>
+        <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2026), Page 1 of 4</p>
     </div>
 
 {{-- PAGE 2 – Eligibility + Work Experience --}}
@@ -531,7 +531,7 @@
 <div class="page">
     <table class="border-2 border-black">
 
-        <tr><td colspan="19" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
+        <tr><td colspan="24" class="{{ $sectionHeader }}">IV. CIVIL SERVICE ELIGIBILITY</td></tr>
         <tr style="height:20pt;" >
             <td colspan="8" rowspan="2" class="{{ $lbl }} align-middle uppercase">
                 <div class="flex justify-center text-center">
@@ -543,12 +543,12 @@
             </td>
             <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle uppercase text-center">RATING<br><span class="normal-case">(If Applicable)</span></td>
             <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle text-center">DATE OF EXAMINATION/<br>CONFERMENT</td>
-            <td colspan="3" rowspan="2" class="{{ $lbl }} align-middle text-center">PLACE OF EXAMINATION /<br>CONFERMENT</td>
+            <td colspan="8" rowspan="2" class="{{ $lbl }} align-middle text-center">PLACE OF EXAMINATION /<br>CONFERMENT</td>
             <td colspan="4" class="{{ $lbl }} align-middle text-center">LICENSE <span class="normal-case">(If Applicable)</span></td>
         </tr>
         <tr style="height:17pt;" class="text-center">
             <td colspan="2" class="{{ $lbl }} align-middle uppercase">NUMBER</td>
-            <td colspan="2" class="{{ $lbl }} align-middle normal-case">Valid Until</td>
+            <td colspan="2" class="{{ $lbl }} align-middle normal-case">Date of Validity</td>
         </tr>
         @php $eligibilities = $pds['eligibilities'] ?? []; @endphp
         @for($i = 0; $i < 8; $i++)
@@ -557,16 +557,16 @@
             <td colspan="8" class="{{ $val }} px-1">{{ $el?->career_service ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }}">{{ $el?->rating ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }}">{{ pDate($el?->date_of_examination) }}</td>
-            <td colspan="3" class="{{ $val }} px-1">{{ $el?->place_of_examination ?? 'N/A' }}</td>
+            <td colspan="8" class="{{ $val }} px-1">{{ $el?->place_of_examination ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }}">{{ $el?->license_number ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }}">{{ pDate($el?->license_validity) }}</td>
         </tr>
         @endfor
-        <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="24" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Work Experience --}}
         <tr>
-            <td colspan="19" class="{{ $sectionHeader }}">
+            <td colspan="24" class="{{ $sectionHeader }}">
                 V. WORK EXPERIENCE<br>
                 <span class="text-[9pt] normal-case font-medium">(Include private employment. Start from your recent work.) Description of duties should be indicated in the attached Work Experience Sheet</span>
             </td>
@@ -578,7 +578,9 @@
                     <p class="grow">INCLUSIVE DATES<br><span class="normal-case">(dd/mm/yyyy)</span></p></td>
                 </div>
             <td colspan="6" rowspan="3" class="{{ $lbl }} align-middle text-center">POSITION TITLE<br><span class="normal-case">(Write in full/Do not abbreviate)</span></td>
-            <td colspan="5" rowspan="3" class="{{ $lbl }} align-middle text-center">DEPARTMENT / AGENCY / OFFICE / COMPANY <br><span class="normal-case">(Write in full/Do not abbreviate)</span> </td>
+            <td colspan="6" rowspan="3" class="{{ $lbl }} align-middle text-center">DEPARTMENT / AGENCY / OFFICE / COMPANY <br><span class="normal-case">(Write in full/Do not abbreviate)</span> </td>
+            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">MONTHLY SALARY</td>
+            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">SALARY/ JOB/ PAY <br> GRADE(if applicable) & <br> STEP INCREMENT <br> (Format "00-0")</td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">STATUS OF APPOINTMENT</td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">GOV'T SERVICE <br>(Y/N)</td>
         </tr>
@@ -594,12 +596,14 @@
             <td colspan="2" class="{{ $val }}">{{ pDate($we?->date_from) }}</td>
             <td colspan="2" class="{{ $val }}">@if($we?->is_present)<em>Present</em>@else{{ pDate($we?->date_to) }}@endif</td>
             <td colspan="6" class="{{ $val }} px-1">{{ $we?->position_title ?? 'N/A' }}</td>
-            <td colspan="5" class="{{ $val }} px-1">{{ $we?->department ?? 'N/A' }}</td>
+            <td colspan="6" class="{{ $val }} px-1">{{ $we?->department ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} px-1">{{ $we?->monthly_salary ?? 'N/A' }}</td>
+            <td colspan="2" class="{{ $val }} px-1">{{ $we?->salary_grade ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }} px-1">{{ $we?->status_of_appointment ?? 'N/A' }}</td>
             <td colspan="2" class="{{ $val }}">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : 'N/A' }}</td>
         </tr>
         @endfor
-        <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="24" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
 
         {{-- Page 2 Signature --}}
         <tr style="height:20pt;" class="text-center">
@@ -607,7 +611,7 @@
             <td colspan="4" class="border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">SIGNATURE</td>
             
             {{-- Signature Value (8 cols to reach 11) --}}
-            <td colspan="7" class="{{ $sig }} align-middle">
+            <td colspan="8" class="{{ $sig }} align-middle">
                 @if(empty($govId?->signature))
                     <span class="text-red-500 italic text-[7pt]">(wet signature/e-signature/digital certificate)</span>
                 @else
@@ -619,12 +623,12 @@
             <td colspan="4" class="border-2 border-black align-middle font-black italic text-[10pt] bg-gray-100">DATE</td>
             
             {{-- Date Value --}}
-            <td colspan="4" class="border-2 border-black align-middle px-2 font-bold uppercase">
+            <td colspan="8" class="border-2 border-black align-middle px-2 font-bold uppercase">
                 {{ $govId?->date_accomplished ? \Carbon\Carbon::parse($govId->date_accomplished)->format('F j, Y') : 'N/A' }}
             </td>
         </tr>
     </table>
-    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2025), Page 2 of 4</p>
+    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2026), Page 2 of 4</p>
 </div>
 
 
@@ -759,7 +763,7 @@
             </td>
         </tr>
     </table>
-    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2025), Page 3 of 4</p>
+    <p class="text-right italic text-[6pt]">CS FORM 212 (Revised 2026), Page 3 of 4</p>
 </div>
 
 
@@ -1165,7 +1169,7 @@
             </td>
         </tr>
     </table>
-    <div class="text-right italic text-[6.5pt]">CS FORM 212 (Revised 2025), Page 4 of 4</div>
+    <div class="text-right italic text-[6.5pt]">CS FORM 212 (Revised 2026), Page 4 of 4</div>
 </div>
 
 </body>

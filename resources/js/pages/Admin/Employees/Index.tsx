@@ -160,9 +160,7 @@ function DetailModal({ employee, divisionAbbreviations, onClose, onApprove }: De
                         <div className="col-span-2">
                             <p className="text-xs text-gray-500">Division</p>
                             <p className="font-medium text-gray-900">
-                                {employee.employee_profile?.division
-                                    ? (divisionAbbreviations[employee.employee_profile.division] ?? employee.employee_profile.division)
-                                    : <span className="italic font-normal text-gray-400">Not set</span>}
+                                {employee.employee_profile?.division ?? <span className="text-gray-400 italic">Not set</span>}
                             </p>
                         </div>
                         <div className="col-span-2">
@@ -638,7 +636,9 @@ export default function Index({ employees, divisions, divisionAbbreviations }: P
                                                 {emp.employee_profile?.position ?? <span className="text-gray-400 italic">Not set</span>}
                                             </td>
                                             <td className="px-4 py-3 text-gray-700">
-                                                {emp.employee_profile?.division ?? <span className="text-gray-400 italic">Not set</span>}
+                                                {emp.employee_profile?.division
+                                    ? (divisionAbbreviations[emp.employee_profile.division] ?? emp.employee_profile.division)
+                                    : <span className="italic font-normal text-gray-400">Not set</span>}
                                             </td>
                                             <td className="px-4 py-3">
                                                 {emp.employee_profile?.employment_type ? (

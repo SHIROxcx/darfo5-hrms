@@ -130,7 +130,7 @@ export function AppSidebarHeader({
             .listen('.leave-request-reviewed', function(data: {
                 message: string; url: string;
                 request: { id: number; status: string; remarks: string | null; leave_type: string; type_code: string };
-                credit: { type_code: string; total: number; used: number; pending: number; available: number };
+                credit: { type_code: string; total: number; used: number; pending: number; available: number } | null;
             }) {
                 setUnreadCount(function(prev) { return prev + 1; });
                 window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: { message: data.message, url: data.url } }));

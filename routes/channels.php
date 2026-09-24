@@ -9,11 +9,11 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 /*
 |--------------------------------------------------------------------------
-| Only authenticated admins can subscribe to admin.notifications
+| Only authenticated admins and superadmins can subscribe to admin.notifications
 |--------------------------------------------------------------------------
 */
 Broadcast::channel('admin.notifications', function (User $user): bool {
-    return $user->hasRole('admin');
+    return $user->hasAnyRole(['admin', 'superadmin']);
 });
 
 /*

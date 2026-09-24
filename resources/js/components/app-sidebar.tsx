@@ -35,6 +35,7 @@ const referenceDataNavItem: NavItem = {
 const superAdminNavItems: NavItem[] = [
     { title: 'User Management', href: '/superadmin/users', icon: ShieldCheck },
     { title: 'Roles & Permissions', href: '/admin/roles', icon: UserCog },
+    { title: 'Leave Management', href: '/admin/leave', icon: Calendar },
     referenceDataNavItem,
 ];
 

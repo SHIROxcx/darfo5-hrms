@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\AnnouncementController;
 use App\Models\EmployeeProfile;
 use App\Models\LeaveCredit;
-use App\Models\LeaveType;
 use App\Models\PdsPersonalInfo;
 use App\Services\LeaveService;
 use Illuminate\Http\Request;
@@ -55,7 +54,7 @@ class DashboardController extends Controller
         // Employee dashboard — seed and load leave credits
         $year         = now()->year;
         $leaveService = app(LeaveService::class);
-        $leaveTypes   = LeaveType::where('is_active', true)->orderBy('name')->get();
+        $leaveTypes   = $leaveService->creditLeaveTypes($user);
 
         foreach ($leaveTypes as $type) {
             $leaveService->ensureCredit($user->id, $type->id, $year);
@@ -64,6 +63,7 @@ class DashboardController extends Controller
         $leaveCredits = LeaveCredit::with('leaveType')
             ->where('user_id', $user->id)
             ->where('year', $year)
+            ->whereIn('leave_type_id', $leaveTypes->pluck('id'))
             ->get()
             ->map(fn ($c) => [
                 'leave_type' => $c->leaveType->name,

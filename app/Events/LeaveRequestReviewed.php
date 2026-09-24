@@ -30,7 +30,12 @@ class LeaveRequestReviewed implements ShouldBroadcastNow
 
     public int $userId;
 
-    public function __construct(LeaveRequest $leaveRequest, LeaveCredit $credit)
+    /**
+     * $credit is null for leave types that don't track credits (placeholder
+     * CSC Form 6 types). The payload then carries `credit: null` and the
+     * employee page leaves its credit bars alone.
+     */
+    public function __construct(LeaveRequest $leaveRequest, ?LeaveCredit $credit)
     {
         $leaveRequest->loadMissing(['leaveType:id,name,code']);
 
@@ -48,13 +53,15 @@ class LeaveRequestReviewed implements ShouldBroadcastNow
                 'leave_type' => $leaveRequest->leaveType->name,
                 'type_code' => $leaveRequest->leaveType->code,
             ],
-            'credit' => [
-                'type_code' => $leaveRequest->leaveType->code,
+            // The balance that actually moved. For Forced Leave that is VL's,
+            // so it is keyed by the credit's own type, not the request's.
+            'credit' => $credit ? [
+                'type_code' => $credit->leaveType->code,
                 'total' => $credit->total_credits,
                 'used' => $credit->used_credits,
                 'pending' => $credit->pending_credits,
                 'available' => $credit->available,
-            ],
+            ] : null,
         ];
     }
 

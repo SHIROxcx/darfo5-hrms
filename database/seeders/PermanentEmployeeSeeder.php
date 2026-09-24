@@ -72,7 +72,7 @@ class PermanentEmployeeSeeder extends Seeder
                     'employment_type' => 'permanent',
                     'position' => $position->title,
                     'salary_grade' => (string) $position->salary_grade,
-                    'place_assign' => 'DA RFO-5',
+                    'place_assign' => 'DEPARTMENT OF AGRICULTURE REGIONAL FIELD OFFICE 5',
                     'division' => $division->name,
                     'section' => $section?->name,
                     'date_hired' => $dateHired->format('Y-m-d'),

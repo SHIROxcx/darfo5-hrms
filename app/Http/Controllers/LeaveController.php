@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
-use App\Models\LeaveType;
 use App\Services\LeaveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +28,11 @@ class LeaveController extends Controller
             ->get()
             ->map(fn ($lr) => [
                 'id' => $lr->id,
-                'leave_type' => $lr->leaveType->name,
+                'form_type' => $lr->form_type,
+                // "Others" shows what the applicant actually typed.
+                'leave_type' => $lr->leaveType->code === 'OTH' && $lr->other_leave_type
+                    ? $lr->other_leave_type
+                    : $lr->leaveType->name,
                 'type_code' => $lr->leaveType->code,
                 'start_date' => $lr->start_date->toDateString(),
                 'end_date' => $lr->end_date->toDateString(),
@@ -40,24 +43,21 @@ class LeaveController extends Controller
                 'created_at' => $lr->created_at->toDateString(),
             ]);
 
-        // Load / seed credits for whichever active leave types this employee
-        // may actually file — Wellness Leave only for JO/COS/Pakyaw, every
-        // active type for Permanent. Keeps the dropdown, the credit bars and
-        // LeaveService's own validation all reading from the same rule.
-        $leaveTypesQuery = LeaveType::where('is_active', true);
-        if ($this->leaveService->restrictedToWellnessOnly($user)) {
-            $leaveTypesQuery->where('code', 'WL');
-        }
-        $leaveTypes = $leaveTypesQuery->orderBy('name')->get();
+        // Credit bars: Wellness Leave only for JO/COS/Pakyaw, VL/SL/WL for
+        // Permanent (LeaveService::creditLeaveTypes). The modal only files
+        // Wellness Leave (LeaveService::simpleFormLeaveTypes); every CSC leave
+        // type goes through the Application for Leave form.
+        $creditTypes = $this->leaveService->creditLeaveTypes($user);
+        $leaveTypes = $this->leaveService->simpleFormLeaveTypes($user);
 
-        foreach ($leaveTypes as $type) {
+        foreach ($creditTypes as $type) {
             $this->leaveService->ensureCredit($user->id, $type->id, $year);
         }
 
         $credits = LeaveCredit::with('leaveType')
             ->where('user_id', $user->id)
             ->where('year', $year)
-            ->whereIn('leave_type_id', $leaveTypes->pluck('id'))
+            ->whereIn('leave_type_id', $creditTypes->pluck('id'))
             ->get()
             ->map(fn ($c) => [
                 'leave_type' => $c->leaveType->name,
@@ -84,6 +84,7 @@ class LeaveController extends Controller
             ]),
             'stats' => $stats,
             'year' => $year,
+            'canFileCscForm' => $this->leaveService->canFileCscForm($user),
         ]);
     }
 

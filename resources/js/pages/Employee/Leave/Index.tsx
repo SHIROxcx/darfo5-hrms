@@ -1,19 +1,22 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import {
-    Calendar, Clock, CheckCircle2, XCircle, Plus, X, ChevronLeft,
-    ChevronRight, Edit2, Ban, FileText, AlertCircle,
-    ArrowBigRight,
-    ArrowRight,
-    Download,
+    Calendar, Clock, CheckCircle2, XCircle, Plus, X,
+    Edit2, Ban, FileText, AlertCircle,
+    Download, HeartPulse,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
+import { CalendarPicker, countWorkingDays, fmt } from '@/components/leave/calendar-picker';
+import { apply, pdf } from '@/routes/leave';
+import { edit as editApplication } from '@/routes/leave/apply';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface LeaveRequest {
     id: number;
+    /** 'csc6' = CSC Form 6 (Application for Leave); 'simple' = Wellness Leave modal. */
+    form_type: 'simple' | 'csc6';
     leave_type: string;
     type_code: string;
     start_date: string;
@@ -42,6 +45,8 @@ interface Props {
     leaveTypes: LeaveType[];
     stats: { pending: number; approved: number; denied: number; };
     year: number;
+    /** Permanent employees file CSC Form 6. The server enforces this too. */
+    canFileCscForm: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -49,17 +54,20 @@ interface Props {
 const TYPE_COLORS: Record<string, string> = {
     VL: 'bg-amber-400', 
     SL: 'bg-sky-400',
-    ML: 'bg-pink-400', 
+    ML: 'bg-pink-400',
+    PAT: 'bg-blue-400',
     PL: 'bg-indigo-400',
     WL: 'bg-purple-400',
+    SPL: 'bg-emerald-400',
     SOLO: 'bg-orange-400',
     STUDY: 'bg-teal-400',
     VAWC: 'bg-red-500',
     RL: 'bg-lime-400',
-    SWL: 'bg-fuchsia-400',
+    SLW: 'bg-fuchsia-400',
     CL: 'bg-cyan-400',
     AL: 'bg-rose-400',
-    FL: 'bg-yellow-400'
+    FL: 'bg-yellow-400',
+    OTH: 'bg-slate-400',
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -74,142 +82,6 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
     denied:    <XCircle className="h-3 w-3" />,
     cancelled: <Ban className="h-3 w-3" />,
 };
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function fmt(dateStr: string, opts: Intl.DateTimeFormatOptions): string {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-PH', opts);
-}
-
-function isWeekend(date: Date): boolean { return date.getDay() === 0 || date.getDay() === 6; }
-
-function addDays(d: Date, n: number): Date { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-
-function toDateString(d: Date): string {
-    const year  = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day   = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function countWorkingDays(start: string, end: string): number {
-    if (!start || !end || end < start) return 0;
-    let count = 0;
-    let cur = new Date(start + 'T00:00:00');
-    const fin = new Date(end + 'T00:00:00');
-    while (cur <= fin) { if (!isWeekend(cur)) count++; cur = addDays(cur, 1); }
-    return count;
-}
-
-// ─── Calendar Date Picker ─────────────────────────────────────────────────────
-
-interface CalendarPickerProps {
-    startDate: string;
-    endDate: string;
-    onSelect: (start: string, end: string) => void;
-}
-
-function CalendarPicker({ startDate, endDate, onSelect }: CalendarPickerProps) {
-    const today = toDateString(new Date());
-    const [viewDate, setViewDate] = useState(() => {
-        const d = startDate ? new Date(startDate + 'T00:00:00') : new Date();
-        return new Date(d.getFullYear(), d.getMonth(), 1);
-    });
-    const [picking, setPicking] = useState<'start' | 'end'>('start');
-
-    function prevMonth() { setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1)); }
-    function nextMonth() { setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1)); }
-
-    // Build calendar grid
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: (string | null)[] = Array(firstDay).fill(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-        cells.push(toDateString(new Date(year, month, d)));
-    }
-
-    function handleDayClick(date: string) {
-        if (date < today) return;
-        if (picking === 'start') {
-            onSelect(date, date >= endDate ? '' : endDate);
-            setPicking('end');
-        } else {
-            if (date < startDate) { onSelect(date, startDate); }
-            else { onSelect(startDate, date); }
-            setPicking('start');
-        }
-    }
-
-    function dayClass(date: string): string {
-        if (date < today) return 'text-gray-300 cursor-not-allowed';
-        const inRange = startDate && endDate && date >= startDate && date <= endDate;
-        const isStart = date === startDate;
-        const isEnd   = date === endDate;
-        const isWknd  = isWeekend(new Date(date + 'T00:00:00'));
-
-        if (isStart || isEnd) return 'bg-green-600 text-white rounded-lg font-bold';
-        if (inRange) return `${isWknd ? 'bg-gray-100' : 'bg-green-100'} text-green-800`;
-        if (isWknd)  return 'text-gray-300 cursor-not-allowed';
-        return 'text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg cursor-pointer';
-    }
-
-    const monthName = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    return (
-        <div className="select-none">
-            {/* Picking indicator */}
-            <div className="flex gap-2 mb-3">
-                <button onClick={() => setPicking('start')}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition cursor-pointer
-                        ${picking === 'start' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500'}`}>
-                    Start: {startDate ? fmt(startDate, { month: 'short', day: 'numeric' }) : 'Pick date'}
-                </button>
-                <button onClick={() => setPicking('end')}
-                    className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition cursor-pointer
-                        ${picking === 'end' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500'}`}>
-                    End: {endDate ? fmt(endDate, { month: 'short', day: 'numeric' }) : 'Pick date'}
-                </button>
-            </div>
-
-            {/* Month nav */}
-            <div className="flex items-center justify-between mb-2">
-                <button onClick={prevMonth} className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition">
-                    <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="text-sm font-semibold text-gray-700">{monthName}</span>
-                <button onClick={nextMonth} className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition">
-                    <ChevronRight className="h-4 w-4" />
-                </button>
-            </div>
-
-            {/* Day headers */}
-            <div className="grid grid-cols-7 mb-1">
-                {days.map(d => (
-                    <div key={d} className={`text-center text-[10px] font-semibold py-1 ${d === 'Sun' || d === 'Sat' ? 'text-gray-300' : 'text-gray-400'}`}>{d}</div>
-                ))}
-            </div>
-
-            {/* Day cells */}
-            <div className="grid grid-cols-7 gap-0.5">
-                {cells.map((date, i) => (
-                    <div key={i} className="aspect-square flex items-center justify-center">
-                        {date ? (
-                            <button
-                                onClick={() => handleDayClick(date)}
-                                disabled={date < today || isWeekend(new Date(date + 'T00:00:00'))}
-                                className={`w-full h-full text-xs flex items-center justify-center transition ${dayClass(date)}`}>
-                                {new Date(date + 'T00:00:00').getDate()}
-                            </button>
-                        ) : null}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 // ─── Leave Request Modal ───────────────────────────────────────────────────────
 
@@ -233,7 +105,11 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
     const editTypeId = editing
         ? leaveTypes.find(t => t.name === editing.leave_type)?.id ?? ''
         : '';
-    const [leaveTypeId, setLeaveTypeId] = useState<string>(editTypeId ? String(editTypeId) : '');
+    // The modal only files Wellness Leave (every CSC leave type goes through
+    // the Application for Leave form), so a single option is pre-selected.
+    const [leaveTypeId, setLeaveTypeId] = useState<string>(
+        editTypeId ? String(editTypeId) : leaveTypes.length === 1 ? String(leaveTypes[0].id) : ''
+    );
 
     const workingDays = countWorkingDays(startDate, endDate);
     const selectedType = leaveTypes.find(t => String(t.id) === leaveTypeId);
@@ -286,7 +162,7 @@ function LeaveModal({ leaveTypes, editing, onClose }: ModalProps) {
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 shrink-0">
                     <h3 className="font-semibold text-green-800 text-sm flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {isEdit ? 'Edit Leave Request' : 'Leave Application'}
+                        {isEdit ? 'Edit Wellness Leave Request' : 'Wellness Leave Application'}
                     </h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
                         <X className="h-5 w-5" />
@@ -411,7 +287,7 @@ function CreditBar({ credit }: { credit: LeaveCredit }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stats, year }: Props) {
+export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stats, year, canFileCscForm }: Props) {
     const [showModal, setShowModal] = useState(false);
     const [editing,   setEditing]   = useState<LeaveRequest | undefined>(undefined);
     const [filter,    setFilter]    = useState<string>('all');
@@ -432,12 +308,14 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
         function onLeaveReviewed(e: Event) {
             const { request, credit } = (e as CustomEvent<{
                 request: { id: number; status: LeaveRequest['status']; remarks: string | null; leave_type: string; type_code: string };
-                credit: LeaveCredit;
+                // null for leave types that don't track credits
+                credit: LeaveCredit | null;
             }>).detail;
 
             setLocalRequests(prev => prev.map(r =>
                 r.id === request.id ? { ...r, status: request.status, remarks: request.remarks } : r
             ));
+            if (!credit) return;
             setLocalCredits(prev => prev.some(c => c.type_code === credit.type_code)
                 ? prev.map(c => c.type_code === credit.type_code ? credit : c)
                 : [...prev, credit]);
@@ -450,8 +328,17 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
         ? localRequests
         : localRequests.filter(r => r.status === filter);
 
-    function openCreate() { setEditing(undefined); setShowModal(true); }
-    function openEdit(req: LeaveRequest) { setEditing(req); setShowModal(true); }
+    // Permanent employees apply on CSC Form 6 (a full page); everyone else
+    // (JO/COS/Pakyaw) files Wellness Leave in the modal.
+    function openCreate() {
+        if (canFileCscForm) { router.visit(apply().url); return; }
+        openWellness();
+    }
+    function openWellness() { setEditing(undefined); setShowModal(true); }
+    function openEdit(req: LeaveRequest) {
+        if (req.form_type === 'csc6') { router.visit(editApplication.url(req.id)); return; }
+        setEditing(req); setShowModal(true);
+    }
 
     function handleCancel(req: LeaveRequest) {
         Swal.fire({
@@ -495,6 +382,13 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                             <Plus className="h-4 w-4" />
                             Apply for Leave
                         </button>
+                        {canFileCscForm && (
+                            <button onClick={openWellness}
+                                className="flex items-center gap-2 rounded-xl border border-green-600 bg-white px-4 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-50 transition shadow-sm cursor-pointer">
+                                <HeartPulse className="h-4 w-4" />
+                                Wellness Leave
+                            </button>
+                        )}
                         <button
                             className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm cursor-pointer">
                             <Download className="h-4 w-4" />
@@ -578,6 +472,13 @@ export default function EmployeeLeaveIndex({ requests, credits, leaveTypes, stat
                                                     {req.reason && <p className="text-xs text-gray-400 mt-1 truncate">{req.reason}</p>}
                                                     {req.remarks && (
                                                         <p className="text-xs text-amber-600 mt-1 italic">HR: {req.remarks}</p>
+                                                    )}
+                                                    {req.form_type === 'csc6' && (
+                                                        <a href={pdf.url(req.id)} target="_blank" rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-green-700 hover:underline">
+                                                            <FileText className="h-3.5 w-3.5" />
+                                                            View Application for Leave (CSC Form 6)
+                                                        </a>
                                                     )}
                                                 </div>
 

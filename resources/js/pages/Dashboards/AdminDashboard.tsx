@@ -73,6 +73,14 @@ function fileIcon(name: string) {
     return <File className="h-4 w-4" />;
 }
 
+// Local (not UTC) YYYY-MM-DD for today + offsetDays — matches the <input type="date"> format.
+function localDateStr(offsetDays = 0): string {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().slice(0, 10);
+}
+
 // ─── Demographics Chart Card ───────────────────────────────────────────────
 
 function DemographicsCard({ male, female, age_18_30, age_31_60 }: {
@@ -406,7 +414,12 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
         if (!body.trim())               e.body        = 'Description is required.';
         if (body.length > MAX_BODY)     e.body        = `Max ${MAX_BODY} characters.`;
         if (!date)                      e.date        = 'Date is required.';
-        if (autoDelete && !deleteAfter) e.deleteAfter = 'Please specify the delete-after date.';
+        if (autoDelete && !deleteAfter) {
+            e.deleteAfter = 'Please specify the delete-after date.';
+        } else if (autoDelete && deleteAfter) {
+            if (deleteAfter <= localDateStr()) e.deleteAfter = 'The auto-delete date must be a future date — today or a past date is not allowed.';
+            else if (date && deleteAfter < date) e.deleteAfter = 'The auto-delete date must be on or after the announcement date.';
+        }
         return e;
     }
 
@@ -548,7 +561,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         </label>
                         {autoDelete && (
                             <div>
-                                <input type="date" value={deleteAfter} min={date || undefined}
+                                <input type="date" value={deleteAfter} min={date && date > localDateStr(1) ? date : localDateStr(1)}
                                     onChange={e => { setDeleteAfter(e.target.value); setErrors(p => ({ ...p, deleteAfter: '' })); }}
                                     className={inputCls} />
                                 {errors.deleteAfter && <p className="mt-1 text-xs text-red-500">{errors.deleteAfter}</p>}

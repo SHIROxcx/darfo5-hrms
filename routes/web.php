@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ServiceRecordImportController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
@@ -73,15 +74,25 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/employees/{user}/toggle-active', [EmployeeController::class, 'toggleActive'])->name('employees.toggle-active');
         Route::delete('/employees/{user}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
         Route::get('/employees/{user}/profile', [EmployeeController::class, 'show'])->name('employees.profile');
-        Route::get('/leave', [AdminLeaveController::class, 'index'])->name('leave.index');
-        Route::get('/leave/pending', [AdminLeaveController::class, 'pending'])->name('leave.pending');
-        Route::get('/leave/{leaveRequest}', [AdminLeaveController::class, 'show'])->name('leave.show');
-        Route::post('/leave/{leaveRequest}/approve', [AdminLeaveController::class, 'approve'])->name('leave.approve');
-        Route::post('/leave/{leaveRequest}/deny', [AdminLeaveController::class, 'deny'])->name('leave.deny');
-       
+
         // ARTA ID Routes
         Route::get('/arta-id/preview/{userToken}',  [ArtaIdController::class, 'preview'])->name('arta-id.preview');
         Route::get('/arta-id/download/{userToken}', [ArtaIdController::class, 'download'])->name('arta-id.download');
+    });
+
+// Leave management — HR admin and superadmin (both receive leave
+// submission notifications, so both must be able to open what they link to).
+Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/leave', [AdminLeaveController::class, 'index'])->name('leave.index');
+        Route::get('/leave/pending', [AdminLeaveController::class, 'pending'])->name('leave.pending');
+        Route::get('/leave/{leaveRequest}', [AdminLeaveController::class, 'show'])->name('leave.show');
+        Route::get('/leave/{leaveRequest}/review', [AdminLeaveController::class, 'review'])->name('leave.review');
+        Route::get('/leave/{leaveRequest}/pdf', [AdminLeaveController::class, 'pdf'])->name('leave.pdf');
+        Route::post('/leave/{leaveRequest}/approve', [AdminLeaveController::class, 'approve'])->name('leave.approve');
+        Route::post('/leave/{leaveRequest}/deny', [AdminLeaveController::class, 'deny'])->name('leave.deny');
     });
 
 // Reference Data management — HR admin and superadmin
@@ -212,6 +223,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // browser displays it directly. Reload the tab to see any change.
             return app(\App\Services\ServiceRecordPdfService::class)->buildHtml($user, preview: true);
         })->middleware(['auth'])->name('service-records.html-preview');
+
+        Route::get('/leave/html-preview/{leaveRequest}', function (\App\Models\LeaveRequest $leaveRequest) {
+            abort_unless(
+                $leaveRequest->user_id === Auth::id() || Auth::user()->hasAnyRole(['admin', 'superadmin']),
+                403
+            );
+
+            // The exact HTML the CSC Form 6 PDF renders. Reload the tab to see any change.
+            return app(\App\Services\LeaveApplicationPdfService::class)->buildHtml($leaveRequest, screen: true);
+        })->middleware(['auth'])->name('leave.html-preview');
     }
 
     // PDS Routes
@@ -247,7 +268,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/my-leave', [LeaveController::class, 'store'])->name('leave.store');
     Route::put('/my-leave/{leaveRequest}', [LeaveController::class, 'update'])->name('leave.update');
     Route::post('/my-leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('leave.cancel');
-    
+
+    // CSC Form 6 (Application for Leave) — Permanent employees only,
+    // enforced in LeaveApplicationController / StoreLeaveApplicationRequest.
+    Route::get('/my-leave/apply', [LeaveApplicationController::class, 'create'])->name('leave.apply');
+    Route::post('/my-leave/apply/preview', [LeaveApplicationController::class, 'preview'])->middleware('throttle:20,1')->name('leave.apply.preview');
+    Route::post('/my-leave/apply', [LeaveApplicationController::class, 'store'])->name('leave.apply.store');
+    Route::get('/my-leave/{leaveRequest}/edit', [LeaveApplicationController::class, 'edit'])->name('leave.apply.edit');
+    Route::put('/my-leave/{leaveRequest}/apply', [LeaveApplicationController::class, 'update'])->name('leave.apply.update');
+    Route::get('/my-leave/{leaveRequest}/pdf', [LeaveApplicationController::class, 'pdf'])->name('leave.pdf');
+
 });
 
 // Email Verification (OTP-based)

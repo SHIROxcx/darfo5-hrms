@@ -26,7 +26,7 @@ class LeaveRequestSubmittedNotification extends Notification
     {
         return [
             'message' => "{$this->leaveRequest->user->full_name} applied for {$this->leaveRequest->leaveType->name}.",
-            'url' => '/admin/leave?highlight='.$this->leaveRequest->id,
+            'url' => $this->leaveRequest->adminUrl(),
         ];
     }
 }

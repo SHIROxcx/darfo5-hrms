@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Services\HolidayService;
+use App\Services\LeaveApplicationPdfService;
 use App\Services\LeaveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class LeaveController extends Controller
@@ -120,8 +122,13 @@ class LeaveController extends Controller
                     'employee_number' => $lr->user->employeeProfile?->employee_number,
                     'job_title' => $lr->user->employeeProfile?->position,
                     'leave_type_id' => $lr->leave_type_id,
-                    'leave_type' => $lr->leaveType->name,
+                    'leave_type' => $lr->leaveType->code === 'OTH' && $lr->other_leave_type
+                        ? $lr->other_leave_type
+                        : $lr->leaveType->name,
                     'type_code' => $lr->leaveType->code,
+                    // CSC Form 6 applications are reviewed on their own page
+                    // (section 7 is filled there), never from the quick modal.
+                    'form_type' => $lr->form_type,
                     'submit_date' => $lr->created_at->toDateString(),
                     'start_date' => $lr->start_date->toDateString(),
                     'end_date' => $lr->end_date->toDateString(),
@@ -165,27 +172,148 @@ class LeaveController extends Controller
     }
 
     /**
-     * Approve a leave request.
+     * Review page for a CSC Form 6 application: the live form PDF beside
+     * the section 7 panel, with 7.A pre-filled from the current VL/SL balances.
      */
-    public function approve(Request $request, LeaveRequest $leaveRequest)
+    public function review(LeaveRequest $leaveRequest)
+    {
+        abort_unless($leaveRequest->isCscForm(), 404);
+        $leaveRequest->load(['user.employeeProfile', 'leaveType', 'reviewer']);
+
+        $snapshot = $leaveRequest->applicant_snapshot ?? [];
+
+        return Inertia::render('Admin/Leave/Review', [
+            'application' => [
+                'id' => $leaveRequest->id,
+                'status' => $leaveRequest->status,
+                'employee' => $leaveRequest->user->full_name,
+                'photo' => $leaveRequest->user->photo,
+                'position' => $snapshot['position'] ?? null,
+                'office' => $snapshot['office'] ?? null,
+                'leave_type' => $leaveRequest->leaveType->name,
+                'type_code' => $leaveRequest->leaveType->code,
+                'other_leave_type' => $leaveRequest->other_leave_type,
+                'tracks_credits' => $leaveRequest->leaveType->tracks_credits || $leaveRequest->leaveType->charge_to_leave_type_id,
+                'start_date' => $leaveRequest->start_date->toDateString(),
+                'end_date' => $leaveRequest->end_date->toDateString(),
+                'days' => $leaveRequest->days_requested,
+                'date_of_filing' => $snapshot['date_of_filing'] ?? $leaveRequest->created_at->toDateString(),
+                'remarks' => $leaveRequest->remarks,
+                'reviewed_by' => $leaveRequest->reviewer?->full_name,
+                'reviewed_at' => $leaveRequest->reviewed_at?->toDateTimeString(),
+                'pdf_url' => route('admin.leave.pdf', $leaveRequest),
+            ],
+            // Pending: 7.A pre-filled from live balances. Decided: what was saved.
+            'section7' => $leaveRequest->isPending()
+                ? $this->leaveService->certificationFor($leaveRequest) + [
+                    'approved_days_with_pay' => $leaveRequest->days_requested,
+                    'approved_days_without_pay' => 0,
+                ]
+                : collect(LeaveService::SECTION_7_FIELDS)->mapWithKeys(fn ($f) => [
+                    $f => $f === 'credits_as_of' ? $leaveRequest->credits_as_of?->toDateString() : $leaveRequest->{$f},
+                ])->all(),
+        ]);
+    }
+
+    /** The form PDF, inline, or as an attachment with ?download=1. */
+    public function pdf(Request $request, LeaveRequest $leaveRequest, LeaveApplicationPdfService $pdf)
+    {
+        abort_unless($leaveRequest->isCscForm(), 404);
+
+        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
+        return response($pdf->pdfFor($leaveRequest), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => $disposition.'; filename="'.$pdf->filenameFor($leaveRequest).'"',
+        ]);
+    }
+
+    /**
+     * Approve a leave request. A CSC Form 6 application also requires
+     * section 7 (7.A certification, 7.B recommendation, 7.C approved for),
+     * so it can only be approved from its review page, not in bulk.
+     */
+    public function approve(Request $request, LeaveRequest $leaveRequest, LeaveApplicationPdfService $pdf)
     {
         $request->validate(['remarks' => 'nullable|string|max:500']);
+        $section7 = $leaveRequest->isCscForm()
+            ? $request->validate($this->section7Rules($leaveRequest, approving: true))
+            : [];
 
-        $this->leaveService->approveRequest($leaveRequest, Auth::user(), $request->remarks);
+        if ($section7 && $section7['approved_days_with_pay'] + $section7['approved_days_without_pay'] > $leaveRequest->days_requested) {
+            return back()->withErrors([
+                'approved_days_with_pay' => "Days with and without pay can't exceed the {$leaveRequest->days_requested} days applied for.",
+            ]);
+        }
+
+        try {
+            $this->leaveService->approveRequest($leaveRequest, Auth::user(), $request->remarks, $section7);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['action' => $e->getMessage()]);
+        }
+
+        $this->archiveFinalForm($leaveRequest, $pdf);
 
         return back()->with('success', 'Leave request approved.');
     }
 
     /**
-     * Deny a leave request.
+     * Deny a leave request. A CSC Form 6 application also requires 7.A,
+     * 7.B and the 7.D reason.
      */
-    public function deny(Request $request, LeaveRequest $leaveRequest)
+    public function deny(Request $request, LeaveRequest $leaveRequest, LeaveApplicationPdfService $pdf)
     {
         $request->validate(['remarks' => 'nullable|string|max:500']);
+        $section7 = $leaveRequest->isCscForm()
+            ? $request->validate($this->section7Rules($leaveRequest, approving: false))
+            : [];
 
-        $this->leaveService->denyRequest($leaveRequest, Auth::user(), $request->remarks);
+        try {
+            $this->leaveService->denyRequest($leaveRequest, Auth::user(), $request->remarks, $section7);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['action' => $e->getMessage()]);
+        }
+
+        $this->archiveFinalForm($leaveRequest, $pdf);
 
         return back()->with('success', 'Leave request denied.');
+    }
+
+    private function section7Rules(LeaveRequest $leaveRequest, bool $approving): array
+    {
+        $credit = ['required', 'numeric', 'min:0', 'max:9999'];
+
+        return [
+            'credits_as_of' => ['required', 'date'],
+            'vl_total_earned' => $credit, 'vl_less_this' => $credit, 'vl_balance' => ['required', 'numeric', 'max:9999'],
+            'sl_total_earned' => $credit, 'sl_less_this' => $credit, 'sl_balance' => ['required', 'numeric', 'max:9999'],
+            'recommendation' => ['required', Rule::in(['for_approval', 'for_disapproval'])],
+            'recommendation_reason' => ['nullable', 'required_if:recommendation,for_disapproval', 'string', 'max:1000'],
+        ] + ($approving ? [
+            'approved_days_with_pay' => ['required', 'numeric', 'min:0', 'max:'.$leaveRequest->days_requested],
+            'approved_days_without_pay' => ['required', 'numeric', 'min:0', 'max:'.$leaveRequest->days_requested],
+            'approved_others' => ['nullable', 'string', 'max:255'],
+        ] : [
+            'disapproval_reason' => ['required', 'string', 'max:1000'],
+        ]);
+    }
+
+    /**
+     * Save the decided form as the official record. A rendering failure
+     * (for example Chrome unavailable) doesn't undo the decision: the PDF
+     * routes then render it live until it is archived.
+     */
+    private function archiveFinalForm(LeaveRequest $leaveRequest, LeaveApplicationPdfService $pdf): void
+    {
+        if (! $leaveRequest->isCscForm()) {
+            return;
+        }
+
+        try {
+            $pdf->storeFinal($leaveRequest->fresh());
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

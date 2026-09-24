@@ -50,6 +50,22 @@ Two PDF paths coexist: `spatie/browsershot` (headless Chrome via `app/Support/Pd
 ### Real-time / broadcasting
 `laravel/reverb` (self-hosted WebSocket server) + `laravel-echo`/`pusher-js` on the frontend, configured via `app/Providers/BroadcastServiceProvider.php` and `routes/channels.php`. Notifications (`app/Notifications`) rely on this for live delivery; `php artisan reverb:start` must be running locally (handled by `composer dev`).
 
+### Leave
+Two filing paths share `leave_requests` and are told apart by `form_type`:
+- **`simple`**: the Wellness Leave modal on `/my-leave`. It files WL only (`LeaveService::simpleFormLeaveTypes`) and is open to every employment type. JO/COS/Pakyaw can only use this path (CSC MC 41 s.1998).
+- **`csc6`**: CSC Form 6 (Application for Leave), **Permanent only**. The server enforces this in `StoreLeaveApplicationRequest::authorize()` and `LeaveApplicationController`. Employees use the two-step page `/my-leave/apply` (Fill, then Review). Review shows the real PDF of the unsaved input (`POST /my-leave/apply/preview`) with a DRAFT watermark. `leave_types.csc_form_order` sets the order of the 6.A checkboxes (NULL = not on the form).
+
+**CSC Form 6 PDF:**
+- `LeaveApplicationPdfService` renders `resources/views/leave/csc-form-6.blade.php` for the preview, the filed form, the admin review and the archive.
+- On approve/deny, the final PDF is saved to `storage/app/private/leave-forms/{id}.pdf` (`final_pdf_path`), and later requests serve that archived copy.
+- Items 1–5 are frozen at filing in `applicant_snapshot`. Salary comes from the latest service record, falling back to the salary grade.
+- For fast layout iteration in local env, `/leave/html-preview/{id}` renders the same Blade view as HTML.
+- Signatory names and the form timezone come from `config/leave.php` (`LEAVE_*` env keys).
+
+**Admin review:** `/admin/leave/{id}/review` (`role:admin|superadmin`, like all admin leave routes) is where one admin fills section 7 (7.A–7.D) and approves or denies in one step. 7.A is pre-filled by `LeaveService::certificationFor()`. A `csc6` request can't be approved without section 7, so it is excluded from the dashboard's bulk actions. On approval only 7.C "days with pay" is deducted (`LeaveService::chargedDays`).
+
+**Placeholder:** only VL, SL and WL track credits (`leave_types.tracks_credits = true`). Forced Leave (FL) has no balance of its own: `charge_to_leave_type_id` points it at VL, per CSC rules, so it reserves and deducts VL credits. `LeaveService::creditFor()` handles all of this. Every other CSC Form 6 type (ML, PAT, SPL, SOLO, STUDY, VAWC, RL, SLW, CL, AL, OTH) has `tracks_credits = false`: it can be filed, but no balance is created, checked or deducted. The accrual, cap and reset rules for these types are **pending HR policy input**, so this is not a finished credit model. The retired `PL` ("Privilege Leave") row stays inactive only so that historical references still resolve.
+
 ### Reference/lookup data
 `Division`/`Section` (hierarchical, with a `move` endpoint for reordering), `Position`, `Eligibility`, `GraduateProgram`, `BachelorsDegree` are admin-managed CRUD reference tables under `admin/reference-data/*`, each with a dedicated controller in `app/Http/Controllers/Admin/ReferenceData/` and page in `resources/js/pages/Admin/ReferenceData/`. Philippine location data (`PhProvince`/`PhCity`/`PhBarangay`) is seeded once and served read-only via `LocationController`.
 

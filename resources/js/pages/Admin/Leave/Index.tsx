@@ -1,11 +1,12 @@
 import { Head, router } from '@inertiajs/react';
 import {
     Search, ChevronLeft, ChevronRight, Check, X, Clock,
-    CheckCircle2, XCircle, Ban, CalendarDays,
+    CheckCircle2, XCircle, Ban, CalendarDays, FileText,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 import AppLayout from '@/layouts/app-layout';
+import { review } from '@/routes/admin/leave';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,8 @@ interface ActivityRow {
     leave_type_id: number;
     leave_type: string;
     type_code: string;
+    /** 'csc6' rows are reviewed on their own page (section 7), never in the modal or in bulk. */
+    form_type: 'simple' | 'csc6';
     submit_date: string;
     start_date: string;
     end_date: string;
@@ -73,6 +76,9 @@ const TYPE_COLORS: Record<string, { bar: string; label: string; dot: string }> =
     VL:    { bar: 'bg-green-500',   label: 'text-green-700',   dot: 'bg-green-500' },
     SL:    { bar: 'bg-sky-400',     label: 'text-sky-700',     dot: 'bg-sky-400' },
     ML:    { bar: 'bg-pink-400',    label: 'text-pink-700',    dot: 'bg-pink-400' },
+    PAT:   { bar: 'bg-blue-400',    label: 'text-blue-700',    dot: 'bg-blue-400' },
+    SPL:   { bar: 'bg-emerald-400', label: 'text-emerald-700', dot: 'bg-emerald-400' },
+    OTH:   { bar: 'bg-slate-400',   label: 'text-slate-700',   dot: 'bg-slate-400' },
     PL:    { bar: 'bg-amber-400',   label: 'text-amber-700',   dot: 'bg-amber-400' },
     WL:    { bar: 'bg-purple-400',  label: 'text-purple-700',  dot: 'bg-purple-400' },
     SOLO:  { bar: 'bg-orange-400',  label: 'text-orange-700',  dot: 'bg-orange-400' },
@@ -524,6 +530,13 @@ export default function AdminLeaveIndex({
     const [bulkBusy, setBulkBusy] = useState(false);
     const [isNavigatingMonth, setIsNavigatingMonth] = useState(false);
 
+    // CSC Form 6 applications open their review page (section 7 has to be
+    // filled there); Wellness Leave requests open the quick-review modal.
+    function openRow(row: ActivityRow) {
+        if (row.form_type === 'csc6') router.visit(review.url(row.id));
+        else setViewing(row);
+    }
+
     // Kept in local state (rather than read straight from the `calendar` prop)
     // so a `notif:leave-calendar-updated` broadcast — fired for every admin tab
     // whenever anyone approves or cancels an approved leave — can patch it live,
@@ -645,7 +658,7 @@ export default function AdminLeaveIndex({
         const id = Number(new URLSearchParams(window.location.search).get('highlight'));
         if (!id) return;
         const row = localActivity.find(r => r.id === id);
-        if (row) setViewing(row);
+        if (row) openRow(row);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -698,7 +711,9 @@ export default function AdminLeaveIndex({
         router.post(`/admin/leave/${id}/deny`, { remarks }, { preserveScroll: true, onSuccess: () => setViewing(null) });
     }
 
-    const pendingIdsVisible = sortedActivity.filter(r => r.status === 'pending').map(r => r.id);
+    // Bulk approve/deny only covers Wellness Leave: a CSC Form 6 application
+    // needs its section 7 filled on the review page (the server rejects it too).
+    const pendingIdsVisible = sortedActivity.filter(r => r.status === 'pending' && r.form_type !== 'csc6').map(r => r.id);
     const allPendingSelected = pendingIdsVisible.length > 0 && pendingIdsVisible.every(id => selected.includes(id));
 
     function toggleSelectAll() {
@@ -837,10 +852,11 @@ export default function AdminLeaveIndex({
                                         <tr key={row.id} className={`border-t border-gray-50 hover:bg-gray-50/60 transition-colors ${selected.includes(row.id) ? 'bg-green-50/40' : ''}`}>
                                             <td className="pl-5 pr-2 py-2.5">
                                                 <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggleRow(row.id)}
-                                                    disabled={!isPending}
+                                                    disabled={!isPending || row.form_type === 'csc6'}
+                                                    title={row.form_type === 'csc6' ? 'Review this Application for Leave on its own page' : undefined}
                                                     className="h-3.5 w-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer disabled:opacity-20" />
                                             </td>
-                                            <td className="px-3 py-2.5 cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 cursor-pointer" onClick={() => openRow(row)}>
                                                 <div className="flex items-center gap-2.5">
                                                     <Avatar name={row.employee} photo={row.photo} className="h-8 w-8 text-[10px]" />
                                                     <div className="min-w-0">
@@ -849,38 +865,47 @@ export default function AdminLeaveIndex({
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => openRow(row)}>
                                                 {row.job_title ?? '—'}
                                             </td>
-                                            <td className="px-3 py-2.5 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 whitespace-nowrap cursor-pointer" onClick={() => openRow(row)}>
                                                 <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${color.label}`}>
                                                     <span className={`h-2 w-2 rounded-full ${color.dot}`} />
                                                     {row.leave_type}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => openRow(row)}>
                                                 {fmtDate(row.submit_date)}
                                             </td>
-                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => openRow(row)}>
                                                 {fmtPeriod(row.start_date, row.end_date)}
                                             </td>
-                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap cursor-pointer" onClick={() => openRow(row)}>
                                                 {row.days} Day{row.days === 1 ? '' : 's'}
                                             </td>
-                                            <td className="px-3 py-2.5 text-gray-500 max-w-40 truncate cursor-pointer" onClick={() => setViewing(row)}>
+                                            <td className="px-3 py-2.5 text-gray-500 max-w-40 truncate cursor-pointer" onClick={() => openRow(row)}>
                                                 {row.reason ?? '—'}
                                             </td>
                                             <td className="px-5 py-2.5">
-                                                {isPending ? (
+                                                {isPending && row.form_type === 'csc6' ? (
+                                                    <div className="flex justify-end">
+                                                        <button
+                                                            onClick={() => openRow(row)}
+                                                            title="Review the Application for Leave and fill section 7"
+                                                            className="flex cursor-pointer items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-600 hover:text-white transition">
+                                                            <FileText className="h-3 w-3" /> Review form
+                                                        </button>
+                                                    </div>
+                                                ) : isPending ? (
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <button
-                                                            onClick={() => setViewing(row)}
+                                                            onClick={() => openRow(row)}
                                                             title="Review to deny"
                                                             className="h-6 w-6 cursor-pointer rounded-full border border-red-200 bg-white text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition">
                                                             <X className="h-3.5 w-3.5" />
                                                         </button>
                                                         <button
-                                                            onClick={() => setViewing(row)}
+                                                            onClick={() => openRow(row)}
                                                             title="Review to approve"
                                                             className="flex cursor-pointer items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-600 hover:text-white transition">
                                                             <Check className="h-3 w-3" /> Approve
