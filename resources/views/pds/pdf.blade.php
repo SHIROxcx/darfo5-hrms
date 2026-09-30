@@ -223,7 +223,7 @@
                     <p class="pds_header text-center text-[22pt] font-black tracking-wide my-2">PERSONAL DATA SHEET</p>
                     <p class="text-[8pt] italic font-semibold mb-2"><span class="uppercase">WARNING:</span> Any misrepresentation made in the Personal Data Sheet and the Work Experience Sheet shall cause the filing of administrative/criminal case/s against the person concerned.</p>
                     <p class="text-[8pt] font-semibold italic">READ THE ATTACHED GUIDE TO FILLING OUT THE PERSONAL DATA SHEET (PDS) BEFORE ACCOMPLISHING THE PDS FORM.</p>
-                    <p class="text-[8pt] font-light tracking-tight">Print legibly if accomplished through own handwriting. Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="font-semibold text-[8pt]">DO NOT ABBREVIATE.</span></p>
+                    <p class="text-[8pt] font-light tracking-tight">Tick appropriate boxes ({!! cb(false) !!}) and use separate sheet if necessary. Indicate N/A if not applicable. <span class="text-[8pt]">DO NOT ABBREVIATE.</span></p>
                 </td>
             </tr>
         
@@ -303,12 +303,12 @@
             </td>
             {{-- Residential Address Starts Here --}}
             <td colspan="3" rowspan="3" class="{{ $lbl }} align-top pt-0">17. RESIDENTIAL ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
-            <td colspan="9" rowspan="3" class="align-top py-1 px-0 text-[7pt]">
+            <td colspan="9" rowspan="3" class="align-top px-0 text-[7pt]">
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->res_house_no, $pi?->res_street], ['Subdivision/Village', 'Barangay', $pi?->res_subdivision, $pi?->res_barangay], ['City/Municipality', 'Province', $pi?->res_city, $pi?->res_province]] as [$l1, $l2, $v1, $v2])
                     <div class="flex border-b border-black italic">
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 ?? 'N/A' }}</div>
-                            <div class="italic text-[7pt] text-center border-t border-black/50">{{ $l1 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold border-r border-black">{{ $v1 ?? 'N/A' }}</div>
+                            <div class="italic text-[7pt] text-center border-t border-black/50 border-r border-r-black">{{ $l1 }}</div>
                         </div>
                         <div class="w-1/2">
                             <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 ?? 'N/A' }}</div>
@@ -334,12 +334,12 @@
             <td colspan="4" class="{{ $val }}">{{ $pi?->blood_type ?? 'N/A' }}</td>
             {{-- Permanent Address Starts Here --}}
             <td colspan="3" rowspan="4" class="{{ $lbl }} align-top pt-0">18. PERMANENT ADDRESS<br><br><br><br><p class="text-center pt-10">ZIP CODE</p></td>
-            <td colspan="9" rowspan="4" class="align-top py-1 px-0 text-[7pt]">
+            <td colspan="9" rowspan="4" class="align-top px-0 text-[7pt]">
                 @foreach([['House/Block/Lot No.', 'Street', $pi?->perm_house_no, $pi?->perm_street], ['Subdivision/Village', 'Barangay', $pi?->perm_subdivision, $pi?->perm_barangay], ['City/Municipality', 'Province', $pi?->perm_city, $pi?->perm_province]] as [$l1, $l2, $v1, $v2])
                     <div class="flex border-b border-black italic">
                         <div class="w-1/2">
-                            <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v1 ?? 'N/A' }}</div>
-                            <div class="italic text-[7pt] text-center border-t border-black/40">{{ $l1 }}</div>
+                            <div class="text-center h-3 uppercase align-middle font-semibold border-r border-r-black">{{ $v1 ?? 'N/A' }}</div>
+                            <div class="italic text-[7pt] text-center border-t border-black/40 border-r border-r-black">{{ $l1 }}</div>
                         </div>
                         <div class="w-1/2">
                             <div class="text-center h-3 uppercase align-middle font-semibold">{{ $v2 ?? 'N/A' }}</div>
@@ -422,6 +422,11 @@
             <td colspan="4" class="{{ $val }} text-center">{{ chDob($children, $chI) }}</td>
         </tr>
         @endforeach
+        <tr style="height:16pt;">
+            <td colspan="10" class="{{ $note }} border-none align-middle normal-case">(Continue on sheet C7 if necessary)</td>
+            <td colspan="5" class="{{ $val }}  px-1">{{ chName($children, $chI) }}</td>
+            <td colspan="4" class="{{ $val }} text-center">{{ chDob($children, $chI) }}</td>
+        </tr>
 
         {{-- Father --}}
         <tr style="height:16pt;" class="uppercase">
@@ -466,7 +471,7 @@
             @else
             {{-- Mother middle name: last child col replaced by continue note --}}
             <td colspan="7" class="{{ $val }} px-1">{{ strtoupper($fam?->$mField ?? 'N/A') }}</td>
-            <td colspan="9" class="{{ $note }} border-none align-middle normal-case">(Continue on separate sheet if necessary)</td>
+            <td colspan="9" class="{{ $note }} border-none align-middle normal-case">(Continue on sheet C7 if necessary)</td>
             @endif
         </tr>
         @endforeach
@@ -498,7 +503,7 @@
             <td colspan=2"" class="{{ $val }} text-center">{{ eduF($eduList, $eKey, 'honors_received') }}</td>
         </tr>
         @endforeach
-        <tr><td colspan="19" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="19" class="{{ $note }}">(Continue on sheet C8 if necessary)</td></tr>
 
         {{-- Page 1 Signature --}}
         <tr style="height:18pt;">
@@ -562,7 +567,7 @@
             <td colspan="2" class="{{ $val }}">{{ pDate($el?->license_validity) }}</td>
         </tr>
         @endfor
-        <tr><td colspan="24" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="24" class="{{ $note }}">(Continue on sheet C9 if necessary)</td></tr>
 
         {{-- Work Experience --}}
         <tr>
@@ -580,7 +585,7 @@
             <td colspan="6" rowspan="3" class="{{ $lbl }} align-middle text-center">POSITION TITLE<br><span class="normal-case">(Write in full/Do not abbreviate)</span></td>
             <td colspan="6" rowspan="3" class="{{ $lbl }} align-middle text-center">DEPARTMENT / AGENCY / OFFICE / COMPANY <br><span class="normal-case">(Write in full/Do not abbreviate)</span> </td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">MONTHLY SALARY</td>
-            <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">SALARY/ JOB/ PAY <br> GRADE(if applicable) & <br> STEP INCREMENT <br> (Format "00-0")</td>
+            <td colspan="2" rowspan="3" class="{{ $lbl }} text-[5pt] align-middle text-center">SALARY/ JOB/ PAY <br> GRADE(if applicable) & <br> STEP INCREMENT <br> (Format "00-0")</td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">STATUS OF APPOINTMENT</td>
             <td colspan="2" rowspan="3" class="{{ $lbl }} align-middle text-center">GOV'T SERVICE <br>(Y/N)</td>
         </tr>
@@ -603,7 +608,7 @@
             <td colspan="2" class="{{ $val }}">{{ $we ? ($we->is_government_service ? 'Y' : 'N') : 'N/A' }}</td>
         </tr>
         @endfor
-        <tr><td colspan="24" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+        <tr><td colspan="24" class="{{ $note }}">(Continue on sheet C6 if necessary)</td></tr>
 
         {{-- Page 2 Signature --}}
         <tr style="height:20pt;" class="text-center">
@@ -638,7 +643,38 @@
 <div class="page">
     <table class="border-2 border-black">
 
-    <tr><td colspan="20" class="{{ $sectionHeader }}">VI. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
+
+    <tr><td colspan="20" class="{{ $sectionHeader }}">VI. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
+    <tr style="height:18pt;" class="text-center">
+        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle">
+            <div class="flex justify-center">
+                <p>30.</p> 
+                <p class="grow">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br>TRAINING PROGRAMS <span class="normal-case block">(Write in full)</span></p>
+            </div>
+        <td colspan="4" class="{{ $lbl }}">INCLUSIVE DATES OF <br>ATTENDANCE<br><span class="normal-case">(dd/mm/yyyy)</span></td>
+        <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle">NUMBER OF<br> HOURS</td>
+        <td colspan="2" rowspan="2" class="{{ $lbl }}align-middle">Type of L&amp;D<br><span class="normal-case">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
+        <td colspan="5" rowspan="2" class="{{ $lbl }} align-middle">CONDUCTED/ SPONSORED BY<br><span class="normal-case">(Write in full)</span></td>
+    </tr>
+    <tr style="height:13pt;" class="{{ $lbl }} text-center normal-case">
+        <td colspan="2">From</td>
+        <td colspan="2">To</td>
+    </tr>
+    @php $trainings=$pds['trainings']??[]; @endphp
+    @for($i=0;$i<21;$i++)
+    @php $tr=$trainings[$i]??null; @endphp
+    <tr style="height:19pt;" class="{{ $val }} uppercase text-center">
+        <td colspan="7" class="px-1 align-middle">{{ $tr?->title?? 'N/A' }}</td>
+        <td colspan="2" class="align-middle">  {{ pDate($tr?->date_from) }}</td>
+        <td colspan="2" class="align-middle">  {{ pDate($tr?->date_to) }}</td>
+        <td colspan="2" class="align-middle">  {{ $tr?->number_of_hours ?? 'N/A' }}</td>
+        <td colspan="2" class="align-middle">  {{ $tr?->type_of_ld ?? 'N/A' }}</td>
+        <td colspan="5" class="px-1 align-middle">{{ $tr?->conducted_by ?? 'N/A' }}</td>
+    </tr>
+    @endfor
+    <tr><td colspan="20" class="{{ $note }}">(Continue on sheet C5 if necessary)</td></tr>
+
+     <tr><td colspan="20" class="{{ $sectionHeader }}">VII. VOLUNTARY WORK OR INVOLVEMENT IN CIVIC / NON-GOVERNMENT / PEOPLE / VOLUNTARY ORGANIZATIONS</td></tr>
     <tr style="height:18pt;" class="text-center">
         <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle">
             <div class="flex justify-center">
@@ -672,37 +708,7 @@
         <td colspan="7" class="{{ $val }}">{{ $vw?->position?? 'N/A' }}</td>
     </tr>
     @endfor
-    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
-
-    <tr><td colspan="20" class="{{ $sectionHeader }}">VII. LEARNING AND DEVELOPMENT (L&amp;D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED</td></tr>
-    <tr style="height:18pt;" class="text-center">
-        <td colspan="7" rowspan="2" class="{{ $lbl }} align-middle">
-            <div class="flex justify-center">
-                <p>30.</p> 
-                <p class="grow">TITLE OF LEARNING AND DEVELOPMENT INTERVENTIONS/<br>TRAINING PROGRAMS <span class="normal-case block">(Write in full)</span></p>
-            </div>
-        <td colspan="4" class="{{ $lbl }}">INCLUSIVE DATES OF <br>ATTENDANCE<br><span class="normal-case">(dd/mm/yyyy)</span></td>
-        <td colspan="2" rowspan="2" class="{{ $lbl }} align-middle">NUMBER OF<br> HOURS</td>
-        <td colspan="2" rowspan="2" class="{{ $lbl }}align-middle">Type of L&amp;D<br><span class="normal-case">(Managerial/<br>Supervisory/<br>Technical/etc)</span></td>
-        <td colspan="5" rowspan="2" class="{{ $lbl }} align-middle">CONDUCTED/ SPONSORED BY<br><span class="normal-case">(Write in full)</span></td>
-    </tr>
-    <tr style="height:13pt;" class="{{ $lbl }} text-center normal-case">
-        <td colspan="2">From</td>
-        <td colspan="2">To</td>
-    </tr>
-    @php $trainings=$pds['trainings']??[]; @endphp
-    @for($i=0;$i<21;$i++)
-    @php $tr=$trainings[$i]??null; @endphp
-    <tr style="height:19pt;" class="{{ $val }} uppercase text-center">
-        <td colspan="7" class="px-1 align-middle">{{ $tr?->title?? 'N/A' }}</td>
-        <td colspan="2" class="align-middle">  {{ pDate($tr?->date_from) }}</td>
-        <td colspan="2" class="align-middle">  {{ pDate($tr?->date_to) }}</td>
-        <td colspan="2" class="align-middle">  {{ $tr?->number_of_hours ?? 'N/A' }}</td>
-        <td colspan="2" class="align-middle">  {{ $tr?->type_of_ld ?? 'N/A' }}</td>
-        <td colspan="5" class="px-1 align-middle">{{ $tr?->conducted_by ?? 'N/A' }}</td>
-    </tr>
-    @endfor
-    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="20" class="{{ $note }}">(Continue on sheet C10 if necessary)</td></tr>
 
     <tr><td colspan="20" class="{{ $sectionHeader }}">VIII. OTHER INFORMATION</td></tr>
     <tr style="height:33pt;" class="text-center">
@@ -738,7 +744,7 @@
         <td colspan="5" class="{{ $val }} px-1">{{ $memberships[$i]?? 'N/A' }}</td>
     </tr>
     @endfor
-    <tr><td colspan="20" class="{{ $note }}">(Continue on separate sheet if necessary)</td></tr>
+    <tr><td colspan="20" class="{{ $note }}">(Continue on sheet C11 if necessary)</td></tr>
 
     {{-- Page 3 Signature --}}
         <tr style="height:22pt;">
