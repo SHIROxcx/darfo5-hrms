@@ -19,6 +19,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
+use App\Http\Controllers\CaptchaController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\MemoController;
 use App\Http\Controllers\MemoFileController;
@@ -40,6 +41,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+
+// Public on purpose: the security-code picture is needed on the login and sign-up pages, before anyone is logged in.
+// Every request issues a new answer, so it is limited to 30 a minute per address (which also limits guessing).
+Route::get('/captcha', CaptchaController::class)->middleware('throttle:30,1')->name('captcha');
 
 Route::get('/', function () {
     return Inertia::render('welcome', [

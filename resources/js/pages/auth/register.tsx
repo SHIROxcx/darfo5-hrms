@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, Check, ChevronRight, ChevronLeft, TriangleAlert } from 'lucide-react';
 import type { FormEventHandler} from 'react';
 import { useState, useEffect, useRef } from 'react';
+import CaptchaField from '@/components/captcha-field';
 import LimitedInput from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
 import { EMPLOYMENT_TYPE_OPTIONS, employmentTypeLabel } from '@/lib/employment-type';
@@ -25,6 +26,7 @@ interface FormData {
     mobile_number: string;
     password: string;
     password_confirmation: string;
+    captcha: string;
 }
 
 // Step Indicator
@@ -169,7 +171,7 @@ interface DivisionData {
 }
 
 //  Main Register Page
-export default function Register() {
+export default function Register({ captchaEnabled }: { captchaEnabled: boolean }) {
     const [step, setStep] = useState(1);
     const [passwordMismatch, setPasswordMismatch] = useState('');
     const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -199,18 +201,19 @@ export default function Register() {
     const [posStyle,  setPosStyle]  = useState<React.CSSProperties>({});
     const posRef = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, errors, reset } = useForm<FormData>({
+    const { data, setData, post, processing, errors, reset, setError } = useForm<FormData>({
         first_name: '', middle_name: '', last_name: '', name_ext: '',
         agency: 'Department of Agriculture Regional Field Office 5',
         division: '', section_unit: '', position: '', salary_grade: 0,
         employment_type: '', employee_number: '', email: '', mobile_number: '',
-        password: '', password_confirmation: '',
+        password: '', password_confirmation: '', captcha: '',
     });
 
-    // Jump back to step 2 on server errors
+    // Jump back to step 2 on server errors, unless the only one is the security code: that box is on step 3, so stay there.
     useEffect(() => {
-        if (Object.keys(errors).length > 0) {
-            setStep(2);
+        const messages = Object.keys(errors);
+        if (messages.length > 0) {
+            setStep(messages.length === 1 && messages[0] === 'captcha' ? 3 : 2);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }, [errors]);
@@ -341,7 +344,19 @@ export default function Register() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post('/register', { onFinish: () => reset('password', 'password_confirmation') });
+        if (captchaEnabled && !data.captcha.trim()) {
+            setError('captcha', 'Type the security code shown in the picture.');
+            return;
+        }
+        post('/register', {
+            // The password boxes are cleared after a refused try, and the person retypes them on step 2. When the only problem was
+            // the security code they stay on step 3, where the password cannot be seen, so it is kept for the next try.
+            onError: errs => {
+                const onlyTheCode = Object.keys(errs).length === 1 && 'captcha' in errs;
+                if (!onlyTheCode) reset('password', 'password_confirmation');
+            },
+            onSuccess: () => reset('password', 'password_confirmation'),
+        });
     };
 
     const fullName = [data.first_name, data.middle_name, data.last_name, data.name_ext]
@@ -693,6 +708,16 @@ export default function Register() {
                             <div className="mt-6 bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-xs text-green-700 text-center">
                                 After submitting, you will receive a <strong>One-Time Password (OTP)</strong>. Once verified, an HR Administrator will review and approve your account before you can log in.
                             </div>
+                            {captchaEnabled && (
+                                <div className="max-w-sm mx-auto mt-6">
+                                    <CaptchaField
+                                        value={data.captcha}
+                                        onChange={v => setData('captcha', v)}
+                                        error={errors.captcha}
+                                        processing={processing}
+                                    />
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end gap-2 bg-gray-50 border-t px-6 py-4">
                             <button type="button" onClick={() => goTo(2)}

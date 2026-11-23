@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Concerns\CaptchaValidationRules;
 use App\Concerns\PasswordValidationRules;
 use App\Models\EmployeeProfile;
 use App\Models\PdsPersonalInfo;
@@ -14,6 +15,7 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
+    use CaptchaValidationRules;
     use PasswordValidationRules;
 
     /** What each box is called in an error message. */
@@ -26,6 +28,10 @@ class CreateNewUser implements CreatesNewUsers
 
     public function create(array $input): User
     {
+        // The security code first and on its own, so the other checks (such as "this email is already registered") are
+        // not run, and cannot be used to probe the user list, by someone who has not solved the picture.
+        Validator::make($input, ['captcha' => $this->captchaRules()], $this->captchaMessages())->validate();
+
         // The names, mobile number and employee number are copied into the person's PDS, so they follow the PDS limits
         // and formats (App\Support\PdsRules): an account must never be created with a value the PDS would then refuse.
         Validator::make($input, [

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Concerns\CaptchaValidationRules;
 use App\Models\User;
+use App\Support\Captcha;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +20,8 @@ use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
+    use CaptchaValidationRules;
+
     /**
      * Register any application services.
      */
@@ -38,6 +42,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirects('register', '/verify-otp');
 
         Fortify::authenticateUsing(function (Request $request) {
+            // The security code comes first: before the email is looked up or any password is checked, so a wrong password
+            // (or an unknown email) reveals nothing to someone who has not solved the picture.
+            // Fortify calls this callback TWICE for one login (once to find the user for the two-factor check, once to sign
+            // in), and a picture can be used only once, so the code is checked on the first call only.
+            if (! $request->attributes->get('captcha_checked')) {
+                Validator::make($request->only('captcha'), ['captcha' => $this->captchaRules()], $this->captchaMessages())->validate();
+                $request->attributes->set('captcha_checked', true);
+            }
+
             // Only text of a sensible length that looks like an email is looked up (and no long password is hashed).
             Validator::make($request->only('email', 'password'), [
                 'email' => ['bail', 'required', 'string', 'max:255', 'email'],
@@ -116,6 +129,7 @@ class FortifyServiceProvider extends ServiceProvider
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
+            'captchaEnabled' => Captcha::enabled(),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
@@ -131,7 +145,7 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(fn () => Inertia::render('auth/register', ['captchaEnabled' => Captcha::enabled()]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

@@ -115,4 +115,17 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Send every email to ONE test inbox (development safety)
+    |--------------------------------------------------------------------------
+    |
+    | When MAIL_ALWAYS_TO is set, every email the app sends (the login code, account approvals, announcements, memos) goes
+    | to that one address instead of the real people. Use it on a computer whose database holds real employees, so testing
+    | real email never reaches them. Leave it EMPTY on the live server.
+    |
+    */
+
+    'to' => env('MAIL_ALWAYS_TO') ? ['address' => env('MAIL_ALWAYS_TO'), 'name' => 'Test inbox'] : null,
+
 ];

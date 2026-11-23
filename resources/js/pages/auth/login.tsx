@@ -2,6 +2,7 @@ import { Form, Head, Link, useForm } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
+import CaptchaField from '@/components/captcha-field';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -14,9 +15,10 @@ type Props = {
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    captchaEnabled: boolean;
 };
 
-export default function Login({ status, canResetPassword, canRegister }: Props) {
+export default function Login({ status, canResetPassword, canRegister, captchaEnabled }: Props) {
     const { props } = usePage();
     const sessionError = (props.flash as any)?.error;
 
@@ -156,6 +158,9 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Security code */}
+                                {captchaEnabled && <CaptchaField error={errors.captcha} processing={processing} />}
 
                                 {/* Remember Me */}
                                 <div className="flex items-center gap-2">
