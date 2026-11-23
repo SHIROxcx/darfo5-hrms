@@ -1,0 +1,125 @@
+name: CI
+
+# Runs on every pull request into main and on every push to main (a merge is a push).
+# What can FAIL (and so blocks a merge or a deploy): the tests, the type check and the production build.
+# What only WARNS: code style on the files you changed, and security advisories. See docs/ci-cd.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch makes an older, still-running check pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Tests, types and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # the style check below compares against the previous commit
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, gd, zip, bcmath, pdo_sqlite, sqlite3, fileinfo, exif
+          tools: composer:v2
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Find Composer's download cache
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Reuse downloaded PHP packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Create the .env file
+        run: |
+          cp .env.example .env
+          # The tests do not use a real database (phpunit.xml switches to in-memory SQLite); the build only needs a key.
+
+      - name: Install PHP packages
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generate the application key
+        run: php artisan key:generate
+
+      - name: Install JavaScript packages
+        run: npm ci --no-audit --no-fund
+
+      # The build also generates the route helpers in resources/js/routes (Wayfinder), which the type check and some tests need.
+      - name: Build the frontend
+        run: npm run build
+
+      - name: Type check
+        run: npm run types
+
+      - name: Run the tests
+        run: ./vendor/bin/pest
+
+      # ---- From here on nothing fails the run; problems show up as yellow warnings on the run page. ----
+
+      - name: Find the files this change touches
+        id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; else base="$PUSH_BEFORE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="HEAD~1"
+          fi
+          git diff --name-only --diff-filter=ACMR "$base" HEAD > changed.txt || true
+          grep -E '\.php$' changed.txt | grep -E '^(app|config|database|routes|tests)/|^[^/]+\.php$' > changed-php.txt || true
+          grep -E '^resources/js/.*\.(ts|tsx)$' changed.txt | grep -v -E '^resources/js/(routes|actions|wayfinder)/' > changed-js.txt || true
+          echo "PHP files changed: $(wc -l < changed-php.txt), TypeScript files changed: $(wc -l < changed-js.txt)"
+
+      - name: Code style (PHP, changed files only)
+        run: |
+          if [ -s changed-php.txt ]; then
+            xargs -a changed-php.txt vendor/bin/pint --test \
+              || echo "::warning title=PHP code style::Pint found style problems in files you changed. Fix them locally with: composer lint"
+          fi
+
+      - name: Code style (TypeScript, changed files only)
+        run: |
+          if [ -s changed-js.txt ]; then
+            xargs -a changed-js.txt npx eslint \
+              || echo "::warning title=TypeScript lint::ESLint found problems in files you changed. See the log above."
+          fi
+
+      - name: Security advisories
+        run: |
+          composer audit --no-interaction || echo "::warning title=composer audit::A PHP package has a known security advisory. See the log above."
+          npm audit --omit=dev --audit-level=high || echo "::warning title=npm audit::A JavaScript package has a known high-severity advisory. See the log above."
+
+      - name: Keep the Laravel log when something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-log
+          path: storage/logs/*.log
+          if-no-files-found: ignore

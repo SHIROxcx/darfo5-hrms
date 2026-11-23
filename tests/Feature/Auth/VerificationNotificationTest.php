@@ -14,7 +14,7 @@ test('sends verification notification', function () {
         ->assertRedirect(route('home'));
 
     Notification::assertSentTo($user, VerifyEmail::class);
-});
+})->skip('The app verifies email with an OTP and HR approves accounts, so the starter-kit behaviour this test expects no longer exists. Rewrite it for the OTP flow.');
 
 test('does not send verification notification if email is verified', function () {
     Notification::fake();

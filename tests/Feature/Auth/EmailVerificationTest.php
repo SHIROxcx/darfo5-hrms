@@ -29,7 +29,7 @@ test('email can be verified', function () {
     Event::assertDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
-});
+})->skip('The app verifies email with an OTP and HR approves accounts, so the starter-kit behaviour this test expects no longer exists. Rewrite it for the OTP flow.');
 
 test('email is not verified with invalid hash', function () {
     $user = User::factory()->unverified()->create();
@@ -74,7 +74,7 @@ test('verified user is redirected to dashboard from verification prompt', functi
 
     Event::assertNotDispatched(Verified::class);
     $response->assertRedirect(route('dashboard', absolute: false));
-});
+})->skip('The app verifies email with an OTP and HR approves accounts, so the starter-kit behaviour this test expects no longer exists. Rewrite it for the OTP flow.');
 
 test('already verified user visiting verification link is redirected without firing event again', function () {
     $user = User::factory()->create();
@@ -92,4 +92,4 @@ test('already verified user visiting verification link is redirected without fir
 
     Event::assertNotDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-});
+})->skip('The app verifies email with an OTP and HR approves accounts, so the starter-kit behaviour this test expects no longer exists. Rewrite it for the OTP flow.');

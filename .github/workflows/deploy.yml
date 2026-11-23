@@ -1,0 +1,70 @@
+name: Deploy to production
+
+# Started by hand: Actions tab > "Deploy to production" > Run workflow (on the main branch).
+# It runs on the office server itself, through a self-hosted GitHub runner (see docs/ci-cd.md), because GitHub's own
+# machines cannot reach a server inside the office network.
+#
+# It only deploys a commit whose CI run passed, takes a database backup first, and then runs the existing deploy.ps1
+# (maintenance mode, install, build, migrate, restart services, smoke test).
+on:
+  workflow_dispatch:
+    inputs:
+      skip_frontend:
+        description: 'Skip the frontend build (only when nothing in resources/ or the package files changed)'
+        type: boolean
+        default: false
+
+# Never two deploys at once, and never cancel one halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy this commit to the office server
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, windows, darfo5-prod]
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: powershell
+    env:
+      APP_DIR: ${{ vars.APP_DIR }}
+      BACKUP_DIR: ${{ vars.BACKUP_DIR }}
+
+    steps:
+      - name: Check the settings
+        run: |
+          if (-not $env:APP_DIR) { throw 'The APP_DIR variable is not set. Add it in GitHub: Settings > Secrets and variables > Actions > Variables.' }
+          if (-not (Test-Path (Join-Path $env:APP_DIR 'deploy.ps1'))) { throw "deploy.ps1 was not found in APP_DIR ($env:APP_DIR)." }
+
+      # Only the helper scripts are fetched here (into the runner's own work folder, not the app folder).
+      - name: Get the deploy helper scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Make sure this commit passed CI
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./.github/scripts/check-ci-passed.ps1 -Repository $env:GITHUB_REPOSITORY -Sha $env:GITHUB_SHA -Token $env:GITHUB_TOKEN
+
+      - name: Update the app folder to exactly this commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./.github/scripts/update-app-folder.ps1 -AppDir $env:APP_DIR -Sha $env:GITHUB_SHA -Token $env:GITHUB_TOKEN
+
+      - name: Back up the database
+        working-directory: ${{ env.APP_DIR }}
+        run: .\backup-database.ps1
+
+      - name: Deploy (maintenance mode, install, build, migrate, restart, smoke test)
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          SKIP_FRONTEND: ${{ inputs.skip_frontend }}
+        run: |
+          if ($env:SKIP_FRONTEND -eq 'true') { .\deploy.ps1 -SkipFrontend } else { .\deploy.ps1 }
