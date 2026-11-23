@@ -6,9 +6,14 @@ use App\Events\AnnouncementDeleted;
 use App\Events\AnnouncementPosted;
 use App\Events\AnnouncementUpdated;
 use App\Models\Announcement;
+use App\Models\RecordEvent;
 use App\Models\User;
+use App\Notifications\AnnouncementEmailNotification;
 use App\Notifications\AnnouncementNotification;
+use App\Support\AnnouncementFiles;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,13 +50,32 @@ class AnnouncementController extends Controller
         return Announcement::tagColor($tag);
     }
 
+    /**
+     * What the admin reads when an attachment is refused. The form shows these as they are, so they have to make sense on
+     * their own: Laravel's default ("The attachments.0 field must not be greater than 10240 kilobytes.") does not.
+     */
+    private static function attachmentMessages(): array
+    {
+        // PHP refuses a file before Laravel ever sees it when it is over upload_max_filesize (2 MB on a fresh WAMP install),
+        // even though the rule below allows 10 MB. Say the size the server really accepts, so the admin knows what to do.
+        $serverMb = max(1, (int) floor(UploadedFile::getMaxFilesize() / 1048576));
+        $acceptedMb = min(10, $serverMb);
+
+        return [
+            'attachments.*.uploaded' => "A file could not be uploaded. This server accepts files up to {$acceptedMb} MB each. Attach a smaller file.",
+            'attachments.*.max' => 'A file is too large (maximum 10 MB each).',
+            'attachments.*.mimes' => 'That file type is not allowed. Attach a PDF, Word, Excel, PowerPoint, image or ZIP file.',
+            'attachments.*.file' => 'An attachment is not a valid file.',
+        ];
+    }
+
     // Store
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:200'],
+            'body' => ['required', 'string', 'max:5000'],
             'date' => ['required', 'date'],
             'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
             'auto_delete' => ['nullable', 'boolean'],
@@ -60,6 +84,7 @@ class AnnouncementController extends Controller
         ], [
             'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
             'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
+            ...self::attachmentMessages(),
         ]);
 
         $user = $request->user();
@@ -86,6 +111,8 @@ class AnnouncementController extends Controller
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
 
+        RecordEvent::record($announcement, 'created', ['title' => $announcement->title], $user);
+
         $payload = self::formatPayload($announcement);
 
         self::broadcastSafely(new AnnouncementPosted($payload));
@@ -99,11 +126,21 @@ class AnnouncementController extends Controller
             tagColor: $payload['tagColor'],
         );
 
+        $emailNotification = new AnnouncementEmailNotification(
+            title: $announcement->title,
+            body: $announcement->body,
+            date: $payload['date'],
+            tag: $announcement->tag,
+        );
+
         User::where('is_approved', true)
             ->whereNotNull('email_verified_at')
             ->where('id', '!=', $user->id)
-            ->select('id')
-            ->chunk(100, fn ($users) => $users->each->notify($notification));
+            ->select(['id', 'first_name', 'email'])
+            ->chunk(100, fn ($users) => $users->each(function (User $recipient) use ($notification, $emailNotification) {
+                $recipient->notify($notification);
+                $recipient->notify($emailNotification);
+            }));
 
         return back()->with('success', 'Announcement posted successfully.');
     }
@@ -118,7 +155,7 @@ class AnnouncementController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:200'],
+            'body' => ['required', 'string', 'max:5000'],
             'date' => ['required', 'date'],
             'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
             'auto_delete' => ['nullable', 'boolean'],
@@ -128,6 +165,7 @@ class AnnouncementController extends Controller
         ], [
             'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
             'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
+            ...self::attachmentMessages(),
         ]);
 
         // Handle removed attachments
@@ -156,6 +194,12 @@ class AnnouncementController extends Controller
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
 
+        // What this edit changed, for the history (updated_at always moves, so it does not count).
+        $changed = array_keys(Arr::except($announcement->getChanges(), ['updated_at']));
+        if ($changed !== []) {
+            RecordEvent::record($announcement, 'updated', ['changed' => $changed], $request->user());
+        }
+
         $payload = self::formatPayload($announcement);
         self::broadcastSafely(new AnnouncementUpdated($payload));
 
@@ -170,18 +214,17 @@ class AnnouncementController extends Controller
             abort(403);
         }
 
-        // Delete stored files
-        foreach ($announcement->attachments ?? [] as $path) {
-            Storage::disk('public')->delete($path);
-        }
-
+        // The record is kept: removing an announcement archives it (see the announcement history page). Its files are kept too,
+        // but moved off the public disk, which anyone with the address can read.
         $id = $announcement->id;
+        AnnouncementFiles::archive($announcement);
 
         // Delete all notifications referencing this announcement
         \DB::table('notifications')
             ->whereJsonContains('data->announcement_id', $id)
             ->delete();
 
+        RecordEvent::record($announcement, 'deleted', [], $request->user());
         $announcement->delete();
 
         self::broadcastSafely(new AnnouncementDeleted($id));

@@ -1,12 +1,13 @@
-import AppLayout from "@/layouts/app-layout";
 import { Head, router, Link } from '@inertiajs/react';
 import {
     Users, ShieldCheck, Briefcase, SquareUserRound,
-    Megaphone, Plus, X,
+    Megaphone, Plus, X, History as HistoryIcon,
     Paperclip, Trash2, ExternalLink, FileText, Image, File,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
+import AppLayout from "@/layouts/app-layout";
+import { history as announcementHistory } from '@/routes/admin/announcements';
 
 // Types
 
@@ -53,7 +54,8 @@ function getGreeting(): { text: string; emoji: string } {
 }
 
 const TAGS     = ['Reminder', 'Policy', 'Health', 'Holiday', 'General'];
-const MAX_BODY = 200;
+const MAX_BODY = 5000;
+const MAX_FILE_MB = 10; // per attachment, the same as the server rule
 const PREVIEW  = 3;
 
 const TAG_COLOR_MAP: Record<string, string> = {
@@ -367,6 +369,19 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
 
 // ─── Post / Edit Modal ─────────────────────────────────────────────────────
 
+// The server names its fields differently from this form (delete_after, attachments.0), and a message nobody has a spot for
+// still has to be seen: without this, a refused post looked like nothing had happened.
+function readServerErrors(errs: Record<string, string>): Record<string, string> {
+    const spots: Record<string, string> = { title: 'title', body: 'body', date: 'date', delete_after: 'deleteAfter' };
+    const out: Record<string, string> = {};
+    for (const [key, message] of Object.entries(errs)) {
+        const spot = spots[key] ?? (key.startsWith('attachments') ? 'attachments' : 'form');
+        if (!out[spot]) out[spot] = message;
+        else if (!out[spot].includes(message)) out[spot] += ` ${message}`; // several files can fail with the same message
+    }
+    return out;
+}
+
 interface ModalProps {
     editing?: Announcement;
     onClose: () => void;
@@ -402,6 +417,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
     );
     const [saving,  setSaving]  = useState(false);
     const [errors,  setErrors]  = useState<Record<string, string>>({});
+    const [fileError, setFileError] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const bodyLeft            = MAX_BODY - body.length;
@@ -424,11 +440,16 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
     }
 
     function removeExistingAttachment(path: string) { setRemovedPaths(prev => [...prev, path]); }
-    function removeNewFile(i: number)               { setFiles(prev => prev.filter((_, idx) => idx !== i)); }
+    function removeNewFile(i: number) {
+        setFiles(prev => prev.filter((_, idx) => idx !== i));
+        setFileError('');
+        setErrors(p => ({ ...p, attachments: '' }));
+    }
 
     function handleSubmit() {
         const e = validate();
         if (Object.keys(e).length) { setErrors(e); return; }
+        setErrors({});
         setSaving(true);
 
         const formData = new FormData();
@@ -453,7 +474,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                 router.reload({ only: ['announcements'] });
             },
             onError: (errs) => {
-                setErrors(errs as Record<string, string>);
+                setErrors(readServerErrors(errs as Record<string, string>));
                 setSaving(false);
             },
         });
@@ -481,10 +502,10 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                     <div>
                         <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
                             <span>Description</span>
-                            <span className={bodyLeft < 20 ? 'text-red-500 font-semibold' : bodyLeft < 50 ? 'text-yellow-500' : 'text-gray-400'}>{bodyLeft} / {MAX_BODY}</span>
+                            <span className={bodyLeft < 500 ? 'text-red-500 font-semibold' : bodyLeft < 1000 ? 'text-yellow-500' : 'text-gray-400'}>{bodyLeft} / {MAX_BODY}</span>
                         </label>
                         <textarea value={body} onChange={e => { setBody(e.target.value.slice(0, MAX_BODY)); setErrors(p => ({ ...p, body: '' })); }}
-                            rows={3} className={`${inputCls} resize-none`} placeholder="Brief description of the announcement" />
+                            rows={6} className={`${inputCls} resize-none`} placeholder="Write the memo for employees" />
                         {errors.body && <p className="mt-1 text-xs text-red-500">{errors.body}</p>}
                     </div>
 
@@ -538,6 +559,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                             className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-xs text-gray-500 hover:border-green-400 hover:text-green-600 transition w-full justify-center">
                             <Plus className="h-3.5 w-3.5" /> Add file
                         </button>
+                        {fileError && <p role="alert" className="mt-1 text-xs text-red-500">{fileError}</p>}
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -547,7 +569,13 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                             onChange={e => {
                                 const picked = e.target.files ? Array.from(e.target.files) : [];
                                 e.target.value = '';
-                                if (picked.length) setFiles(prev => [...prev, ...picked]);
+                                const tooBig = picked.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
+                                const fine   = picked.filter(f => f.size <= MAX_FILE_MB * 1024 * 1024);
+                                setFileError(tooBig.length
+                                    ? `${tooBig.map(f => f.name).join(', ')} ${tooBig.length > 1 ? 'are' : 'is'} larger than ${MAX_FILE_MB} MB and was not added.`
+                                    : '');
+                                setErrors(p => ({ ...p, attachments: '' }));
+                                if (fine.length) setFiles(prev => [...prev, ...fine]);
                             }}
                         />
                     </div>
@@ -573,12 +601,15 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                 </div>
 
                 <div className="flex justify-end gap-2 border-t px-6 py-4 shrink-0">
+                    {(errors.attachments || errors.form) && (
+                        <p role="alert" className="mr-auto min-w-0 self-center text-xs text-red-500">{errors.attachments || errors.form}</p>
+                    )}
                     <button onClick={onClose}
-                        className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                        className="shrink-0 cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                         Cancel
                     </button>
                     <button onClick={handleSubmit} disabled={saving}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
+                        className="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60">
                         {saving ? (
                             <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -743,10 +774,16 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
                                         <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">{announcements.length}</span>
                                     )}
                                 </div>
-                                <button onClick={openCreate} title="Post new announcement"
-                                    className="flex cursor-pointer items-center justify-center h-7 w-7 text-green-700 hover:text-green-900 transition">
-                                    <Plus className="h-4 w-4" />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                    <Link href={announcementHistory().url} title="Announcement history" aria-label="Announcement history"
+                                        className="flex items-center justify-center h-7 w-7 text-green-700 hover:text-green-900 transition">
+                                        <HistoryIcon className="h-4 w-4" />
+                                    </Link>
+                                    <button onClick={openCreate} title="Post new announcement"
+                                        className="flex cursor-pointer items-center justify-center h-7 w-7 text-green-700 hover:text-green-900 transition">
+                                        <Plus className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
 
                             <ul>

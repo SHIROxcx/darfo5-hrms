@@ -4,14 +4,16 @@ namespace App\Console\Commands;
 
 use App\Events\AnnouncementDeleted;
 use App\Models\Announcement;
+use App\Models\RecordEvent;
+use App\Support\AnnouncementFiles;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class DeleteExpiredAnnouncements extends Command
 {
-    protected $signature   = 'announcements:delete-expired';
-    protected $description = 'Delete announcements whose auto-delete date has passed';
+    protected $signature = 'announcements:delete-expired';
+
+    protected $description = 'Archive announcements whose auto-delete date has passed';
 
     public function handle(): void
     {
@@ -20,10 +22,17 @@ class DeleteExpiredAnnouncements extends Command
             ->whereDate('delete_after', '<=', Carbon::today())
             ->get();
 
+        $archived = 0;
+
         foreach ($expired as $announcement) {
-            // Delete stored attachment files
-            foreach ($announcement->attachments ?? [] as $path) {
-                Storage::disk('public')->delete($path);
+            // The record is kept (archived) and its files move off the public disk; only the employees' bell rows go.
+            // If the files cannot be moved the announcement stays as it is, and the rest of the batch still runs.
+            try {
+                AnnouncementFiles::archive($announcement);
+            } catch (\Throwable $e) {
+                \Log::error("Announcement {$announcement->id} was not archived, its files could not be moved: ".$e->getMessage());
+
+                continue;
             }
 
             // Delete related notifications
@@ -32,7 +41,9 @@ class DeleteExpiredAnnouncements extends Command
                 ->delete();
 
             $id = $announcement->id;
+            RecordEvent::record($announcement, 'expired', ['delete_after' => $announcement->delete_after?->toDateString()]);
             $announcement->delete();
+            $archived++;
 
             // Broadcast so all open tabs/clients remove it in real time. Best
             // effort only — if Reverb is down, the deletion above must still
@@ -44,6 +55,6 @@ class DeleteExpiredAnnouncements extends Command
             }
         }
 
-        $this->info("Deleted {$expired->count()} expired announcement(s).");
+        $this->info("Archived {$archived} expired announcement(s).");
     }
 }

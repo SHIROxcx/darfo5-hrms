@@ -143,6 +143,24 @@ export function AppSidebarHeader({
         };
     }, [userId, isAdmin]);
 
+    // A memo was published — drawer entry + badge. The payload is only {message, url};
+    // the memo itself is read on its own page. Everyone signed in listens (the server
+    // lets only approved, verified accounts and HR join the channel).
+    useEffect(() => {
+        if (!userId) return;
+
+        echo
+            .private('memos')
+            .listen('.memo-published', function(data: { message: string; url: string }) {
+                setUnreadCount(function(prev) { return prev + 1; });
+                window.dispatchEvent(new CustomEvent('notif:new-notification', { detail: { message: data.message, url: data.url } }));
+            });
+
+        return function() {
+            echo.leave('memos');
+        };
+    }, [userId]);
+
     useEffect(() => {
         echo
             .channel('announcements')

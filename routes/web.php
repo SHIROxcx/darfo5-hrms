@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\AnnouncementHistoryController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\Admin\MemoController as AdminMemoController;
 use App\Http\Controllers\Admin\ReferenceData\BachelorsDegreeController;
 use App\Http\Controllers\Admin\ReferenceData\DivisionController;
 use App\Http\Controllers\Admin\ReferenceData\EligibilityController;
@@ -12,15 +14,19 @@ use App\Http\Controllers\Admin\ReferenceData\SectionController;
 use App\Http\Controllers\Admin\ServiceRecordBulkPdfController;
 use App\Http\Controllers\Admin\ServiceRecordController;
 use App\Http\Controllers\Admin\ServiceRecordImportController;
+use App\Http\Controllers\Admin\SignatoryController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\MemoController;
+use App\Http\Controllers\MemoFileController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PdsController;
+use App\Http\Controllers\PdsFileController;
 use App\Http\Controllers\PdsPdfController;
 use App\Http\Controllers\PublicEmployeeController;
 use App\Http\Controllers\ServiceRecordPdfController;
@@ -155,6 +161,38 @@ Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
         Route::post('/service-records/pdf/bulk', [ServiceRecordBulkPdfController::class, 'bulk'])->name('service-records.pdf.bulk');
     });
 
+// Announcement history and memos — HR admin and superadmin.
+// Fixed paths such as /admin/memos/signatories must stay above any /admin/memos/{memo} route added to this group.
+Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/announcements/history', [AnnouncementHistoryController::class, 'index'])->name('announcements.history');
+
+        // Saved signatories. Fixed paths like these stay above any /memos/{memo} route.
+        Route::get('/memos/signatories', [SignatoryController::class, 'index'])->name('signatories.index');
+        Route::post('/memos/signatories', [SignatoryController::class, 'store'])->name('signatories.store');
+        Route::put('/memos/signatories/{signatory}', [SignatoryController::class, 'update'])->name('signatories.update');
+        Route::delete('/memos/signatories/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
+        Route::get('/memos/signatories/{signatory}/signature', [SignatoryController::class, 'signature'])->name('signatories.signature');
+
+        // Memos. Fixed paths (signatories above, create here) stay above any /memos/{memo} route.
+        Route::get('/memos', [AdminMemoController::class, 'index'])->name('memos.index');
+        Route::get('/memos/create', [AdminMemoController::class, 'create'])->name('memos.create');
+        Route::post('/memos', [AdminMemoController::class, 'store'])->name('memos.store');
+        Route::get('/memos/{memo}/edit', [AdminMemoController::class, 'edit'])->name('memos.edit');
+        Route::get('/memos/{memo}/preview', [AdminMemoController::class, 'preview'])->name('memos.preview');
+        Route::put('/memos/{memo}', [AdminMemoController::class, 'update'])->name('memos.update');
+        Route::delete('/memos/{memo}', [AdminMemoController::class, 'destroy'])->name('memos.destroy');
+        Route::post('/memos/{memo}/publish', [AdminMemoController::class, 'publish'])->name('memos.publish');
+        Route::post('/memos/{memo}/withdraw', [AdminMemoController::class, 'withdraw'])->name('memos.withdraw');
+        Route::post('/memos/{memo}/restore', [AdminMemoController::class, 'restore'])->name('memos.restore');
+        // HR can open the file of any memo (a draft's uploaded file, a withdrawn memo's PDF); the same controller serves employees.
+        Route::get('/memos/{memo}/file', [MemoFileController::class, 'show'])->name('memos.file');
+        // The memo's own page. After every fixed path above (create, signatories), which would otherwise be read as a memo id.
+        Route::get('/memos/{memo}', [AdminMemoController::class, 'show'])->name('memos.show');
+    });
+
 // Authenticated Routes for verified users
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -184,34 +222,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/announcements/{announcement}',  [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 
     if (app()->environment('local')) {
-        Route::get('/pds/html-preview/{userId?}', function (?int $userId = null) {
-    
-            $authUser = Auth::user();
-            $targetId = $userId ?? $authUser->id;
-    
-            $user = \App\Models\User::findOrFail($targetId);
-            $ep   = \App\Models\EmployeeProfile::where('user_id', $targetId)->first();
-    
-            $pds = [
-                'personal'        => \App\Models\PdsPersonalInfo::where('user_id', $targetId)->first(),
-                'family'          => \App\Models\PdsFamilyBackground::where('user_id', $targetId)->first(),
-                'children'        => \App\Models\PdsChild::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'education'       => \App\Models\PdsEducation::where('user_id', $targetId)->get(),
-                'eligibilities'   => \App\Models\PdsEligibility::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'work_experience' => \App\Models\PdsWorkExperience::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'voluntary_work'  => \App\Models\PdsVoluntaryWork::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'trainings'       => \App\Models\PdsTraining::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'other_info'      => \App\Models\PdsOtherInfo::where('user_id', $targetId)->first(),
-                'questions'       => \App\Models\PdsQuestion::where('user_id', $targetId)->first(),
-                'references'      => \App\Models\PdsReference::where('user_id', $targetId)->orderBy('sort_order')->get(),
-                'government_id'   => \App\Models\PdsGovernmentId::where('user_id', $targetId)->first(),
-            ];
-    
-            // Render the exact same Blade view the PDF uses — but returned as HTML
-            // so the browser displays it directly. Reload the tab to see any change.
-            return view('pds.pdf', compact('user', 'ep', 'pds'));
-    
-        })->middleware(['auth'])->name('pds.html-preview');
+        Route::get('/pds/html-preview/{userId?}', [PdsPdfController::class, 'htmlPreview'])
+            ->middleware(['auth'])->name('pds.html-preview');
 
         Route::get('/service-records/html-preview/{userId?}', function (?int $userId = null) {
             $authUser = Auth::user();
@@ -239,6 +251,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pds/preview/{userToken?}',  [PdsPdfController::class, 'preview'])->name('pds.preview');
     Route::get('/pds/download/{userToken?}', [PdsPdfController::class, 'download'])->name('pds.download');
     Route::get('/pds', [PdsController::class, 'index'])->name('pds.index');
+    // Must stay above /pds/{userId}, which would otherwise take "file" as a user id.
+    Route::get('/pds/file', [PdsFileController::class, 'show'])->name('pds.file');
     Route::get('/pds/{userId}', [PdsController::class, 'show'])->name('pds.show');
     Route::post('/pds/save/{section}', [PdsController::class, 'saveSection'])->name('pds.save');
 
@@ -277,6 +291,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/my-leave/{leaveRequest}/edit', [LeaveApplicationController::class, 'edit'])->name('leave.apply.edit');
     Route::put('/my-leave/{leaveRequest}/apply', [LeaveApplicationController::class, 'update'])->name('leave.apply.update');
     Route::get('/my-leave/{leaveRequest}/pdf', [LeaveApplicationController::class, 'pdf'])->name('leave.pdf');
+
+    // Memos: read-only for employees (published memos only). The controllers check the account, and Memo::visibleTo the memo.
+    Route::get('/memos', [MemoController::class, 'index'])->name('memos.index');
+    Route::get('/memos/{memo}', [MemoController::class, 'show'])->name('memos.show');
+    Route::get('/memos/{memo}/file', [MemoFileController::class, 'show'])->name('memos.file');
 
 });
 

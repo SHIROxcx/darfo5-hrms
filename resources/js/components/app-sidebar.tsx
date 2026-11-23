@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, FileText, Folder, LayoutGrid, MessagesSquare, Settings, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { Calendar, FileText, Folder, LayoutGrid, MessagesSquare, ScrollText, Settings, ShieldCheck, UserCog, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -10,6 +10,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { index as memosIndex } from '@/routes/admin/memos';
+import { index as myMemosIndex } from '@/routes/memos';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';``
 import { dashboard } from '@/routes';
@@ -36,6 +38,7 @@ const superAdminNavItems: NavItem[] = [
     { title: 'User Management', href: '/superadmin/users', icon: ShieldCheck },
     { title: 'Roles & Permissions', href: '/admin/roles', icon: UserCog },
     { title: 'Leave Management', href: '/admin/leave', icon: Calendar },
+    { title: 'Memos', href: memosIndex(), icon: ScrollText },
     referenceDataNavItem,
 ];
 
@@ -43,12 +46,14 @@ const adminNavItems: NavItem[] = [
     { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
     { title: 'Employee Management', href: '/admin/employees', icon: Users },
     { title: 'Leave Management', href: '/admin/leave', icon: Calendar },
+    { title: 'Memos', href: memosIndex(), icon: ScrollText },
     referenceDataNavItem,
 ];
 
 const employeeNavItems: NavItem[] = [
     { title: 'Personal Data Sheet', href: '/pds', icon: FileText },
     { title: 'My Leave', href: '/my-leave', icon: Calendar },
+    { title: 'Memos', href: myMemosIndex(), icon: ScrollText },
 ];
 
 interface AuthUser {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Broadcasting\MemoChannel;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -24,3 +25,10 @@ Broadcast::channel('admin.notifications', function (User $user): bool {
 Broadcast::channel('user.{id}', function (User $user, int $id): bool {
     return $user->id === $id;
 });
+
+/*
+|--------------------------------------------------------------------------
+| Memos: HR and fully onboarded employees hear "a memo was published"
+|--------------------------------------------------------------------------
+*/
+Broadcast::channel('memos', MemoChannel::class);
