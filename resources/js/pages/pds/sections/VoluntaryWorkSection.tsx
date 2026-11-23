@@ -1,9 +1,12 @@
+import { Save, Plus, Trash2, Pencil, X, HeartHandshake, Paperclip, FileText, Image as ImageIcon, AlertCircle, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, Pencil, X, HeartHandshake, Paperclip, FileText, Image as ImageIcon, AlertCircle, ExternalLink } from 'lucide-react';
-import type { User, PdsData, PdsVoluntaryWork } from '@/types/pds';
-import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
+import LimitedInput from '@/components/limited-input';
+import { Spinner } from '@/components/ui/spinner';
+import { pdsFileUrl } from '@/lib/pds-file-url';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsVoluntaryWork } from '@/types/pds';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,12 +75,11 @@ const buildFormData = (rows: VoluntaryWorkEntry[], files: RowFile[]) => {
 interface AttachmentFieldProps {
     rowFile:      RowFile;
     onChange:     (rf: RowFile) => void;
-    storageBase?: string;
     error?:       string;
     optional?:    boolean;
 }
 
-function AttachmentField({ rowFile, onChange, storageBase = '/storage', error, optional = false }: AttachmentFieldProps) {
+function AttachmentField({ rowFile, onChange, error, optional = false }: AttachmentFieldProps) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -108,7 +110,7 @@ function AttachmentField({ rowFile, onChange, storageBase = '/storage', error, o
         setSizeError('');
     };
 
-    const existingUrl = hasExisting ? `${storageBase}/${rowFile.existing}` : null;
+    const existingUrl = hasExisting ? pdsFileUrl(rowFile.existing) : null;
     const viewUrl     = rowFile.preview ?? existingUrl;
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
@@ -220,7 +222,7 @@ function VoluntaryWorkModal({ open, onClose, title, draft, draftFile, errors, on
                         <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Organization Name <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.organization_name ?? ''} className={ic('organization_name')}
+                        <LimitedInput maxLength={PDS_MAX.organization_name} value={draft.organization_name ?? ''} className={ic('organization_name')}
                             placeholder="Write organization name in full"
                             onChange={e => onFieldChange('organization_name', e.target.value)} />
                         {errors.organization_name && <p className="mt-1 text-xs text-red-500">{errors.organization_name}</p>}
@@ -231,7 +233,7 @@ function VoluntaryWorkModal({ open, onClose, title, draft, draftFile, errors, on
                         <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Organization Address <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.organization_address ?? ''} className={ic('organization_address')}
+                        <LimitedInput maxLength={PDS_MAX.organization_address} value={draft.organization_address ?? ''} className={ic('organization_address')}
                             placeholder="Write address in full"
                             onChange={e => onFieldChange('organization_address', e.target.value)} />
                         {errors.organization_address && <p className="mt-1 text-xs text-red-500">{errors.organization_address}</p>}
@@ -268,7 +270,7 @@ function VoluntaryWorkModal({ open, onClose, title, draft, draftFile, errors, on
                         <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Position / Nature of Work <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.position ?? ''} className={ic('position')}
+                        <LimitedInput maxLength={PDS_MAX.position} value={draft.position ?? ''} className={ic('position')}
                             placeholder="e.g. Volunteer Coordinator"
                             onChange={e => onFieldChange('position', e.target.value)} />
                         {errors.position && <p className="mt-1 text-xs text-red-500">{errors.position}</p>}
@@ -311,10 +313,9 @@ interface CardProps {
     rowFile:     RowFile;
     onEdit:      () => void;
     onDelete:    () => void;
-    storageBase?: string;
 }
 
-function VoluntaryWorkCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage' }: CardProps) {
+function VoluntaryWorkCard({ row, rowFile, onEdit, onDelete }: CardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
@@ -340,7 +341,7 @@ function VoluntaryWorkCard({ row, rowFile, onEdit, onDelete, storageBase = '/sto
         : hasExisting
             ? rowFile.existing!.split('/').pop() ?? 'Attachment'
             : null;
-    const viewUrl = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
+    const viewUrl = rowFile.preview ?? (hasExisting ? pdsFileUrl(rowFile.existing) : null);
 
     return (
         <div className="flex items-stretch gap-3 p-4 transition-colors overflow-hidden">
@@ -522,7 +523,7 @@ export default function VoluntaryWorkSection({ pdsData, onSave, saving }: Props)
         <div className="space-y-1">
             <div className="flex items-start justify-between mb-4">
                 <div>
-                    <h2 className="text-base font-semibold text-green-800 uppercase">VI. Voluntary Work</h2>
+                    <h2 className="text-base font-semibold text-green-800 uppercase">VII. Voluntary Work</h2>
                     <p className="text-xs text-gray-500 mt-0.5">
                         Involvement in Civic / Non-government / People / Voluntary Organizations.{' '}
                         <span className="font-medium text-green-700">Write N/A if not applicable.</span>

@@ -40,7 +40,7 @@ All other CSC Form 6 types — ML, PAT, SPL, SOLO, STUDY, VAWC, RL, SLW, CL, AL,
 - Leave days are working days: Monday to Friday, minus holidays managed in Admin → Holidays (`LeaveService::countWorkingDays`).
 - Filing creates **pending** credits; approval moves them to **used**; denial or cancellation releases them.
 - On approval of CSC Form 6, only **7.C "days with pay"** is deducted (`LeaveService::chargedDays`).
-- A CSC Form 6 can't be approved without section 7 (7.A–7.D). 7.A is pre-filled by `LeaveService::certificationFor()`.
+- A CSC Form 6 can't be approved without section 7 (7.A–7.D). 7.A is pre-filled by `LeaveService::certificationFor()`. One admin fills section 7 and approves or denies in one step at `/admin/leave/{id}/review`, so `csc6` requests are excluded from the dashboard's bulk actions.
 - CSC Form 6 start date may not be before today, in **Asia/Manila** time (`config/leave.php` timezone).
 - Items 1–5 of CSC Form 6 are frozen at filing in `applicant_snapshot`. Salary comes from the latest service record, falling back to the salary grade.
 - Signatory names and titles come from `config/leave.php` (`LEAVE_*` env keys).

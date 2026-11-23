@@ -1,9 +1,12 @@
+import { Save, Plus, Trash2, ChevronDown, X, Paperclip, FileText, Image as ImageIcon, Pencil, Award, ExternalLink, Ellipsis } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, ChevronDown, X, Paperclip, FileText, Image as ImageIcon, Pencil, Award, ExternalLink, Ellipsis } from 'lucide-react';
-import type { User, PdsData, PdsEligibility } from '@/types/pds';
-import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
+import LimitedInput from '@/components/limited-input';
+import { Spinner } from '@/components/ui/spinner';
+import { pdsFileUrl } from '@/lib/pds-file-url';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsEligibility } from '@/types/pds';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -211,11 +214,10 @@ function EligibilityCombobox({ value, onChange, error }: ComboboxProps) {
 interface AttachmentCellProps {
     rowFile: RowFile;
     onChange: (rf: RowFile) => void;
-    storageBase?: string;
     error?: string;
 }
 
-function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: AttachmentCellProps) {
+function AttachmentCell({ rowFile, onChange, error }: AttachmentCellProps) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -249,7 +251,7 @@ function AttachmentCell({ rowFile, onChange, storageBase = '/storage', error }: 
         setSizeError('');
     };
 
-    const existingUrl = hasExisting ? `${storageBase}/${rowFile.existing}` : null;
+    const existingUrl = hasExisting ? pdsFileUrl(rowFile.existing) : null;
     const viewUrl     = rowFile.preview ?? existingUrl;
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
@@ -414,8 +416,8 @@ function EligibilityModal({
                         <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                             Place of Examination <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            type="text"
+                        <LimitedInput
+                            maxLength={PDS_MAX.place_of_examination}
                             value={row.place_of_examination ?? ''}
                             onChange={e => onFieldChange('place_of_examination', e.target.value)}
                             placeholder="City, Province"
@@ -430,8 +432,8 @@ function EligibilityModal({
                             <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                                 License No. <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
+                            <LimitedInput
+                                maxLength={PDS_MAX.license_number}
                                 value={row.license_number ?? ''}
                                 onChange={e => onFieldChange('license_number', e.target.value)}
                                 placeholder="License No. or N/A"
@@ -492,10 +494,9 @@ interface CardProps {
     rowFile: RowFile;
     onEdit: () => void;
     onDelete: () => void;
-    storageBase?: string;
 }
 
-function EligibilityCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage' }: CardProps) {
+function EligibilityCard({ row, rowFile, onEdit, onDelete }: CardProps) {
     const hasFile = !!rowFile.file;
     const hasExisting = !!rowFile.existing;
     const label = hasFile
@@ -503,7 +504,7 @@ function EligibilityCard({ row, rowFile, onEdit, onDelete, storageBase = '/stora
         : hasExisting
             ? rowFile.existing!.split('/').pop() ?? 'Attachment'
             : null;
-    const viewUrl = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
+    const viewUrl = rowFile.preview ?? (hasExisting ? pdsFileUrl(rowFile.existing) : null);
 
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);

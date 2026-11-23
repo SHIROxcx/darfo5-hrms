@@ -1,8 +1,10 @@
+import { Save, X, GraduationCap, Pencil, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, X, GraduationCap, Pencil, CheckCircle2 } from 'lucide-react';
-import type { User, PdsData, PdsEducation, PdsSaveCallback } from '@/types/pds';
+import LimitedInput from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsEducation, PdsSaveCallback } from '@/types/pds';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -114,7 +116,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                         <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                             Name of School <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.school_name ?? ''} className={ic('school_name')}
+                        <LimitedInput maxLength={PDS_MAX.school_name} value={draft.school_name ?? ''} className={ic('school_name')}
                             placeholder="Write school name in full. Do not abbreviate."
                             onChange={e => onChange('school_name', e.target.value)} />
                         {errors.school_name && <p className="mt-1 text-xs text-red-500">{errors.school_name}</p>}
@@ -125,7 +127,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                         <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                             Degree / Course <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.course ?? ''} className={ic('course')}
+                        <LimitedInput maxLength={PDS_MAX.course} value={draft.course ?? ''} className={ic('course')}
                             placeholder="e.g. Bachelor of Science in Agriculture or N/A"
                             onChange={e => onChange('course', e.target.value)} />
                         {errors.course && <p className="mt-1 text-xs text-red-500">{errors.course}</p>}
@@ -137,7 +139,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                                 From (Year) <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.period_from ?? ''} className={ic('period_from')}
+                            <LimitedInput maxLength={PDS_MAX.period_from} value={draft.period_from ?? ''} className={ic('period_from')}
                                 placeholder="e.g. 2018 or N/A"
                                 onChange={e => onChange('period_from', e.target.value)} />
                             {errors.period_from && <p className="mt-1 text-xs text-red-500">{errors.period_from}</p>}
@@ -146,7 +148,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                                 To (Year) <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.period_to ?? ''} className={ic('period_to')}
+                            <LimitedInput maxLength={PDS_MAX.period_to} value={draft.period_to ?? ''} className={ic('period_to')}
                                 placeholder="e.g. 2022 or N/A"
                                 onChange={e => onChange('period_to', e.target.value)} />
                             {errors.period_to && <p className="mt-1 text-xs text-red-500">{errors.period_to}</p>}
@@ -159,7 +161,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                                 Highest Level / Units Earned <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.highest_level ?? ''} className={ic('highest_level')}
+                            <LimitedInput maxLength={PDS_MAX.highest_level} value={draft.highest_level ?? ''} className={ic('highest_level')}
                                 placeholder="e.g. Graduate or N/A"
                                 onChange={e => onChange('highest_level', e.target.value)} />
                             {errors.highest_level && <p className="mt-1 text-xs text-red-500">{errors.highest_level}</p>}
@@ -168,7 +170,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                             <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                                 Year Graduated <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.year_graduated ?? ''} className={ic('year_graduated')}
+                            <LimitedInput maxLength={PDS_MAX.year_graduated} value={draft.year_graduated ?? ''} className={ic('year_graduated')}
                                 placeholder="e.g. 2022 or N/A"
                                 onChange={e => onChange('year_graduated', e.target.value)} />
                             {errors.year_graduated && <p className="mt-1 text-xs text-red-500">{errors.year_graduated}</p>}
@@ -180,7 +182,7 @@ function EducationModal({ open, onClose, level, draft, errors, onChange, onSubmi
                         <label className="uppercase block text-xs font-medium text-gray-600 mb-1">
                             Scholarship / Honors Received <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.honors_received ?? ''} className={ic('honors_received')}
+                        <LimitedInput maxLength={PDS_MAX.honors_received} value={draft.honors_received ?? ''} className={ic('honors_received')}
                             placeholder="e.g. Cum Laude or N/A"
                             onChange={e => onChange('honors_received', e.target.value)} />
                         {errors.honors_received && <p className="mt-1 text-xs text-red-500">{errors.honors_received}</p>}

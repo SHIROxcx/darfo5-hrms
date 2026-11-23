@@ -1,9 +1,11 @@
 // OtherInfoSection.tsx
-import { useState, useEffect } from 'react';
 import { Save, Plus, X } from 'lucide-react';
-import type { User, PdsData, PdsOtherInfo, PdsSaveCallback } from '@/types/pds';
+import { useState, useEffect } from 'react';
+import { CharCounter, useFocusTracking } from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsOtherInfo, PdsSaveCallback } from '@/types/pds';
 
 interface Props {
     user: User;
@@ -24,6 +26,7 @@ interface TagInputProps {
 
 function TagInput({ label, items, onChange, onDirty }: TagInputProps) {
     const [input, setInput] = useState('');
+    const { focused, focusProps } = useFocusTracking();
 
     const add = () => {
         const trimmed = input.trim();
@@ -67,6 +70,8 @@ function TagInput({ label, items, onChange, onDirty }: TagInputProps) {
             <div className="flex gap-2">
                 <input
                     type="text"
+                    maxLength={PDS_MAX.tag}
+                    {...focusProps}
                     value={input}
                     onChange={e => {
                         setInput(e.target.value);
@@ -88,6 +93,7 @@ function TagInput({ label, items, onChange, onDirty }: TagInputProps) {
                     <Plus className="w-4 h-4" />
                 </button>
             </div>
+            <CharCounter length={input.length} max={PDS_MAX.tag} focused={focused} />
         </div>
     );
 }
@@ -111,7 +117,7 @@ export default function OtherInfoSection({ pdsData, onSave, saving, onDirtyChang
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         Promise.resolve(onSave('other_info', form as unknown as Record<string, unknown>))
-            .then(() => markClean());
+            .then(saved => { if (saved !== false) markClean(); }); // a failed save keeps the unsaved-changes warning
     };
 
     return (

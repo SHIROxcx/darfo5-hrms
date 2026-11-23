@@ -1,9 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
-import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
 import {
     User as UserIcon, Users, Award, Briefcase, Download,
     Heart, BookMarked, Info, HelpCircle, UserCheck,
@@ -14,24 +10,28 @@ import {
     BriefcaseBusiness,
     ClipboardList,
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import AppLayout from '@/layouts/app-layout';
 
 // Section components
-import PersonalInfoSection from '@/pages/pds/sections/PersonalInfoSection';
-import FamilyBackgroundSection from '@/pages/pds/sections/FamilyBackgroundSection';
+import { getSectionCompletion } from '@/lib/pds-completion';
 import EducationSection, { isEducationComplete } from '@/pages/pds/sections/EducationSection';
 import EligibilitySection from '@/pages/pds/sections/EligibilitySection';
-import WorkExperienceSection from '@/pages/pds/sections/WorkExperienceSection';
-import VoluntaryWorkSection from '@/pages/pds/sections/VoluntaryWorkSection';
-import TrainingSection from '@/pages/pds/sections/TrainingSection';
+import FamilyBackgroundSection from '@/pages/pds/sections/FamilyBackgroundSection';
 import OtherInfoSection from '@/pages/pds/sections/OtherInfoSection';
 import QuestionsSection from '@/pages/pds/sections/QuestionsSection';
+import TrainingSection from '@/pages/pds/sections/TrainingSection';
+import VoluntaryWorkSection from '@/pages/pds/sections/VoluntaryWorkSection';
+import WorkExperienceSection from '@/pages/pds/sections/WorkExperienceSection';
 import ReferencesSection from '@/pages/pds/sections/ReferencesSection';
 
 // Work Experience Sheet modal
 import WorkExperienceSheetModal from '@/pages/pds/WorkExperienceSheetModal';
 
-import { getSectionCompletion } from '@/lib/pds-completion';
+import PersonalInfoSection from '@/pages/pds/sections/PersonalInfoSection';
+import type { BreadcrumbItem } from '@/types';
+import type { User, PdsData, PdsSaveCallback } from '@/types/pds';
 
 interface Props {
     user: User;
@@ -44,8 +44,8 @@ const SECTIONS = [
     { id: 'education',       label: 'III. Education',                icon: GraduationCap,       page: 1 },
     { id: 'eligibility',     label: 'IV. Licenses & Eligibilities',  icon: Award,               page: 2 },
     { id: 'work_experience', label: 'V. Work Experience',            icon: BriefcaseBusiness,   page: 2 },
-    { id: 'voluntary_work',  label: 'VI. Voluntary Work',            icon: HeartHandshake,      page: 3 },
-    { id: 'trainings',       label: 'VII. L&D Interventions',        icon: BookMarked,          page: 3 },
+    { id: 'trainings',       label: 'VI. L&D Interventions',         icon: BookMarked,          page: 3 },
+    { id: 'voluntary_work',  label: 'VII. Voluntary Work',           icon: HeartHandshake,      page: 3 },
     { id: 'other_info',      label: 'VIII. Other Information',       icon: Info,                page: 3 },
     { id: 'questions',       label: 'IX. Legal Declarations',        icon: HelpCircle,          page: 4 },
     { id: 'references',      label: "X. References & ID",            icon: UserCheck,           page: 4 },
@@ -124,6 +124,20 @@ function PdfPreviewModal({ userToken, onClose }: { userToken: string; onClose: (
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
+
+/** What to tell the employee when a save fails for any reason other than a mistake on the form. */
+function saveFailureMessage(e: unknown): string {
+    if (!axios.isAxiosError(e)) return 'Something went wrong in the page, so your changes may not be saved. Refresh the page and try again.';
+    if (!e.response) return 'Could not reach the server. Check your internet connection and try again. Nothing was saved.';
+
+    const status = e.response.status;
+    if (status === 401) return 'You are not logged in any more. Refresh the page and log in again. Nothing was saved.';
+    if (status === 403) return 'You are not allowed to change this record.';
+    if (status === 413) return 'The files you attached are too big to send together. Attach fewer or smaller files and try again. Nothing was saved.';
+    if (status >= 500) return 'Something went wrong on the server, so your changes may not be saved. Please try again. If it keeps happening, tell the HR office.';
+
+    return 'Your changes could not be saved. Please try again.';
+}
 
 export default function PdsIndex({ user, pdsData }: Props) {
     const [activeSection, setActiveSection] = useState<SectionId>('personal');
@@ -220,6 +234,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
             });
 
             router.reload({ only: ['pdsData'] });
+            return true;
         } catch (e: any) {
             if (e.response?.status === 422) {
                 const errors = e.response.data?.errors ?? {};
@@ -230,9 +245,22 @@ export default function PdsIndex({ user, pdsData }: Props) {
                     text: firstError ?? 'Failed to save. Please try again.',
                     confirmButtonColor: '#dc2626',
                 });
-                return;
+                return false;
             }
-            throw e;
+
+            // An expired session (419) is already handled for the whole app: app.tsx sends the browser to the login page.
+            if (e.response?.status === 419) return false;
+
+            // Anything else (a server error, files too big to send, no connection) used to be thrown away:
+            // the employee pressed Save and nothing at all happened.
+            Swal.fire({
+                icon: 'error',
+                title: 'Could not save',
+                text: saveFailureMessage(e),
+                confirmButtonColor: '#dc2626',
+            });
+            if (!axios.isAxiosError(e)) throw e; // a bug in the page itself: still report it to the console
+            return false;
         } finally {
             setSaving(false);
         }
@@ -374,7 +402,7 @@ export default function PdsIndex({ user, pdsData }: Props) {
                                 <p className="text-xs text-green-700 font-medium mb-1">
                                     {completedCount} of {SECTIONS.length} Sections Completed
                                 </p>
-                                <p className="text-xs text-green-600">CS Form 212 (Revised 2025)</p>
+                                <p className="text-xs text-green-600">CS Form 212 (Revised 2026)</p>
                             </div>
                         </div>
                     </aside>

@@ -1,0 +1,269 @@
+{
+  "_note": "Examples for every PDS format check, keyed by form field. The server tests (PdsFormatChecksTest) and a browser-side check of resources/js/lib/pds-formats.ts both read this file, so the two copies of each rule are tested against the same cases. Empty values are never listed: a blank box is handled by the required rule.",
+  "philsys_number": {
+    "valid": [
+      "1234-5678-9012-3456",
+      "1234567890123456",
+      "1234 5678 9012 3456",
+      "N/A",
+      "n/a"
+    ],
+    "invalid": [
+      "1234-5678-9012-345",
+      "1234-5678-9012-34567",
+      "1234-5678-9012-345A",
+      "ABCD-EFGH-IJKL-MNOP",
+      "none"
+    ]
+  },
+  "tin_number": {
+    "valid": [
+      "123-456-789",
+      "123456789",
+      "123-456-789-000",
+      "123456789000",
+      "N/A",
+      "123-456-789-00000",
+      "12345678900000"
+    ],
+    "invalid": [
+      "123-456-78",
+      "123-456-7890",
+      "123-456-789-00",
+      "12-345-67X",
+      "pending",
+      "123-456-789-0000"
+    ]
+  },
+  "philhealth_number": {
+    "valid": [
+      "12-345678901-2",
+      "123456789012",
+      "N/A"
+    ],
+    "invalid": [
+      "12-345678901",
+      "12-3456789012-3",
+      "ab-345678901-2"
+    ]
+  },
+  "pagibig_number": {
+    "valid": [
+      "1234-5678-9012",
+      "123456789012",
+      "N/A"
+    ],
+    "invalid": [
+      "1234-5678-901",
+      "1234-5678-90123",
+      "1234-5678-90XX"
+    ]
+  },
+  "umid_number": {
+    "valid": [
+      "0845-8859385-3",
+      "084588593853",
+      "N/A"
+    ],
+    "invalid": [
+      "0845-8859385",
+      "0845-8859385-34",
+      "0845-ABCDEFG-3"
+    ]
+  },
+  "mobile_number": {
+    "valid": [
+      "09171234567",
+      "0917 123 4567",
+      "0917-123-4567",
+      "+639171234567",
+      "+63 917 123 4567",
+      "+63 (917) 123 4567",
+      "(0917) 123-4567",
+      "639171234567",
+      "0917.123.4567"
+    ],
+    "invalid": [
+      "9171234567",
+      "08171234567",
+      "0917123456",
+      "091712345678",
+      "+63917123456",
+      "0917-ABC-4567",
+      "N/A",
+      "63917123456"
+    ]
+  },
+  "telephone": {
+    "valid": [
+      "(054) 914-9970",
+      "054-914-9970",
+      "9149970",
+      "+63 54 914 9970",
+      "(054) 472-1234 loc. 101",
+      "(054) 472-1234 local 101",
+      "N/A",
+      "(054) 472-1234 to 36",
+      "(054) 472-1234 loc 101/102",
+      "(054) 472-1234 x101",
+      "Tel. 472-1234"
+    ],
+    "invalid": [
+      "call me",
+      "123",
+      "(054) abc-1234",
+      "054-914-9970 ask for Maria"
+    ]
+  },
+  "last_name": {
+    "valid": [
+      "Dela Cruz",
+      "O'Brien",
+      "Dela Cruz-Santos",
+      "Ñoño",
+      "Mañalac",
+      "St. John",
+      "D’Souza",
+      "Santos (deceased)"
+    ],
+    "invalid": [
+      "Cruz123",
+      "J0hn",
+      "@Cruz",
+      "12",
+      "-Cruz",
+      "N/A"
+    ]
+  },
+  "middle_name": {
+    "valid": [
+      "Reyes",
+      "Dela Cruz",
+      "N/A"
+    ],
+    "invalid": [
+      "R3yes",
+      "Reyes_",
+      "#"
+    ]
+  },
+  "name_ext": {
+    "valid": [
+      "Jr.",
+      "Sr.",
+      "III",
+      "N/A"
+    ],
+    "invalid": [
+      "J1",
+      "2nd",
+      "Jr/Sr"
+    ]
+  },
+  "child_full_name": {
+    "valid": [
+      "Juan Dela Cruz",
+      "Cruz, Juan Dela",
+      "Ma. Cristina O'Neil",
+      "N/A"
+    ],
+    "invalid": [
+      "Baby 2",
+      "J@n",
+      "Juan_Cruz"
+    ]
+  },
+  "reference_contact": {
+    "valid": [
+      "09171234567",
+      "(054) 914-9970",
+      "+63 917 123 4567",
+      "ana.reyes@example.com",
+      "ana@mail.ph",
+      "Tel. 472-1234"
+    ],
+    "invalid": [
+      "N/A",
+      "none",
+      "12",
+      "ana@",
+      "@example.com",
+      "ana example.com",
+      "ana@example"
+    ]
+  },
+  "first_name": {
+    "valid": [
+      "Maria Luisa",
+      "Ma. Cristina",
+      "Niño",
+      "Jo-Ann"
+    ],
+    "invalid": [
+      "Maria2",
+      "M@ria",
+      "Jose_"
+    ]
+  },
+  "email": {
+    "valid": [
+      "maria.reyes@example.com",
+      "ana+tag@mail.example.ph",
+      "j.dela-cruz@da.gov.ph"
+    ],
+    "invalid": [
+      "not-an-email",
+      "name@",
+      "@example.com",
+      "two words@example.com",
+      "name@example"
+    ]
+  },
+  "_messages_note": "The exact sentence a wrong value gets, for boxes outside a repeated row. The server test and the browser check both compare against these.",
+  "messages": {
+    "philsys_number": {
+      "value": "1234",
+      "message": "PhilSys Card Number (PCN) must have 16 digits, for example 1234-5678-9012-3456. Dashes and spaces are fine; write N/A if you have none."
+    },
+    "tin_number": {
+      "value": "1234",
+      "message": "TIN No. must have 9, 12 or 14 digits, for example 123-456-789. Dashes and spaces are fine; write N/A if you have none."
+    },
+    "philhealth_number": {
+      "value": "1234",
+      "message": "PhilHealth No. must have 12 digits, for example 12-345678901-2. Dashes and spaces are fine; write N/A if you have none."
+    },
+    "pagibig_number": {
+      "value": "1234",
+      "message": "PAG-IBIG ID No. must have 12 digits, for example 1234-5678-9012. Dashes and spaces are fine; write N/A if you have none."
+    },
+    "umid_number": {
+      "value": "1234",
+      "message": "UMID ID No. must have 12 digits, for example 0845-8859385-3. Dashes and spaces are fine; write N/A if you have none."
+    },
+    "mobile_number": {
+      "value": "12345",
+      "message": "Mobile No. must look like 09171234567 or +639171234567."
+    },
+    "telephone": {
+      "value": "call me",
+      "message": "Telephone No. may only have numbers, spaces and ( ) + - . / for example (054) 123-4567, optionally followed by loc. 101. Write N/A if none."
+    },
+    "last_name": {
+      "value": "Cruz3",
+      "message": "Surname may only have letters, spaces and . - ' , ( ) (no numbers)."
+    },
+    "middle_name": {
+      "value": "R3",
+      "message": "Middle name may only have letters, spaces and . - ' , ( ) (no numbers). Write N/A if none."
+    },
+    "first_name": {
+      "value": "Jo@n",
+      "message": "First name may only have letters, spaces and . - ' , ( ) (no numbers)."
+    },
+    "email": {
+      "value": "not-an-email",
+      "message": "Email must be a valid email address, like name@example.com."
+    }
+  }
+}

@@ -1,8 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
 import { Save, Plus, Trash2, Upload, X, Camera, PenLine, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
-import type { User, PdsData, PdsReference, PdsGovernmentId, PdsSaveCallback } from '@/types/pds';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import LimitedInput from '@/components/limited-input';
+import SignaturePadModal from '@/components/signature-pad-modal';
 import { Spinner } from '@/components/ui/spinner';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { pdsFileUrl } from '@/lib/pds-file-url';
+import { checkContact, checkPersonName } from '@/lib/pds-formats';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsReference, PdsGovernmentId, PdsSaveCallback } from '@/types/pds';
 
 interface Props { 
     user: User; 
@@ -33,11 +38,11 @@ interface DeclarationData {
     passport_raw:      string | null;
 }
 
-/** Convert a stored path like "pds/1/photo.jpg" to a full /storage/ URL. */
+/** Turn a stored path like "pds/1/photo.jpg" into its private-file URL; blob: and http URLs pass through. */
 function storageUrl(path: string | null | undefined): string | null {
     if (!path) return null;
     if (path.startsWith('http') || path.startsWith('blob:')) return path;
-    return `/storage/${path}`;
+    return pdsFileUrl(path);
 }
 
 function validate(
@@ -57,9 +62,18 @@ function validate(
 
     const refErrors: RefErrors = refs.map(ref => {
         const e: Partial<Record<keyof PdsReference, string>> = {};
-        if (!ref.name?.trim())      e.name      = 'Reference name is required.';
-        if (!ref.address?.trim())   e.address   = 'Address is required.';
+        // Only set a key when there is a message: the form counts a row's keys to decide whether it has an error.
+        if (!ref.name?.trim()) e.name = 'Reference name is required.';
+        else {
+            const message = checkPersonName(ref.name, 'Reference name');
+            if (message) e.name = message;
+        }
+        if (!ref.address?.trim()) e.address = 'Address is required.';
         if (!ref.telephone?.trim()) e.telephone = 'Contact No. / Email is required.';
+        else {
+            const message = checkContact(ref.telephone);
+            if (message) e.telephone = message;
+        }
         return e;
     });
 
@@ -72,7 +86,7 @@ function validate(
 }
 
 // Shimmer skeleton
-// Shown while a saved /storage/ image is fetching over the network
+// Shown while a saved image is fetching over the network
 
 function ImageSkeleton() {
     return ( 
@@ -307,6 +321,7 @@ function SignatureUploadBox({
 }) {
     const inputRef                  = useRef<HTMLInputElement>(null);
     const [imgLoaded, setImgLoaded] = useState(false);
+    const [padOpen,   setPadOpen]   = useState(false);
 
     // Reset the loaded flag whenever the src changes (new upload or clear + re-upload)
     useEffect(() => { setImgLoaded(false); }, [preview]);
@@ -319,8 +334,15 @@ function SignatureUploadBox({
         e.target.value = '';
     };
 
+    // A drawn signature goes through the same path as an uploaded image file.
+    const handlePadSave = (blob: Blob) => {
+        onFile(new File([blob], 'signature.png', { type: 'image/png' }), URL.createObjectURL(blob));
+        setPadOpen(false);
+    };
+
     return (
         <div>
+            {padOpen && <SignaturePadModal onSave={handlePadSave} onClose={() => setPadOpen(false)} />}
             <div
                 className={`relative w-full aspect-3/1 rounded-xl border-2 transition-colors overflow-hidden ${
                     error
@@ -357,7 +379,7 @@ function SignatureUploadBox({
                         className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 cursor-pointer w-full h-full"
                     >
                         <Upload className="w-5 h-5 text-gray-400" />
-                        <span className="text-[10px] text-gray-400 text-center px-2 leading-tight">
+                        <span className="text-xs text-gray-400 text-center px-2 leading-tight">
                             Upload your wet or e-signature image (PNG with transparent background preferred)
                         </span>
                     </button>
@@ -371,15 +393,24 @@ function SignatureUploadBox({
                     className="hidden"
                 />
             </div>
-            {preview && (
+            <div className="mt-1 flex items-center justify-center gap-4">
+                {preview && (
+                    <button
+                        type="button"
+                        onClick={() => inputRef.current?.click()}
+                        className="text-sm font-semibold text-green-600 hover:text-green-700 text-center cursor-pointer"
+                    >
+                        Change
+                    </button>
+                )}
                 <button
                     type="button"
-                    onClick={() => inputRef.current?.click()}
-                    className="mt-1 w-full text-sm font-semibold text-green-600 hover:text-green-700 text-center cursor-pointer"
+                    onClick={() => setPadOpen(true)}
+                    className="flex items-center gap-1 text-sm font-semibold text-green-600 hover:text-green-700 cursor-pointer"
                 >
-                    Change
+                    <PenLine className="w-3.5 h-3.5" /> {preview ? 'Draw again' : 'Or draw your signature'}
                 </button>
-            )}
+            </div>
             {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
     );
@@ -580,18 +611,32 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
     const removeRef = (i: number) => { setRefs(p => p.filter((_, idx) => idx !== i)); setRefErrors(p => p.filter((_, idx) => idx !== i)); };
 
     const setPassportPhoto = (file: File, url: string) => {
+        markDirty();
         setDecl(p => ({ ...p, passport_photo: file, passport_preview: url }));
         if (submitted) setPhotoErrors(p => ({ ...p, passport_photo: undefined }));
     };
-    const clearPassportPhoto = () => setDecl(p => ({ ...p, passport_photo: null, passport_preview: null, passport_raw: null }));
+    const clearPassportPhoto = () => {
+        markDirty();
+        setDecl(p => ({ ...p, passport_photo: null, passport_preview: null, passport_raw: null }));
+    };
+
+    // A picture made in this browser (an upload or a drawing) is released when it is replaced or removed.
+    const releasePreview = (preview: string | null) => { if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview); };
 
     const setSignature = (file: File, url: string) => {
+        markDirty();
+        releasePreview(decl.signature_preview);
         setDecl(p => ({ ...p, signature: file, signature_preview: url }));
         if (submitted) setPhotoErrors(p => ({ ...p, signature: undefined }));
     };
-    const clearSignature = () => setDecl(p => ({ ...p, signature: null, signature_preview: null }));
+    const clearSignature = () => {
+        markDirty();
+        releasePreview(decl.signature_preview);
+        setDecl(p => ({ ...p, signature: null, signature_preview: null }));
+    };
 
     const setDateAccomplished = (v: string) => {
+        markDirty();
         setDecl(p => ({ ...p, date_accomplished: v }));
         if (submitted) setPhotoErrors(p => ({ ...p, date_accomplished: undefined }));
     };
@@ -636,12 +681,14 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
         if (decl.passport_photo) payload.passport_photo = decl.passport_photo;
         if (decl.signature)      payload.signature      = decl.signature;
 
+        let saved = true;
         try {
-            await onSave('references', payload);
-        } catch (e) {
+            saved = (await onSave('references', payload)) !== false;
+        } catch {
+            saved = false;
         }
 
-        markClean(); // changes saved
+        if (saved) markClean(); // only when the server took it, so a failed save keeps the unsaved-changes warning
 
     };
 
@@ -683,17 +730,17 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div id={`ref-${i}-name`}>
                                     <label className={labelClass}>Name <span className="text-red-500">*</span></label>
-                                    <input type="text" value={ref.name ?? ''} onChange={e => setRef(i, 'name', e.target.value)} className={refIc(i, 'name')} />
+                                    <LimitedInput maxLength={PDS_MAX.reference_name} value={ref.name ?? ''} onChange={e => setRef(i, 'name', e.target.value)} className={refIc(i, 'name')} />
                                     {refErr(i, 'name')}
                                 </div>
                                 <div id={`ref-${i}-address`}>
                                     <label className={labelClass}>Office/Residential Address <span className="text-red-500">*</span></label>
-                                    <input type="text" value={ref.address ?? ''} onChange={e => setRef(i, 'address', e.target.value)} className={refIc(i, 'address')} />
+                                    <LimitedInput maxLength={PDS_MAX.reference_address} value={ref.address ?? ''} onChange={e => setRef(i, 'address', e.target.value)} className={refIc(i, 'address')} />
                                     {refErr(i, 'address')}
                                 </div>
                                 <div id={`ref-${i}-telephone`}>
                                     <label className={labelClass}>Contact No. / Email <span className="text-red-500">*</span></label>
-                                    <input type="text" value={ref.telephone ?? ''} onChange={e => setRef(i, 'telephone', e.target.value)} className={refIc(i, 'telephone')} />
+                                    <LimitedInput maxLength={PDS_MAX.reference_telephone} value={ref.telephone ?? ''} onChange={e => setRef(i, 'telephone', e.target.value)} className={refIc(i, 'telephone')} />
                                     {refErr(i, 'telephone')}
                                 </div>
                             </div>
@@ -719,18 +766,18 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
                         </div>
                         <div id="field-id_number">
                             <label className={labelClass}>ID / License / Passport No. <span className="text-red-500">*</span></label>
-                            <input type="text" value={govId.id_number ?? ''} onChange={e => setGov('id_number', e.target.value)} className={govIc('id_number')} />
+                            <LimitedInput maxLength={PDS_MAX.id_number} value={govId.id_number ?? ''} onChange={e => setGov('id_number', e.target.value)} className={govIc('id_number')} />
                             {govErr('id_number')}
                         </div>
                         <div id="field-date_of_issuance">
                             <label className={labelClass}>Date of Issuance <span className="text-red-500">*</span></label>
-                            <input type="text" value={govId.date_of_issuance ?? ''} onChange={e => setGov('date_of_issuance', e.target.value)}
+                            <LimitedInput maxLength={PDS_MAX.date_of_issuance} value={govId.date_of_issuance ?? ''} onChange={e => setGov('date_of_issuance', e.target.value)}
                                 placeholder="mm/dd/yyyy or Month DD, YYYY" className={govIc('date_of_issuance')} />
                             {govErr('date_of_issuance')}
                         </div>
                         <div id="field-place_of_issuance">
                             <label className={labelClass}>Place of Issuance <span className="text-red-500">*</span></label>
-                            <input type="text" value={govId.place_of_issuance ?? ''} onChange={e => setGov('place_of_issuance', e.target.value)} className={govIc('place_of_issuance')} />
+                            <LimitedInput maxLength={PDS_MAX.place_of_issuance} value={govId.place_of_issuance ?? ''} onChange={e => setGov('place_of_issuance', e.target.value)} className={govIc('place_of_issuance')} />
                             {govErr('place_of_issuance')}
                         </div>
                     </div>
@@ -742,10 +789,10 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
                 <h3 className="text-sm font-medium text-green-700 uppercase mb-3 pb-2 border-b border-gray-100">
                     Photo and Signature
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-start">
+                <div className="flex flex-col sm:flex-row gap-5 items-start">
 
-                    {/* Passport Photo */}
-                    <div id="field-passport_photo">
+                    {/* Passport Photo: kept to a passport-photo size, so it does not stretch tall beside short boxes */}
+                    <div id="field-passport_photo" className="w-full max-w-56 shrink-0">
                         <div className="flex items-center gap-1.5 mb-2">
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 Passport-Size Photo <span className="text-red-500">*</span>
@@ -760,44 +807,48 @@ export default function ReferencesSection({ pdsData, onSave, saving, onDirtyChan
                         />
                     </div>
 
-                    {/* Signature */}
-                    <div id="field-signature">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Signature <span className="text-red-500">*</span>
-                            </span>
-                        </div>
-                        <SignatureUploadBox
-                            id="upload-signature"
-                            preview={decl.signature_preview}
-                            error={photoErrors.signature}
-                            onFile={setSignature}
-                            onClear={clearSignature}
-                        />
-                    </div>
+                    {/* Signature and the date it was signed sit together, stacked beside the photo */}
+                    <div className="w-full min-w-0 sm:flex-1 space-y-5">
 
-                    {/* Date Accomplished */}
-                    <div id="field-date_accomplished">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Date Accomplished <span className="text-red-500">*</span>
-                            </span>
+                        {/* Signature */}
+                        <div id="field-signature" className="max-w-lg">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                    Signature <span className="text-red-500">*</span>
+                                </span>
+                            </div>
+                            <SignatureUploadBox
+                                id="upload-signature"
+                                preview={decl.signature_preview}
+                                error={photoErrors.signature}
+                                onFile={setSignature}
+                                onClear={clearSignature}
+                            />
                         </div>
-                        <input
-                            type="date"
-                            value={decl.date_accomplished}
-                            onChange={e => setDateAccomplished(e.target.value)}
-                            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white transition-all ${
-                                photoErrors.date_accomplished
-                                    ? 'border-red-400 focus:ring-red-400'
-                                    : 'border-gray-200 focus:ring-green-500'
-                            }`}
-                        />
-                        {photoErrors.date_accomplished && (
-                            <p className="mt-1 text-xs text-red-500">{photoErrors.date_accomplished}</p>
-                        )}
-                    </div>
 
+                        {/* Date Accomplished */}
+                        <div id="field-date_accomplished" className="max-w-xs">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                    Date Accomplished <span className="text-red-500">*</span>
+                                </span>
+                            </div>
+                            <input
+                                type="date"
+                                value={decl.date_accomplished}
+                                onChange={e => setDateAccomplished(e.target.value)}
+                                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white transition-all ${
+                                    photoErrors.date_accomplished
+                                        ? 'border-red-400 focus:ring-red-400'
+                                        : 'border-gray-200 focus:ring-green-500'
+                                }`}
+                            />
+                            {photoErrors.date_accomplished && (
+                                <p className="mt-1 text-xs text-red-500">{photoErrors.date_accomplished}</p>
+                            )}
+                        </div>
+
+                    </div>
                 </div>
             </div>
 

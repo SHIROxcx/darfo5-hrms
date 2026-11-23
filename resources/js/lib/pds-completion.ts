@@ -3,11 +3,11 @@ import { isEducationComplete } from '@/pages/pds/sections/EducationSection';
 
 export type PdsSectionId =
     | 'personal' | 'family' | 'education' | 'eligibility' | 'work_experience'
-    | 'voluntary_work' | 'trainings' | 'other_info' | 'questions' | 'references';
+    | 'trainings' | 'voluntary_work' | 'other_info' | 'questions' | 'references';
 
 export const PDS_SECTION_IDS: PdsSectionId[] = [
     'personal', 'family', 'education', 'eligibility', 'work_experience',
-    'voluntary_work', 'trainings', 'other_info', 'questions', 'references',
+    'trainings', 'voluntary_work', 'other_info', 'questions', 'references',
 ];
 
 export function getSectionCompletion(sectionId: PdsSectionId, pdsData: PdsData): boolean {

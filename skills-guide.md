@@ -25,7 +25,19 @@ The skills live in `.claude/skills/<skill-name>/SKILL.md`.
 
 The example here is a Trainings module.
 
-### Step 1: Ask for the feature
+### Step 1: Fill in a module spec (recommended)
+
+For anything bigger than a simple list, write the module down first:
+
+1. Copy [docs/modules/_template.md](docs/modules/_template.md) to `docs/modules/<module-name>.md`, e.g. `docs/modules/trainings.md`.
+2. Fill in what you know: purpose, who may do what, fields, screens, workflow, rules, notifications, forms and reports, privacy, and the "done when" checks. Leave blanks or write `?` where you're unsure.
+3. Tell Claude:
+
+> "Build the module in docs/modules/trainings.md"
+
+Claude treats the spec as the requirements, asks only about the blanks, and writes your answers back into the spec. The spec stays in the repo as the record of what was agreed. HR or other offices can fill in the purpose, rules and forms sections, even without touching code.
+
+For a quick module, you can skip the spec and just ask:
 
 > "Add a Trainings module where HR records trainings each employee attended: title, date, hours, sponsor, and a certificate upload."
 
@@ -108,7 +120,8 @@ Claude moves those rules from "Pending HR" to "Confirmed" in `csc-hr-rules`, wit
 | When | Say | Skill |
 |---|---|---|
 | Start of day, or a startup error | "start the project" | `dev-doctor` |
-| New feature | "add a … module" | `admin-module` (+ `architecture-guard`, `hrms-authz-check`, `ui-consistency`) |
+| Plan a new feature | copy `docs/modules/_template.md` and fill it in | — |
+| New feature | "build the module in docs/modules/….md" or "add a … module" | `admin-module` (+ `architecture-guard`, `hrms-authz-check`, `ui-consistency`) |
 | New printable form | "add a printable …" | `official-form-pdf` |
 | New notification or email | "notify … when …" | `notify-employee` |
 | Leave, attendance or performance rules | (runs on its own) | `csc-hr-rules` |

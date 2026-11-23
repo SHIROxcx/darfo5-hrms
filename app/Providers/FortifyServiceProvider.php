@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -37,6 +38,16 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirects('register', '/verify-otp');
 
         Fortify::authenticateUsing(function (Request $request) {
+            // Only text of a sensible length that looks like an email is looked up (and no long password is hashed).
+            Validator::make($request->only('email', 'password'), [
+                'email' => ['bail', 'required', 'string', 'max:255', 'email'],
+                'password' => ['bail', 'required', 'string', 'max:255'],
+            ], [
+                'email.max' => 'Email is too long (maximum 255 characters).',
+                'email.email' => 'Enter a valid email address, like name@example.com.',
+                'password.max' => 'Password is too long (maximum 255 characters).',
+            ])->validate();
+
             $user = User::where('email', $request->email)->first();
 
             if (! $user) {
@@ -137,7 +148,9 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            // The client can send anything here (a list, a huge string): only a reasonable piece of text goes in the key.
+            $email = $request->input(Fortify::username());
+            $throttleKey = Str::transliterate(Str::lower(is_string($email) ? mb_substr($email, 0, 255) : '').'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
         });

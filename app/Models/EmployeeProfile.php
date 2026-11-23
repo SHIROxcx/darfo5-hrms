@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeProfile extends Model
 {
+    /** The employment types a person can choose when signing up (the same list as resources/js/lib/employment-type.ts). */
+    public const EMPLOYMENT_TYPES = ['jo', 'cos', 'pakyaw', 'permanent'];
+
     protected $fillable = [
         'user_id', 'sex', 'birth_place', 'civil_status', 'mobile_number',
         'employee_number', 'employment_type', 'position', 'salary_grade',

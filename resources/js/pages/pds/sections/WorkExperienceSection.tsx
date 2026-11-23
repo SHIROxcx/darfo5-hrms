@@ -1,9 +1,13 @@
+import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, AlertCircle, BriefcaseBusiness, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, AlertCircle, BriefcaseBusiness, ExternalLink } from 'lucide-react';
-import type { User, PdsData, PdsWorkExperience } from '@/types/pds';
-import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
+import LimitedInput, { CharCounter, useFocusTracking } from '@/components/limited-input';
+import { Spinner } from '@/components/ui/spinner';
+import { pdsFileUrl } from '@/lib/pds-file-url';
+import { PDS_MAX, acceptsEdit, clipPaste } from '@/lib/pds-limits';
+import { splitGradeStep, joinGradeStep, cleanMoney } from '@/lib/pds-salary';
+import type { User, PdsData, PdsWorkExperience } from '@/types/pds';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,7 +39,8 @@ interface WorkExperienceEntry extends PdsWorkExperience {
 
 const EMPTY: WorkExperienceEntry = {
     date_from: '', date_to: '', is_present: false, position_title: '', office: '', department: '',
-    supervisor: '', location: '', status_of_appointment: '', is_government_service: false,
+    supervisor: '', location: '', monthly_salary: '', salary_grade: '',
+    status_of_appointment: '', is_government_service: false,
     accomplishments: '', actual_duties: '',
 };
 
@@ -69,6 +74,10 @@ function validateRow(row: WorkExperienceEntry, rowFile: RowFile): RowErrors {
     if (!row.date_from?.trim())                     errs.date_from = 'Required.';
     if (!row.is_present && !row.date_to?.trim())    errs.date_to = 'Required, or check Present.';
     if (!row.status_of_appointment?.trim())         errs.status_of_appointment = 'Required.';
+    const { grade, step } = splitGradeStep(row.salary_grade);
+    if (grade && !step)                             errs.salary_grade = 'Add the step increment, e.g. 24-2.';
+    else if (row.salary_grade && !/^\d{1,2}-\d$/.test(row.salary_grade))
+                                                    errs.salary_grade = 'Salary grade and step must look like 24-2.';
     if (!rowFile?.file && !rowFile?.existing)       errs.attachment_file = 'Please attach a supporting document.';
     return errs;
 }
@@ -89,7 +98,8 @@ const buildFormData = (rows: WorkExperienceEntry[], files: RowFile[]) => {
         fd.append(`work_experience[${i}][department]`,            row.department            ?? '');
         fd.append(`work_experience[${i}][supervisor]`,            row.supervisor            ?? '');
         fd.append(`work_experience[${i}][location]`,              row.location              ?? '');
-        fd.append(`work_experience[${i}][salary_grade]`,          (row as any).salary_grade ?? '');
+        fd.append(`work_experience[${i}][monthly_salary]`,        row.monthly_salary == null ? '' : String(row.monthly_salary));
+        fd.append(`work_experience[${i}][salary_grade]`,          row.salary_grade ?? '');
         fd.append(`work_experience[${i}][status_of_appointment]`, row.status_of_appointment ?? '');
         fd.append(`work_experience[${i}][is_government_service]`, row.is_government_service ? '1' : '0');
         fd.append(`work_experience[${i}][accomplishments]`,       row.accomplishments       ?? '');
@@ -116,6 +126,7 @@ function PositionInput({ value, positions, loading, onChange, hasError }: Positi
     const [open,   setOpen]   = useState(false);
     const [style,  setStyle]  = useState<React.CSSProperties>({});
     const inputRef            = useRef<HTMLInputElement>(null);
+    const { focused, focusProps } = useFocusTracking();
 
     const base = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors";
     const ok   = `${base} border-gray-200 focus:ring-green-500`;
@@ -160,14 +171,17 @@ function PositionInput({ value, positions, loading, onChange, hasError }: Positi
             )}
             <input
                 ref={inputRef}
+                maxLength={PDS_MAX.position_title}
                 value={search}
                 onChange={handleChange}
-                onFocus={openDropdown}
+                onFocus={() => { openDropdown(); focusProps.onFocus(); }}
+                onBlur={focusProps.onBlur}
                 disabled={loading}
                 placeholder={loading ? 'Loading positions…' : 'Search or type position'}
                 autoComplete="off"
                 className={`${hasError ? err : ok} ${loading ? 'text-gray-400' : ''} pr-8`}
             />
+            <CharCounter length={search.length} max={PDS_MAX.position_title} focused={focused} />
             {open && <div className="fixed inset-0" style={{ zIndex: 9998 }} onMouseDown={() => setOpen(false)} />}
             {open && (
                 <ul style={style} className="max-h-56 overflow-auto rounded-xl border border-gray-200 bg-white shadow-xl text-sm">
@@ -192,11 +206,10 @@ function PositionInput({ value, positions, loading, onChange, hasError }: Positi
 interface AttachmentFieldProps {
     rowFile:      RowFile;
     onChange:     (rf: RowFile) => void;
-    storageBase?: string;
     error?:       string;
 }
 
-function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }: AttachmentFieldProps) {
+function AttachmentField({ rowFile, onChange, error }: AttachmentFieldProps) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -227,7 +240,7 @@ function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }:
         setSizeError('');
     };
 
-    const existingUrl = hasExisting ? `${storageBase}/${rowFile.existing}` : null;
+    const existingUrl = hasExisting ? pdsFileUrl(rowFile.existing) : null;
     const viewUrl     = rowFile.preview ?? existingUrl;
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
@@ -295,6 +308,8 @@ interface BulletTextareaProps {
     /** Clean value (no bullets) — matches what you store in draft state */
     value:       string;
     onChange:    (clean: string) => void;
+    /** Longest stored text; typing or pasting past it is cut off. */
+    maxLength?:  number;
     rows?:       number;
     placeholder?: string;
     className?:  string;
@@ -320,13 +335,20 @@ function stripBullets(bulleted: string): string {
  
 function BulletTextarea({
     value,
-    onChange,
+    onChange: onChangeValue,
+    maxLength,
     rows = 4,
     placeholder,
     className = '',
     disabled  = false,
 }: BulletTextareaProps) {
     const ref = useRef<HTMLTextAreaElement>(null);
+    const { focused, focusProps } = useFocusTracking();
+    // Refuse an edit that would grow the text past the limit (never cut the end off); shrinking is always fine.
+    const onChange = useCallback(
+        (clean: string) => { if (acceptsEdit(clean, value, maxLength)) onChangeValue(clean); },
+        [onChangeValue, maxLength, value],
+    );
  
     // Convert clean value into bulleted display value
     const displayValue = addBullets(value);
@@ -416,7 +438,7 @@ function BulletTextarea({
         if (!el) return;
  
         const pasted = e.clipboardData.getData('text');
-        const clean  = pasted
+        const cleaned = pasted
             .split('\n')
             .map(l => l.replace(/^[•\-\*]\s?/, '').trim())
             .join('\n');
@@ -425,27 +447,32 @@ function BulletTextarea({
         const end    = el.selectionEnd;
         const before = el.value.slice(0, start);
         const after  = el.value.slice(end);
+        const clean  = clipPaste(cleaned, value, stripBullets(el.value.slice(start, end)).length, maxLength);
  
         const newVal = before + clean + after;
         const newPos = start + clean.length;
  
         cursorRef.current = newPos;
         onChange(stripBullets(addBullets(newVal)));
-    }, [onChange]);
+    }, [onChange, value, maxLength]);
  
     return (
-        <textarea
-            ref={ref}
-            rows={rows}
-            value={displayValue}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            disabled={disabled}
-            placeholder={placeholder ? `${BULLET}${placeholder}` : BULLET}
-            className={className}
-            spellCheck
-        />
+        <>
+            <textarea
+                ref={ref}
+                {...focusProps}
+                rows={rows}
+                value={displayValue}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                disabled={disabled}
+                placeholder={placeholder ? `${BULLET}${placeholder}` : BULLET}
+                className={className}
+                spellCheck
+            />
+            {maxLength ? <CharCounter length={value.length} max={maxLength} focused={focused} /> : null}
+        </>
     );
 }
 
@@ -486,6 +513,7 @@ function WorkExperienceModal({
     const ok   = `${base} border-gray-200 focus:ring-green-500`;
     const err  = `${base} border-red-400 focus:ring-red-400 bg-red-50`;
     const ic   = (k: keyof WorkExperienceEntry) => errors[k] ? err : ok;
+    const { grade, step } = splitGradeStep(draft.salary_grade);
 
     const taBase = "w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 bg-white transition-colors resize-none";
     const taOk   = `${taBase} border-gray-200 focus:ring-green-500`;
@@ -527,7 +555,7 @@ function WorkExperienceModal({
                         <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Department / Agency / Company <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.department ?? ''} className={ic('department')}
+                        <LimitedInput maxLength={PDS_MAX.department} value={draft.department ?? ''} className={ic('department')}
                             placeholder="Agency or Company name"
                             onChange={e => onFieldChange('department', e.target.value)} />
                         {errors.department && <p className="mt-1 text-xs text-red-500">{errors.department}</p>}
@@ -538,7 +566,7 @@ function WorkExperienceModal({
                         <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                             Office / Section / Unit <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.office ?? ''} className={ic('office')}
+                        <LimitedInput maxLength={PDS_MAX.office} value={draft.office ?? ''} className={ic('office')}
                             placeholder="Office or Unit"
                             onChange={e => onFieldChange('office', e.target.value)} />
                         {errors.office && <p className="mt-1 text-xs text-red-500">{errors.office}</p>}
@@ -595,6 +623,39 @@ function WorkExperienceModal({
                         </div>
                     </div>
 
+                    {/* Monthly Salary */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                            Monthly Salary
+                        </label>
+                        <input type="text" inputMode="decimal"
+                            value={draft.monthly_salary == null ? '' : String(draft.monthly_salary)}
+                            className={ic('monthly_salary')} placeholder="e.g. 21877.00"
+                            onChange={e => onFieldChange('monthly_salary', cleanMoney(e.target.value))} />
+                        {errors.monthly_salary && <p className="mt-1 text-xs text-red-500">{errors.monthly_salary}</p>}
+                    </div>
+
+                    {/* Salary/Job/Pay Grade & Step Increment */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Salary/Job/Pay Grade
+                            </label>
+                            <input type="number" min="1" max="33" value={grade}
+                                className={ic('salary_grade')} placeholder="e.g. 24"
+                                onChange={e => onFieldChange('salary_grade', joinGradeStep(e.target.value, step))} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
+                                Step
+                            </label>
+                            <input type="number" min="1" max="8" value={step} disabled={!grade}
+                                className={ic('salary_grade')} placeholder="e.g. 2"
+                                onChange={e => onFieldChange('salary_grade', joinGradeStep(grade, e.target.value))} />
+                            {errors.salary_grade && <p className="mt-1 text-xs text-red-500">{errors.salary_grade}</p>}
+                        </div>
+                    </div>
+
                     {/* ── Work Experience Sheet ── */}
                     <div className="border-t border-dashed border-gray-200 pt-4 space-y-4">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Work Experience Sheet Details</p>
@@ -604,7 +665,7 @@ function WorkExperienceModal({
                             <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                                 Immediate Supervisor <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.supervisor ?? ''} className={ic('supervisor')}
+                            <LimitedInput maxLength={PDS_MAX.supervisor} value={draft.supervisor ?? ''} className={ic('supervisor')}
                                 placeholder="Write full name"
                                 onChange={e => onFieldChange('supervisor', e.target.value)} />
                             {errors.supervisor && <p className="mt-1 text-xs text-red-500">{errors.supervisor}</p>}
@@ -615,7 +676,7 @@ function WorkExperienceModal({
                             <label className="block text-xs font-medium text-gray-600 mb-1 uppercase">
                                 Location of Agency <span className="text-red-500">*</span>
                             </label>
-                            <input type="text" value={draft.location ?? ''} className={ic('location')}
+                            <LimitedInput maxLength={PDS_MAX.location} value={draft.location ?? ''} className={ic('location')}
                                 placeholder="e.g. Pili, Camarines Sur"
                                 onChange={e => onFieldChange('location', e.target.value)} />
                             {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location}</p>}
@@ -628,6 +689,7 @@ function WorkExperienceModal({
                             </label>
                             <BulletTextarea
                                 rows={4}
+                                maxLength={PDS_MAX.accomplishments}
                                 value={draft.accomplishments ?? ''}
                                 onChange={val => onFieldChange('accomplishments', val)}
                                 placeholder="Developed recruitment plan"
@@ -648,6 +710,7 @@ function WorkExperienceModal({
                             </label>
                             <BulletTextarea
                                 rows={4}
+                                maxLength={PDS_MAX.actual_duties}
                                 value={draft.actual_duties ?? ''}
                                 onChange={val => onFieldChange('actual_duties', val)}
                                 placeholder="Responsible for management of recruitment and selection process"
@@ -699,10 +762,9 @@ interface CardProps {
     rowFile: RowFile;
     onEdit: () => void;
     onDelete: () => void;
-    storageBase?: string;
 }
 
-function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage' }: CardProps) {
+function WorkExperienceCard({ row, rowFile, onEdit, onDelete }: CardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
@@ -714,7 +776,7 @@ function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/st
         : hasExisting
             ? rowFile.existing!.split('/').pop() ?? 'Attachment'
             : null;
-    const viewUrl = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
+    const viewUrl = rowFile.preview ?? (hasExisting ? pdsFileUrl(rowFile.existing) : null);
 
     const dateRange = row.is_present
         ? `${formatDate(row.date_from)} – Present`
@@ -742,6 +804,14 @@ function WorkExperienceCard({ row, rowFile, onEdit, onDelete, storageBase = '/st
                 </p>
                 <p className="text-xs text-gray-600 mt-0.5 truncate">{row.department}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{row.status_of_appointment}</p>
+                {(row.monthly_salary || row.salary_grade) && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        {[
+                            row.monthly_salary ? `P${Number(row.monthly_salary).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null,
+                            row.salary_grade ? `SG ${row.salary_grade}` : null,
+                        ].filter(Boolean).join(' · ')}
+                    </p>
+                )}
                 <p className="text-xs text-gray-600 mt-0.5">{(row.date_from || row.is_present) && dateRange}</p>
                 {row.is_government_service && (
                     <p className="text-xs text-green-600 font-medium mt-0.5">Government Service</p>
@@ -860,7 +930,11 @@ export default function WorkExperienceSection({ pdsData, onSave, saving }: Props
     };
 
     const handlePositionChange = (title: string, sg?: string) => {
-        setDraft(prev => ({ ...prev, position_title: title, ...(sg !== undefined ? { salary_grade: sg } : {}) }));
+        setDraft(prev => ({
+            ...prev,
+            position_title: title,
+            ...(sg !== undefined ? { salary_grade: joinGradeStep(sg, splitGradeStep(prev.salary_grade).step) } : {}),
+        }));
         if (submitted) setDraftErrors(prev => ({ ...prev, position_title: undefined }));
     };
 

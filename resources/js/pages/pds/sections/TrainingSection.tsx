@@ -1,9 +1,12 @@
+import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, BookOpen, AlertCircle, ExternalLink, Bookmark, BookMarked } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Plus, Trash2, Paperclip, FileText, Image as ImageIcon, X, Pencil, BookOpen, AlertCircle, ExternalLink, Bookmark, BookMarked } from 'lucide-react';
-import type { User, PdsData, PdsTraining } from '@/types/pds';
-import { Spinner } from '@/components/ui/spinner';
 import Swal from 'sweetalert2';
+import LimitedInput from '@/components/limited-input';
+import { Spinner } from '@/components/ui/spinner';
+import { pdsFileUrl } from '@/lib/pds-file-url';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsTraining } from '@/types/pds';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,8 +69,8 @@ const buildFormData = (rows: PdsTraining[], files: RowFile[]) => {
 
 // ── Attachment Field ──────────────────────────────────────────────────────────
 
-function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }:
-    { rowFile: RowFile; onChange: (rf: RowFile) => void; storageBase?: string; error?: string; }) {
+function AttachmentField({ rowFile, onChange, error }:
+    { rowFile: RowFile; onChange: (rf: RowFile) => void; error?: string; }) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [sizeError, setSizeError] = useState('');
 
@@ -91,7 +94,7 @@ function AttachmentField({ rowFile, onChange, storageBase = '/storage', error }:
         setSizeError('');
     };
 
-    const existingUrl = hasExisting ? `${storageBase}/${rowFile.existing}` : null;
+    const existingUrl = hasExisting ? pdsFileUrl(rowFile.existing) : null;
     const viewUrl     = rowFile.preview ?? existingUrl;
     const previewSrc  = viewUrl && label && isImage(label) ? viewUrl : null;
 
@@ -203,7 +206,7 @@ function TrainingModal({ open, onClose, title, draft, draftFile, errors, onField
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                             Title of Training / Intervention <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.title ?? ''} className={ic('title')}
+                        <LimitedInput maxLength={PDS_MAX.title} value={draft.title ?? ''} className={ic('title')}
                             placeholder="Write title in full"
                             onChange={e => onFieldChange('title', e.target.value)} />
                         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
@@ -254,7 +257,7 @@ function TrainingModal({ open, onClose, title, draft, draftFile, errors, onField
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                             Conducted / Sponsored By <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={draft.conducted_by ?? ''} className={ic('conducted_by')}
+                        <LimitedInput maxLength={PDS_MAX.conducted_by} value={draft.conducted_by ?? ''} className={ic('conducted_by')}
                             placeholder="Institution or organization name"
                             onChange={e => onFieldChange('conducted_by', e.target.value)} />
                         {errors.conducted_by && <p className="mt-1 text-xs text-red-500">{errors.conducted_by}</p>}
@@ -297,10 +300,9 @@ interface CardProps {
     rowFile: RowFile;
     onEdit: () => void;
     onDelete: () => void;
-    storageBase?: string;
 }
 
-function TrainingCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage' }: CardProps) {
+function TrainingCard({ row, rowFile, onEdit, onDelete }: CardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
@@ -312,7 +314,7 @@ function TrainingCard({ row, rowFile, onEdit, onDelete, storageBase = '/storage'
         : hasExisting
             ? rowFile.existing!.split('/').pop() ?? 'Attachment'
             : null;
-    const viewUrl     = rowFile.preview ?? (hasExisting ? `${storageBase}/${rowFile.existing}` : null);
+    const viewUrl     = rowFile.preview ?? (hasExisting ? pdsFileUrl(rowFile.existing) : null);
 
     const dateRange = row.date_from || row.date_to
         ? `${formatDate(row.date_from) ?? '—'} – ${formatDate(row.date_to) ?? '—'}`
@@ -530,7 +532,7 @@ export default function TrainingSection({ pdsData, onSave, saving }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div>
-                    <h2 className="text-base font-semibold text-green-800 uppercase">VII. Learning & Development Interventions</h2>
+                    <h2 className="text-base font-semibold text-green-800 uppercase">VI. Learning & Development Interventions</h2>
                     <p className="text-xs text-gray-500 mt-0.5">Training programs attended. Write titles in full.</p>
                 </div>
                 <button type="button" onClick={openAdd}

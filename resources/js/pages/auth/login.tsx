@@ -1,4 +1,7 @@
 import { Form, Head, Link, useForm } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -6,9 +9,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { usePage } from '@inertiajs/react';
 
 type Props = {
     status?: string;
@@ -109,6 +109,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                         id="email"
                                         type="email"
                                         name="email"
+                                        maxLength={255}
                                         required
                                         autoFocus
                                         autoComplete="username"
@@ -137,6 +138,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                             id="password"
                                             type={showPassword ? 'text' : 'password'}
                                             name="password"
+                                            maxLength={255}
                                             required
                                             autoComplete="current-password"
                                             placeholder="Password"

@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
-import type { User, PdsData, PdsPersonalInfo, PdsSaveCallback } from '@/types/pds';
-import { Spinner } from '@/components/ui/spinner';
+import { useState, useEffect } from 'react';
+import LimitedInput from '@/components/limited-input';
 import SearchableSelect from '@/components/searchable-select';
 import type { SelectOption } from '@/components/searchable-select';
+import { Spinner } from '@/components/ui/spinner';
 import { usePhLocations } from '@/hooks/usePhLocations';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { PDS_ID_FORMATS, checkGovernmentId, checkMobile, checkPersonName, checkTelephone } from '@/lib/pds-formats';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsPersonalInfo, PdsSaveCallback } from '@/types/pds';
 
 interface Props {
     user: User;
@@ -54,8 +57,22 @@ const REQUIRED_FIELDS: Array<{ key: keyof PersonalForm; label: string }> = [
     { key: 'mobile_number',     label: 'Mobile No.' },
     { key: 'pagibig_number',    label: 'PAG-IBIG ID No.' },
     { key: 'philhealth_number', label: 'PhilHealth No.' },
-    { key: 'philsys_number',    label: 'PhilSys No.' },
+    { key: 'philsys_number',    label: 'PhilSys Card Number (PCN)' },
     { key: 'tin_number',        label: 'TIN No.' },
+];
+
+// Boxes with a known shape. Same checks, same wording as the server (App\Support\PdsRules).
+const FORMAT_CHECKS: Array<{ key: keyof PersonalForm; check: (value: string) => string | null }> = [
+    { key: 'last_name',         check: v => checkPersonName(v, 'Surname') },
+    { key: 'first_name',        check: v => checkPersonName(v, 'First name') },
+    { key: 'middle_name',       check: v => checkPersonName(v, 'Middle name', true) },
+    { key: 'mobile_number',     check: checkMobile },
+    { key: 'telephone',         check: v => checkTelephone(v, { allowNa: true }) },
+    { key: 'umid_number',       check: v => checkGovernmentId('umid_number', v) },
+    { key: 'pagibig_number',    check: v => checkGovernmentId('pagibig_number', v) },
+    { key: 'philhealth_number', check: v => checkGovernmentId('philhealth_number', v) },
+    { key: 'philsys_number',    check: v => checkGovernmentId('philsys_number', v) },
+    { key: 'tin_number',        check: v => checkGovernmentId('tin_number', v) },
 ];
 
 function validate(form: PersonalForm): FormErrors {
@@ -65,6 +82,11 @@ function validate(form: PersonalForm): FormErrors {
         if (!val || String(val).trim() === '') {
             errors[key] = `${label} is required.`;
         }
+    }
+    for (const { key, check } of FORMAT_CHECKS) {
+        if (errors[key]) continue; // "required" already says what is wrong
+        const message = check(String(form[key] ?? ''));
+        if (message) errors[key] = message;
     }
     return errors;
 }
@@ -441,23 +463,24 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div id="field-last_name">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.last_name}
+                        <LimitedInput maxLength={PDS_MAX.last_name} value={form.last_name}
                             onChange={e => set('last_name', e.target.value)}
                             className={ic('last_name')} />
                         {err('last_name')}
                     </div>
                     <div id="field-first_name">
                         <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.first_name}
+                        <LimitedInput maxLength={PDS_MAX.first_name} value={form.first_name}
                             onChange={e => set('first_name', e.target.value)}
                             className={ic('first_name')} />
                         {err('first_name')}
                     </div>
-                    <div>
+                    <div id="field-middle_name">
                         <label className={labelClass}>Middle Name</label>
-                        <input type="text" value={form.middle_name}
+                        <LimitedInput maxLength={PDS_MAX.middle_name} value={form.middle_name}
                             onChange={e => set('middle_name', e.target.value)}
-                            className={inputClass} />
+                            className={ic('middle_name')} />
+                        {err('middle_name')}
                     </div>
                     <div>
                         <label className={labelClass}>Name Extension</label>
@@ -489,7 +512,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                     <div id="field-birth_place">
                         <label className={labelClass}>Place of Birth <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.birth_place ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.birth_place} value={form.birth_place ?? ''}
                             onChange={e => set('birth_place', e.target.value)}
                             className={ic('birth_place')} />
                         {err('birth_place')}
@@ -541,8 +564,8 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                         <label className={labelClass}>
                             Agency Employee No. <span className="text-red-500">*</span>
                         </label>
-                            <input
-                                type="text"
+                            <LimitedInput
+                                maxLength={PDS_MAX.agency_employee_no}
                                 value={form.agency_employee_no ?? ''}
                                 onChange={e => set('agency_employee_no', e.target.value)}
                                 className={inputClass}
@@ -589,7 +612,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                             </div>
                             <div>
                                 <label className={labelClass}>Country</label>
-                                <input type="text" value={form.citizenship_country}
+                                <LimitedInput maxLength={PDS_MAX.citizenship_country} value={form.citizenship_country}
                                     onChange={e => set('citizenship_country', e.target.value)}
                                     placeholder="Indicate country" className={inputClass} />
                             </div>
@@ -646,21 +669,21 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                     <div id="field-res_house_no">
                         <label className={labelClass}>House/Block/Lot No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.res_house_no ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.res_house_no} value={form.res_house_no ?? ''}
                             onChange={e => set('res_house_no', e.target.value)}
                             className={ic('res_house_no')} />
                         {err('res_house_no')}
                     </div>
                     <div id="field-res_street">
                         <label className={labelClass}>Street <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.res_street ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.res_street} value={form.res_street ?? ''}
                             onChange={e => set('res_street', e.target.value)}
                             className={ic('res_street')} />
                         {err('res_street')}
                     </div>
                     <div>
                         <label className={labelClass}>Subdivision/Village</label>
-                        <input type="text" value={form.res_subdivision ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.res_subdivision} value={form.res_subdivision ?? ''}
                             onChange={e => set('res_subdivision', e.target.value)}
                             className={inputClass} />
                     </div>
@@ -724,7 +747,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                     <div id="field-perm_house_no">
                         <label className={labelClass}>House/Block/Lot No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.perm_house_no ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.perm_house_no} value={form.perm_house_no ?? ''}
                             onChange={e => !sameAsResidential && set('perm_house_no', e.target.value)}
                             readOnly={sameAsResidential}
                             className={sameAsResidential ? readonlyClass : ic('perm_house_no')} />
@@ -732,7 +755,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                     <div id="field-perm_street">
                         <label className={labelClass}>Street *</label>
-                        <input type="text" value={form.perm_street ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.perm_street} value={form.perm_street ?? ''}
                             onChange={e => !sameAsResidential && set('perm_street', e.target.value)}
                             readOnly={sameAsResidential}
                             className={sameAsResidential ? readonlyClass : ic('perm_street')} />
@@ -740,7 +763,7 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                     <div>
                         <label className={labelClass}>Subdivision/Village</label>
-                        <input type="text" value={form.perm_subdivision ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.perm_subdivision} value={form.perm_subdivision ?? ''}
                             onChange={e => !sameAsResidential && set('perm_subdivision', e.target.value)}
                             readOnly={sameAsResidential}
                             className={sameAsResidential ? readonlyClass : inputClass} />
@@ -752,17 +775,18 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
             <div className={sectionClass}>
                 <h3 className="text-sm font-medium text-green-800 pb-2 mb-3 border-b border-gray-100 uppercase">Contact & Government IDs</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
+                    <div id="field-telephone">
                         <label className={labelClass}>Telephone No.</label>
-                        <input type="text" value={form.telephone ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.telephone} value={form.telephone ?? ''}
                             onChange={e => set('telephone', e.target.value)}
-                            className={inputClass} />
+                            className={ic('telephone')} placeholder="e.g. (054) 123-4567" />
+                        {err('telephone')}
                     </div>
                     <div id="field-mobile_number">
                         <label className={labelClass}>Mobile No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.mobile_number ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.mobile_number} value={form.mobile_number ?? ''}
                             onChange={e => set('mobile_number', e.target.value)}
-                            className={ic('mobile_number')} />
+                            className={ic('mobile_number')} placeholder="e.g. 09171234567" />
                         {err('mobile_number')}
                     </div>
                     <div>
@@ -771,38 +795,39 @@ export default function PersonalInfoSection({ user, pdsData, onSave, saving, onD
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    <div>
+                    <div id="field-umid_number">
                         <label className={labelClass}>UMID ID No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.umid_number ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.umid_number} value={form.umid_number ?? ''}
                             onChange={e => set('umid_number', e.target.value)}
-                            className={inputClass} />
+                            className={ic('umid_number')} placeholder={`e.g. ${PDS_ID_FORMATS.umid_number.example}`} />
+                        {err('umid_number')}
                     </div>
                     <div id="field-pagibig_number">
                         <label className={labelClass}>PAG-IBIG ID No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.pagibig_number ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.pagibig_number} value={form.pagibig_number ?? ''}
                             onChange={e => set('pagibig_number', e.target.value)}
-                            className={ic('pagibig_number')} />
+                            className={ic('pagibig_number')} placeholder={`e.g. ${PDS_ID_FORMATS.pagibig_number.example}`} />
                         {err('pagibig_number')}
                     </div>
                     <div id="field-philhealth_number">
                         <label className={labelClass}>PhilHealth No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.philhealth_number ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.philhealth_number} value={form.philhealth_number ?? ''}
                             onChange={e => set('philhealth_number', e.target.value)}
-                            className={ic('philhealth_number')} />
+                            className={ic('philhealth_number')} placeholder={`e.g. ${PDS_ID_FORMATS.philhealth_number.example}`} />
                         {err('philhealth_number')}
                     </div>
                     <div id="field-philsys_number">
-                        <label className={labelClass}>PhilSys No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.philsys_number ?? ''}
+                        <label className={labelClass}>PhilSys Card Number (PCN) <span className="text-red-500">*</span></label>
+                        <LimitedInput maxLength={PDS_MAX.philsys_number} value={form.philsys_number ?? ''}
                             onChange={e => set('philsys_number', e.target.value)}
-                            className={ic('philsys_number')} />
+                            className={ic('philsys_number')} placeholder={`e.g. ${PDS_ID_FORMATS.philsys_number.example}`} />
                         {err('philsys_number')}
                     </div>
                     <div id="field-tin_number">
                         <label className={labelClass}>TIN No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.tin_number ?? ''}
+                        <LimitedInput maxLength={PDS_MAX.tin_number} value={form.tin_number ?? ''}
                             onChange={e => set('tin_number', e.target.value)}
-                            className={ic('tin_number')} />
+                            className={ic('tin_number')} placeholder={`e.g. ${PDS_ID_FORMATS.tin_number.example}`} />
                         {err('tin_number')}
                     </div>
                 </div>

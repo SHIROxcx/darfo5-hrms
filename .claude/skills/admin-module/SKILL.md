@@ -13,7 +13,11 @@ Builds a new admin feature the way this project already builds them. It depends 
 
 ## 1. Pin down the scope first
 
-Before writing code, settle these with the user. Ask only what the request leaves open; don't ask about what it already says.
+**Start from the module spec if there is one.** Specs live in `docs/modules/<module-name>.md`, copied from `docs/modules/_template.md`. If the user names one, or one exists for this module, read it first and treat it as the requirements. Ask only about fields left blank or marked `?`, and about anything that contradicts the rest of the spec or the project. When the user answers, write the answers back into the spec, so it stays the record of what was decided. If there is no spec and the module is more than a simple list, offer to create one from the template before building.
+
+Rules in the spec's "Business rules" section that aren't ticked "Confirmed by HR" are checked against `csc-hr-rules`. If they're pending there, don't build them; say which ones are blocked.
+
+Without a spec, settle these with the user. Ask only what the request leaves open; don't ask about what it already says.
 
 | Question | Why it matters |
 |---|---|

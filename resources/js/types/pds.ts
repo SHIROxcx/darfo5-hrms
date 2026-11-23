@@ -99,6 +99,7 @@ export interface PdsWorkExperience {
     department?: string;
     supervisor?: string;
     location?: string;
+    monthly_salary?: string | number | null;
     salary_grade?: string;
     status_of_appointment?: string;
     is_government_service?: boolean;
@@ -178,7 +179,8 @@ export interface PdsGovernmentId {
     date_accomplished?: string | null;
 }
 
-export type PdsSaveCallback = (section: string, data: FormData | Record<string, unknown>) => void;
+// Resolves to false when the save did not go through, so a section keeps its "unsaved changes" warning.
+export type PdsSaveCallback = (section: string, data: FormData | Record<string, unknown>) => void | Promise<boolean>;
 
 export interface PdsData {
     personal?: PdsPersonalInfo | null;

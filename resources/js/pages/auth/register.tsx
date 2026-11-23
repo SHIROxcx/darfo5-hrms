@@ -1,8 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, FormEventHandler, useEffect, useRef } from 'react';
 import { Eye, EyeOff, Check, ChevronRight, ChevronLeft, TriangleAlert } from 'lucide-react';
+import type { FormEventHandler} from 'react';
+import { useState, useEffect, useRef } from 'react';
+import LimitedInput from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
 import { EMPLOYMENT_TYPE_OPTIONS, employmentTypeLabel } from '@/lib/employment-type';
+import { checkEmail, checkMobile, checkPersonName } from '@/lib/pds-formats';
+import { PDS_MAX } from '@/lib/pds-limits';
 
 // Types
 interface FormData {
@@ -25,6 +29,14 @@ interface FormData {
 
 // Step Indicator
 const STEPS = ['Terms & Conditions', 'Account Information', 'Review & Submit'];
+
+// Longest text each box takes. The names, mobile number and employee number use the PDS limits (they are copied into
+// the PDS); the server (App\Actions\Fortify\CreateNewUser) enforces the same numbers.
+const EMAIL_MAX = 255;
+const WORK_MAX = 255; // agency, division, section and position
+const PASSWORD_MIN = 12; // the project's shared password rule on the real site
+const PASSWORD_MAX = 64;
+// A "special character" is punctuation, a symbol or a space (what the server's `symbols()` rule counts), not just any non-ASCII letter.
 
 function StepBar({ current }: { current: number }) {
     return (
@@ -74,7 +86,7 @@ function PasswordInput({ id, value, onChange, placeholder, error, label, require
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
             <div className="relative">
-                <input id={id} type={show ? 'text' : 'password'} value={value}
+                <input id={id} type={show ? 'text' : 'password'} maxLength={PASSWORD_MAX} value={value}
                     onChange={e => onChange(e.target.value)} placeholder={placeholder}
                     className={`w-full px-3 py-2 pr-10 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
                         ${error ? 'border-red-400' : 'border-gray-300'}`} />
@@ -91,11 +103,11 @@ function PasswordInput({ id, value, onChange, placeholder, error, label, require
 // Password strength
 function getPasswordStrength(password: string): { level: 'low' | 'medium' | 'high'; color: string; bars: number } {
     let score = 0;
-    if (password.length >= 8)  score++;
+    if (password.length >= PASSWORD_MIN)  score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[a-z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
+    if (/[\p{P}\p{S}\p{Z}]/u.test(password)) score++;
     if (score <= 2) return { level: 'low',    color: 'bg-red-500',    bars: 1 };
     if (score <= 4) return { level: 'medium', color: 'bg-yellow-400', bars: 2 };
     return               { level: 'high',   color: 'bg-green-500',  bars: 3 };
@@ -118,11 +130,11 @@ function Field({ label, required, optional, error, children }: {
     );
 }
 
-function TextInput({ value, onChange, placeholder, error }: {
-    value: string; onChange: (v: string) => void; placeholder?: string; error?: string;
+function TextInput({ value, onChange, placeholder, error, maxLength }: {
+    value: string; onChange: (v: string) => void; placeholder?: string; error?: string; maxLength: number;
 }) {
     return (
-        <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        <LimitedInput maxLength={maxLength} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500
                 ${error ? 'border-red-400' : 'border-gray-300'}`} />
     );
@@ -280,21 +292,37 @@ export default function Register() {
     const validateStep2 = (): boolean => {
         setHasAttemptedNext(true);
         const e: Partial<Record<keyof FormData, string>> = {};
+        // A message is only set when there is one: an empty key would count as an error.
+        const firstNameError = checkPersonName(data.first_name, 'First name');
+        const middleNameError = checkPersonName(data.middle_name, 'Middle name', true);
+        const lastNameError = checkPersonName(data.last_name, 'Last name');
+        const emailError = checkEmail(data.email);
+        const mobileError = checkMobile(data.mobile_number);
+
         if (!data.first_name)      e.first_name      = 'First name is required.';
+        else if (firstNameError)   e.first_name      = firstNameError;
+        if (middleNameError)       e.middle_name     = middleNameError;
         if (!data.last_name)       e.last_name       = 'Last name is required.';
+        else if (lastNameError)    e.last_name       = lastNameError;
         if (!data.division)        e.division        = 'Division is required.';
         if (!data.section_unit)    e.section_unit    = 'Section / Unit is required.';
         if (!data.position)        e.position        = 'Position is required.';
         if (!data.employment_type) e.employment_type = 'Employment type is required.';
         if (!data.email)           e.email           = 'Email address is required.';
+        else if (emailError)       e.email           = emailError;
         if (!data.mobile_number)   e.mobile_number   = 'Mobile number is required.';
+        else if (mobileError)      e.mobile_number   = mobileError;
         if (!data.password)
             e.password = 'Password is required.';
-        else if (data.password.length < 8)
-            e.password = 'Password must be at least 8 characters.';
+        else if (data.password.length < PASSWORD_MIN)
+            e.password = `Password must be at least ${PASSWORD_MIN} characters.`;
         else if (!/[A-Z]/.test(data.password))
             e.password = 'Password must contain at least 1 uppercase letter.';
-        else if (!/[^A-Za-z0-9]/.test(data.password))
+        else if (!/[a-z]/.test(data.password))
+            e.password = 'Password must contain at least 1 lowercase letter.';
+        else if (!/[0-9]/.test(data.password))
+            e.password = 'Password must contain at least 1 number.';
+        else if (!/[\p{P}\p{S}\p{Z}]/u.test(data.password))
             e.password = 'Password must contain at least 1 special character.';
         setFormErrors(e);
         if (Object.keys(e).length > 0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
@@ -393,20 +421,20 @@ export default function Register() {
 
                                 {/* Name */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                                    <Field label="First Name" required error={formErrors.first_name}>
-                                        <TextInput value={data.first_name}
+                                    <Field label="First Name" required error={formErrors.first_name || errors.first_name}>
+                                        <TextInput maxLength={PDS_MAX.first_name} value={data.first_name}
                                             onChange={v => { setData('first_name', v); clearError('first_name'); }}
-                                            placeholder="Enter your first name" error={formErrors.first_name} />
+                                            placeholder="Enter your first name" error={formErrors.first_name || errors.first_name} />
                                     </Field>
-                                    <Field label="Middle Name">
-                                        <TextInput value={data.middle_name}
-                                            onChange={v => setData('middle_name', v)}
-                                            placeholder="Enter your middle name" />
+                                    <Field label="Middle Name" error={formErrors.middle_name || errors.middle_name}>
+                                        <TextInput maxLength={PDS_MAX.middle_name} value={data.middle_name}
+                                            onChange={v => { setData('middle_name', v); clearError('middle_name'); }}
+                                            placeholder="Enter your middle name" error={formErrors.middle_name || errors.middle_name} />
                                     </Field>
-                                    <Field label="Last Name" required error={formErrors.last_name}>
-                                        <TextInput value={data.last_name}
+                                    <Field label="Last Name" required error={formErrors.last_name || errors.last_name}>
+                                        <TextInput maxLength={PDS_MAX.last_name} value={data.last_name}
                                             onChange={v => { setData('last_name', v); clearError('last_name'); }}
-                                            placeholder="Enter your last name" error={formErrors.last_name} />
+                                            placeholder="Enter your last name" error={formErrors.last_name || errors.last_name} />
                                     </Field>
                                     <Field label="Name Extension">
                                         <select value={data.name_ext} onChange={e => setData('name_ext', e.target.value)}
@@ -431,14 +459,14 @@ export default function Register() {
                                     </Field>
 
                                     {/* Division — searchable */}
-                                    <Field label="Division" required error={formErrors.division}>
+                                    <Field label="Division" required error={formErrors.division || errors.division}>
                                         <div className="relative">
                                             {loadingDivs && (
                                                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                                                     <Spin />
                                                 </div>
                                             )}
-                                            <input ref={divRef} value={divSearch} disabled={loadingDivs}
+                                            <input ref={divRef} maxLength={WORK_MAX} value={divSearch} disabled={loadingDivs}
                                                 onChange={e => {
                                                     setDivSearch(e.target.value);
                                                     setData('division', e.target.value);
@@ -466,14 +494,14 @@ export default function Register() {
                                     </Field>
 
                                     {/* Section*/}
-                                    <Field label="Section / Unit" required error={formErrors.section_unit}>
+                                    <Field label="Section / Unit" required error={formErrors.section_unit || errors.section_unit}>
                                         <div className="relative">
                                             {loadingDivs && (
                                                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                                                     <Spin />
                                                 </div>
                                             )}
-                                            <input ref={secRef} value={secSearch}
+                                            <input ref={secRef} maxLength={WORK_MAX} value={secSearch}
                                                 disabled={loadingDivs || !data.division}
                                                 onChange={e => {
                                                     setSecSearch(e.target.value);
@@ -504,17 +532,19 @@ export default function Register() {
                                     </Field>
 
                                     {/* Position — searchable */}
-                                    <Field label="Position" required error={formErrors.position}>
+                                    <Field label="Position" required error={formErrors.position || errors.position}>
                                         <div className="relative">
                                             {loadingPos && (
                                                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                                                     <Spin />
                                                 </div>
                                             )}
-                                            <input ref={posRef} value={posSearch} disabled={loadingPos}
+                                            <input ref={posRef} maxLength={WORK_MAX} value={posSearch} disabled={loadingPos}
                                                 onChange={e => {
                                                     setPosSearch(e.target.value);
                                                     setData('position', e.target.value);
+                                                    // Typing after picking from the list: the picked position's grade no longer applies.
+                                                    setData('salary_grade', 0);
                                                     openPos();
                                                     clearError('position');
                                                 }}
@@ -542,7 +572,7 @@ export default function Register() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-5">
 
                                     {/* Employment Type */}
-                                    <Field label="Employment Type" required error={formErrors.employment_type}>
+                                    <Field label="Employment Type" required error={formErrors.employment_type || errors.employment_type}>
                                         <select value={data.employment_type}
                                             onChange={e => { setData('employment_type', e.target.value); clearError('employment_type'); }}
                                             className={inputCls(formErrors.employment_type)}>
@@ -553,7 +583,7 @@ export default function Register() {
 
                                     {/* Agency Employee No. */}
                                     <Field label="Agency Employee No." error={formErrors.employee_number || errors.employee_number}>
-                                        <input value={data.employee_number}
+                                        <LimitedInput maxLength={PDS_MAX.agency_employee_no} value={data.employee_number}
                                             onChange={e => { setData('employee_number', e.target.value); clearError('employee_number'); }}
                                             placeholder="Leave blank if not yet assigned"
                                             className={inputCls(formErrors.employee_number || errors.employee_number)}
@@ -562,24 +592,24 @@ export default function Register() {
 
                                     {/* Email */}
                                     <Field label="Email Address" required error={formErrors.email || errors.email}>
-                                        <input type="email" value={data.email}
+                                        <LimitedInput type="email" maxLength={EMAIL_MAX} value={data.email}
                                             onChange={e => { setData('email', e.target.value); clearError('email'); }}
                                             placeholder="email@example.com"
                                             className={inputCls(formErrors.email || errors.email)} />
                                     </Field>
 
                                     {/* Mobile */}
-                                    <Field label="Mobile Number" required error={formErrors.mobile_number}>
-                                        <input type="text" value={data.mobile_number}
+                                    <Field label="Mobile Number" required error={formErrors.mobile_number || errors.mobile_number}>
+                                        <LimitedInput maxLength={PDS_MAX.mobile_number} value={data.mobile_number}
                                             onChange={e => { setData('mobile_number', e.target.value); clearError('mobile_number'); }}
                                             placeholder="09XXXXXXXXX"
-                                            className={inputCls(formErrors.mobile_number)} />
+                                            className={inputCls(formErrors.mobile_number || errors.mobile_number)} />
                                     </Field>
 
                                     {/* Password */}
                                     <PasswordInput id="password" label="Password" required value={data.password}
                                         onChange={v => { setData('password', v); clearError('password'); setPasswordMismatch(''); }}
-                                        placeholder="Minimum 8 characters"
+                                        placeholder={`At least ${PASSWORD_MIN} characters`}
                                         error={formErrors.password || errors.password} />
 
                                     <PasswordInput id="password_confirmation" label="Confirm Password" required value={data.password_confirmation}
@@ -590,11 +620,11 @@ export default function Register() {
                                  {/* Password checklist — full width, directly below the inputs */}
                                 {data.password && (() => {
                                     const checks = [
-                                        { label: 'At least 8 characters',        pass: data.password.length >= 8 },
+                                        { label: `At least ${PASSWORD_MIN} characters`, pass: data.password.length >= PASSWORD_MIN },
                                         { label: 'At least 1 uppercase letter',  pass: /[A-Z]/.test(data.password) },
                                         { label: 'At least 1 lowercase letter',  pass: /[a-z]/.test(data.password) },
                                         { label: 'At least 1 number',            pass: /[0-9]/.test(data.password) },
-                                        { label: 'At least 1 special character', pass: /[^A-Za-z0-9]/.test(data.password) },
+                                        { label: 'At least 1 special character', pass: /[\p{P}\p{S}\p{Z}]/u.test(data.password) },
                                     ];
                                     const allPassed = checks.every(c => c.pass);
                                     return (

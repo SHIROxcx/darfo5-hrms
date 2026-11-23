@@ -252,7 +252,7 @@
                 {{-- Signature image --}}
                 @if(!empty($govId?->signature))
                 <div class="absolute left-50% z-50 flex items-center justify-center p-1 min-h-12 mb-1">
-                    <img src="{{ storage_path('app/public/' . $govId->signature) }}" class="max-h-12">
+                    <img src="{{ \App\Support\PdsFiles::path($govId->signature) }}" class="max-h-12">
                 </div>
                 @else
                 <div class="min-h-12 mb-1"></div>

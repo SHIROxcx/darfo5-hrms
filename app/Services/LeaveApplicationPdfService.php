@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LeaveRequest;
 use App\Models\PdsGovernmentId;
 use App\Support\PdfBrowsershot;
+use App\Support\PdsFiles;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
@@ -181,7 +182,7 @@ class LeaveApplicationPdfService
     {
         $path = $userId ? PdsGovernmentId::where('user_id', $userId)->value('signature') : null;
 
-        return $path ? $this->fileToDataUri(storage_path('app/public/'.$path)) : null;
+        return PdsFiles::dataUri($path);
     }
 
     private function fileToDataUri(string $absolutePath): ?string

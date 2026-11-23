@@ -6,6 +6,7 @@ use App\Models\Division;
 use App\Models\PdsGovernmentId;
 use App\Models\Section;
 use App\Models\User;
+use App\Support\PdsFiles;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -44,7 +45,7 @@ class ArtaIdController extends Controller
             'office'               => $office,
             'employment_type'      => $ep->employment_type ?? null,
             'photo_data_uri'       => $user->photo ? $this->fileToDataUri(storage_path('app/public/' . $user->photo)) : null,
-            'signature_data_uri'   => $gov?->signature ? $this->fileToDataUri(storage_path('app/public/' . $gov->signature)) : null,
+            'signature_data_uri'   => PdsFiles::dataUri($gov?->signature),
             'border_img'           => $this->fileToDataUri(public_path('images/arta-border.png')),
             'bagong_pilipinas_img' => $this->fileToDataUri(public_path('images/bagong-pilipinas.png')),
             'da_logo_img'          => $this->fileToDataUri(public_path('images/da-masarig-logo.png')),

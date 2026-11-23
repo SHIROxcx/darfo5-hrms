@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
-import type { User, PdsData, PdsFamilyBackground, PdsChild, PdsSaveCallback } from '@/types/pds';
+import { useEffect, useState } from 'react';
+import LimitedInput from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { checkPersonName, checkTelephone } from '@/lib/pds-formats';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsFamilyBackground, PdsChild, PdsSaveCallback } from '@/types/pds';
 
 interface Props {
     user: User;
@@ -36,6 +39,21 @@ const REQUIRED_FIELDS: Array<{ key: keyof FamilyForm; label: string }> = [
     { key: 'mother_middle_name',      label: "Mother's Middle Name" },
 ];
 
+// Name boxes (letters, spaces and . - ' , only; N/A allowed). Same checks and wording as the server (App\Support\PdsRules).
+const NAME_CHECKS: Array<{ key: keyof FamilyForm; label: string }> = [
+    { key: 'spouse_surname',     label: 'Spouse surname' },
+    { key: 'spouse_first_name',  label: 'Spouse first name' },
+    { key: 'spouse_middle_name', label: 'Spouse middle name' },
+    { key: 'spouse_name_ext',    label: 'Spouse name extension' },
+    { key: 'father_surname',     label: 'Father surname' },
+    { key: 'father_first_name',  label: 'Father first name' },
+    { key: 'father_middle_name', label: 'Father middle name' },
+    { key: 'father_name_ext',    label: 'Father name extension' },
+    { key: 'mother_surname',     label: 'Mother surname' },
+    { key: 'mother_first_name',  label: 'Mother first name' },
+    { key: 'mother_middle_name', label: 'Mother middle name' },
+];
+
 function validate(form: FamilyForm, children: PdsChild[]): { formErrors: FormErrors; childErrors: ChildErrors } {
     const formErrors: FormErrors = {};
 
@@ -46,11 +64,24 @@ function validate(form: FamilyForm, children: PdsChild[]): { formErrors: FormErr
         }
     }
 
+    for (const { key, label } of NAME_CHECKS) {
+        if (formErrors[key]) continue; // "write N/A" already says what is needed
+        const message = checkPersonName(String(form[key] ?? ''), label, true);
+        if (message) formErrors[key] = message;
+    }
+    if (!formErrors.spouse_telephone) {
+        const message = checkTelephone(String(form.spouse_telephone ?? ''), { allowNa: true, label: 'Spouse telephone No.' });
+        if (message) formErrors.spouse_telephone = message;
+    }
+
     // Validate each child row that has been added
     const childErrors: ChildErrors = children.map(child => {
         const errs: Partial<Record<keyof PdsChild, string>> = {};
         if (!child.full_name || child.full_name.trim() === '') {
             errs.full_name = "Child's full name is required. Write N/A if not applicable.";
+        } else {
+            const message = checkPersonName(child.full_name, "Child's full name", true);
+            if (message) errs.full_name = message;
         }
         return errs;
     });
@@ -196,55 +227,56 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving, onDir
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="field-spouse_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_surname}
+                        <LimitedInput maxLength={PDS_MAX.spouse_surname} value={form.spouse_surname}
                             onChange={e => setField('spouse_surname', e.target.value)}
                             className={ic('spouse_surname')} />
                         {err('spouse_surname')}
                     </div>
                     <div id="field-spouse_first_name">
                         <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_first_name}
+                        <LimitedInput maxLength={PDS_MAX.spouse_first_name} value={form.spouse_first_name}
                             onChange={e => setField('spouse_first_name', e.target.value)}
                             className={ic('spouse_first_name')} />
                         {err('spouse_first_name')}
                     </div>
                     <div id="field-spouse_middle_name">
                         <label className={labelClass}>Middle Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_middle_name}
+                        <LimitedInput maxLength={PDS_MAX.spouse_middle_name} value={form.spouse_middle_name}
                             onChange={e => setField('spouse_middle_name', e.target.value)}
                             className={ic('spouse_middle_name')} />
                         {err('spouse_middle_name')}
                     </div>
-                    <div>
+                    <div id="field-spouse_name_ext">
                         <label className={labelClass}>Name Extension</label>
-                        <input type="text" value={form.spouse_name_ext}
+                        <LimitedInput maxLength={PDS_MAX.spouse_name_ext} value={form.spouse_name_ext}
                             onChange={e => setField('spouse_name_ext', e.target.value)}
-                            className={inputClass} placeholder="Jr., Sr." />
+                            className={ic('spouse_name_ext')} placeholder="Jr., Sr." />
+                        {err('spouse_name_ext')}
                     </div>
                     <div id="field-spouse_occupation">
                         <label className={labelClass}>Occupation <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_occupation}
+                        <LimitedInput maxLength={PDS_MAX.spouse_occupation} value={form.spouse_occupation}
                             onChange={e => setField('spouse_occupation', e.target.value)}
                             className={ic('spouse_occupation')} />
                         {err('spouse_occupation')}
                     </div>
                     <div id="field-spouse_employer">
                         <label className={labelClass}>Employer/Business Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_employer}
+                        <LimitedInput maxLength={PDS_MAX.spouse_employer} value={form.spouse_employer}
                             onChange={e => setField('spouse_employer', e.target.value)}
                             className={ic('spouse_employer')} />
                         {err('spouse_employer')}
                     </div>
                     <div id="field-spouse_business_address">
                         <label className={labelClass}>Business Address <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_business_address}
+                        <LimitedInput maxLength={PDS_MAX.spouse_business_address} value={form.spouse_business_address}
                             onChange={e => setField('spouse_business_address', e.target.value)}
                             className={ic('spouse_business_address')} />
                         {err('spouse_business_address')}
                     </div>
                     <div id="field-spouse_telephone">
                         <label className={labelClass}>Telephone No. <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.spouse_telephone}
+                        <LimitedInput maxLength={PDS_MAX.spouse_telephone} value={form.spouse_telephone}
                             onChange={e => setField('spouse_telephone', e.target.value)}
                             className={ic('spouse_telephone')} />
                         {err('spouse_telephone')}
@@ -260,30 +292,31 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving, onDir
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="field-father_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.father_surname}
+                        <LimitedInput maxLength={PDS_MAX.father_surname} value={form.father_surname}
                             onChange={e => setField('father_surname', e.target.value)}
                             className={ic('father_surname')} />
                         {err('father_surname')}
                     </div>
                     <div id="field-father_first_name">
                         <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.father_first_name}
+                        <LimitedInput maxLength={PDS_MAX.father_first_name} value={form.father_first_name}
                             onChange={e => setField('father_first_name', e.target.value)}
                             className={ic('father_first_name')} />
                         {err('father_first_name')}
                     </div>
                     <div id="field-father_middle_name">
                         <label className={labelClass}>Middle Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.father_middle_name}
+                        <LimitedInput maxLength={PDS_MAX.father_middle_name} value={form.father_middle_name}
                             onChange={e => setField('father_middle_name', e.target.value)}
                             className={ic('father_middle_name')} />
                         {err('father_middle_name')}
                     </div>
-                    <div>
+                    <div id="field-father_name_ext">
                         <label className={labelClass}>Name Extension</label>
-                        <input type="text" value={form.father_name_ext}
+                        <LimitedInput maxLength={PDS_MAX.father_name_ext} value={form.father_name_ext}
                             onChange={e => setField('father_name_ext', e.target.value)}
-                            className={inputClass} placeholder="Jr., Sr." />
+                            className={ic('father_name_ext')} placeholder="Jr., Sr." />
+                        {err('father_name_ext')}
                     </div>
                 </div>
             </div>
@@ -296,21 +329,21 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving, onDir
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div id="field-mother_surname">
                         <label className={labelClass}>Surname <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.mother_surname}
+                        <LimitedInput maxLength={PDS_MAX.mother_surname} value={form.mother_surname}
                             onChange={e => setField('mother_surname', e.target.value)}
                             className={ic('mother_surname')} />
                         {err('mother_surname')}
                     </div>
                     <div id="field-mother_first_name">
                         <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.mother_first_name}
+                        <LimitedInput maxLength={PDS_MAX.mother_first_name} value={form.mother_first_name}
                             onChange={e => setField('mother_first_name', e.target.value)}
                             className={ic('mother_first_name')} />
                         {err('mother_first_name')}
                     </div>
                     <div id="field-mother_middle_name">
                         <label className={labelClass}>Middle Name <span className="text-red-500">*</span></label>
-                        <input type="text" value={form.mother_middle_name}
+                        <LimitedInput maxLength={PDS_MAX.mother_middle_name} value={form.mother_middle_name}
                             onChange={e => setField('mother_middle_name', e.target.value)}
                             className={ic('mother_middle_name')} />
                         {err('mother_middle_name')}
@@ -342,8 +375,8 @@ export default function FamilyBackgroundSection({ pdsData, onSave, saving, onDir
                             <div className="flex gap-3 items-start">
                                 <span className="text-xs text-gray-400 w-5 text-center mt-2.5">{i + 1}</span>
                                 <div className="flex-1">
-                                    <input
-                                        type="text"
+                                    <LimitedInput
+                                        maxLength={PDS_MAX.child_full_name}
                                         value={child.full_name}
                                         onChange={e => setChild(i, 'full_name', e.target.value)}
                                         placeholder="Full name"

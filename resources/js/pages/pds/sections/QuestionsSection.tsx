@@ -1,7 +1,9 @@
-import { useState } from 'react';
 import { Save } from 'lucide-react';
-import type { User, PdsData, PdsQuestion, PdsSaveCallback } from '@/types/pds';
+import { useState } from 'react';
+import LimitedInput from '@/components/limited-input';
 import { Spinner } from '@/components/ui/spinner';
+import { PDS_MAX } from '@/lib/pds-limits';
+import type { User, PdsData, PdsQuestion, PdsSaveCallback } from '@/types/pds';
 
 interface Props { user: User; pdsData: PdsData; onSave: PdsSaveCallback; saving: boolean; }
 
@@ -219,7 +221,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     {(form.q34_a === true || form.q34_b === true) && (
                         <div id="field-q34_details" className="mt-3">
                             <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                            <input type="text" value={form.q34_details ?? ''}
+                            <LimitedInput maxLength={PDS_MAX.q34_details} value={form.q34_details ?? ''}
                                 onChange={e => set('q34_details', e.target.value)}
                                 className={ic('q34_details')} />
                             {err('q34_details')}
@@ -239,7 +241,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             {form.q35_a === true && (
                                 <div id="field-q35_a_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                                    <input type="text" value={form.q35_a_details ?? ''}
+                                    <LimitedInput maxLength={PDS_MAX.q35_a_details} value={form.q35_a_details ?? ''}
                                         onChange={e => set('q35_a_details', e.target.value)}
                                         className={ic('q35_a_details')} />
                                     {err('q35_a_details')}
@@ -255,14 +257,14 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                                 <div className="grid grid-cols-2 gap-3 mt-2">
                                     <div id="field-q35_b_date">
                                         <label className="block text-xs text-gray-500 mb-1">Date Filed: <span className="text-red-500">*</span></label>
-                                        <input type="text" value={form.q35_b_date ?? ''}
+                                        <LimitedInput maxLength={PDS_MAX.q35_b_date} value={form.q35_b_date ?? ''}
                                             onChange={e => set('q35_b_date', e.target.value)}
                                             className={ic('q35_b_date')} />
                                         {err('q35_b_date')}
                                     </div>
                                     <div id="field-q35_b_status">
                                         <label className="block text-xs text-gray-500 mb-1">Status of Case/s: <span className="text-red-500">*</span></label>
-                                        <input type="text" value={form.q35_b_status ?? ''}
+                                        <LimitedInput maxLength={PDS_MAX.q35_b_status} value={form.q35_b_status ?? ''}
                                             onChange={e => set('q35_b_status', e.target.value)}
                                             className={ic('q35_b_status')} />
                                         {err('q35_b_status')}
@@ -283,7 +285,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     {form.q36 === true && (
                         <div id="field-q36_details" className="mt-2">
                             <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                            <input type="text" value={form.q36_details ?? ''}
+                            <LimitedInput maxLength={PDS_MAX.q36_details} value={form.q36_details ?? ''}
                                 onChange={e => set('q36_details', e.target.value)}
                                 className={ic('q36_details')} />
                             {err('q36_details')}
@@ -302,7 +304,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     {form.q37 === true && (
                         <div id="field-q37" className="mt-2">
                             <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                            <input type="text" value={form.q37_details ?? ''}
+                            <LimitedInput maxLength={PDS_MAX.q37_details} value={form.q37_details ?? ''}
                                 onChange={e => set('q37_details', e.target.value)}
                                 className={ic('q37_details')} />
                             {err('q37_details')}
@@ -322,7 +324,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             {form.q38_a === true && (
                                 <div id="field-q38_a_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                                    <input type="text" value={form.q38_a_details ?? ''}
+                                    <LimitedInput maxLength={PDS_MAX.q38_a_details} value={form.q38_a_details ?? ''}
                                         onChange={e => set('q38_a_details', e.target.value)}
                                         className={ic('q38_a_details')} />
                                     {err('q38_a_details')}
@@ -338,7 +340,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                             {form.q38_b === true && (
                                 <div id="field-q38_b_details" className="mt-2">
                                     <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                                    <input type="text" value={form.q38_b_details ?? ''}
+                                    <LimitedInput maxLength={PDS_MAX.q38_b_details} value={form.q38_b_details ?? ''}
                                         onChange={e => set('q38_b_details', e.target.value)}
                                         className={ic('q38_b_details')} />
                                     {err('q38_b_details')}
@@ -357,7 +359,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                     {form.q39 === true && (
                         <div id="field-q39_details" className="mt-2">
                             <label className="block text-xs text-gray-500 mb-1">If YES, give details: <span className="text-red-500">*</span></label>
-                            <input type="text" value={form.q39_details ?? ''}
+                            <LimitedInput maxLength={PDS_MAX.q39_details} value={form.q39_details ?? ''}
                                 onChange={e => set('q39_details', e.target.value)}
                                 className={ic('q39_details')} />
                             {err('q39_details')}
@@ -368,7 +370,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                 {/* ── Q40 ── */}
                 <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/40">
                     <p className="text-sm font-medium text-gray-800 mb-3">
-                        40. Pursuant to: (a) Indigenous People's Act (RA 8371); (B) Magna Carta for Disabled Persons (ra 7277, as ammended); 
+                        40. Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277, as amended); 
                         and (c) Expanded Solo Parents Welfare Act (RA 11861), please answer the following items:
                     </p>
                     <div className="space-y-4">
@@ -383,7 +385,7 @@ export default function QuestionsSection({ pdsData, onSave, saving }: Props) {
                                 {form[qKey] === true && (
                                     <div id={`field-${detailKey}`} className="mt-2">
                                         <label className="block text-xs text-gray-500 mb-1">If YES, please specify ID No: <span className="text-red-500">*</span></label>
-                                        <input type="text" value={form[detailKey] ?? ''}
+                                        <LimitedInput maxLength={PDS_MAX[detailKey as keyof typeof PDS_MAX]} value={form[detailKey] ?? ''}
                                             onChange={e => set(detailKey, e.target.value)}
                                             className={ic(detailKey)} />
                                         {err(detailKey)}
