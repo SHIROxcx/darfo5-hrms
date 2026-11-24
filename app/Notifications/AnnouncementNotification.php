@@ -12,7 +12,7 @@ class AnnouncementNotification extends Notification
     public function __construct(
         private readonly int    $announcementId,
         private readonly string $title,
-        private readonly string $body,
+        private readonly ?string $body,
         private readonly string $date,
         private readonly string $tag,
         private readonly string $tagColor,

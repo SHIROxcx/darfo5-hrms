@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import PageLinks from '@/components/page-links';
 import AppLayout from '@/layouts/app-layout';
-import { formatMemoDate, formatMemoTime } from '@/lib/memo-format';
+import { formatMemoDate } from '@/lib/memo-format';
 import { index, show } from '@/routes/memos';
 import type { BreadcrumbItem } from '@/types';
 import type { EmployeeMemoFilters, EmployeeMemoRow, PageLink } from '@/types/memo';
@@ -42,7 +42,7 @@ export default function MemosIndex({ memos, filters, years }: Props) {
             <div className="mx-auto w-full px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">Memos</h1>
-                    <p className="mt-1 text-sm text-gray-500">Official memos and memorandum circulars from HR.</p>
+                    <p className="mt-1 text-sm text-gray-500">Official memos from HR.</p>
                 </div>
 
                 <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -74,32 +74,24 @@ export default function MemosIndex({ memos, filters, years }: Props) {
                         <table className="w-full text-sm">
                             <thead className="sticky top-0 z-10 border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
                                 <tr>
-                                    <th className="px-4 py-5 text-left">Number</th>
                                     <th className="px-4 py-5 text-left">Subject</th>
-                                    <th className="px-4 py-5 text-left">Type</th>
                                     <th className="px-4 py-5 text-left">Date</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {memos.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="py-12 text-center italic text-gray-400">No memos found.</td>
+                                        <td colSpan={2} className="py-12 text-center italic text-gray-400">No memos found.</td>
                                     </tr>
                                 ) : (
                                     memos.data.map(memo => (
                                         <tr key={memo.id} className="transition hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">{memo.number_label ?? <span className="italic text-gray-300">—</span>}</td>
                                             <td className="px-4 py-3">
                                                 <Link href={show(memo.id).url} className="font-medium text-gray-800 hover:text-green-700 hover:underline">
                                                     {memo.subject}
                                                 </Link>
-                                                <p className="mt-0.5 text-xs text-gray-500">To: {memo.addressed_to}</p>
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">{memo.type}</td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">
-                                                {formatMemoDate(memo.memo_date)}
-                                                {memo.memo_time && <span className="text-gray-400">, {formatMemoTime(memo.memo_time)}</span>}
-                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">{formatMemoDate(memo.memo_date)}</td>
                                         </tr>
                                     ))
                                 )}

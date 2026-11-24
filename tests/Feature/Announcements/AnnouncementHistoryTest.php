@@ -5,6 +5,7 @@ use App\Models\Announcement;
 use App\Models\RecordEvent;
 use App\Models\User;
 use App\Notifications\AnnouncementNotification;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -124,18 +125,36 @@ test('posting and editing write history, and an edit lists the fields it changed
     $admin = historyUser('admin');
 
     $this->actingAs($admin)->post('/announcements', [
-        'title' => 'Flag ceremony', 'body' => 'Every Monday.', 'date' => now()->toDateString(), 'tag' => 'Reminder',
+        'file' => UploadedFile::fake()->create('Flag ceremony.pdf', 10, 'application/pdf'),
     ])->assertSessionHasNoErrors();
     $announcement = Announcement::firstOrFail();
 
     $this->actingAs($admin)->put("/announcements/{$announcement->id}", [
-        'title' => 'Flag ceremony moved', 'body' => 'Every Monday.', 'date' => now()->toDateString(), 'tag' => 'Reminder',
+        'file' => UploadedFile::fake()->create('Flag ceremony moved.pdf', 10, 'application/pdf'),
     ])->assertSessionHasNoErrors();
 
     $history = RecordEvent::for($announcement)->get();
     expect($history->pluck('action')->all())->toBe(['updated', 'created'])
-        ->and($history->first()->details)->toBe(['changed' => ['title']])
+        ->and($history->first()->details['changed'])->toEqualCanonicalizing(['title', 'attachments'])
         ->and($history->last()->details)->toBe(['title' => 'Flag ceremony']);
+});
+
+test('an announcement that is only a file archives with its file and shows in the history without text', function () {
+    Notification::fake();
+    $admin = historyUser('admin');
+
+    $this->actingAs($admin)->post('/announcements', ['file' => UploadedFile::fake()->create('Circular.pdf', 10, 'application/pdf')])->assertSessionHasNoErrors();
+    $announcement = Announcement::firstOrFail();
+    $publicPath = $announcement->attachments[0];
+
+    $this->actingAs($admin)->delete("/announcements/{$announcement->id}")->assertRedirect();
+
+    Storage::disk('public')->assertMissing($publicPath);
+    Storage::disk('local')->assertExists("announcements/archive/{$announcement->id}/Circular.pdf");
+
+    $this->actingAs($admin)->get('/admin/announcements/history')->assertInertia(fn (Assert $page) => $page
+        ->where('announcements.data.0.title', 'Circular')
+        ->where('announcements.data.0.body', null));
 });
 
 test('the history page lists archived announcements with who removed them and why, for admins only', function () {

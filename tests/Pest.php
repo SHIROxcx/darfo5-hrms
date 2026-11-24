@@ -249,30 +249,6 @@ function memoAdmin(string $role = 'admin'): \App\Models\User
     return $user;
 }
 
-/** A tiny real PNG, for a signature picture. */
-function memoPng(): string
-{
-    return base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
-}
-
-/** A saved signatory (the list HR picks memo signatories from). */
-function makeSignatory(array $overrides = []): \App\Models\Signatory
-{
-    return \App\Models\Signatory::factory()->create($overrides);
-}
-
-/** A written draft that is ready to publish: it has a body and one saved signatory, saved the way the form saves it. */
-function writtenDraft(array $overrides = [], ?\App\Models\Signatory $signatory = null): \App\Models\Memo
-{
-    $signatory ??= makeSignatory(['name' => 'Maria Santos', 'position' => 'Regional Executive Director']);
-
-    return app(\App\Services\MemoService::class)->saveDraft(
-        memoPayload(array_merge(['signatories' => [['signatory_id' => $signatory->id, 'label' => 'Approved by']]], $overrides)),
-        null,
-        memoAdmin(),
-    );
-}
-
 /** What PHP hands over for a file that is over its upload limit. */
 function memoRefusedUpload(string $name = 'scan.pdf', string $mime = 'application/pdf'): \Illuminate\Http\UploadedFile
 {
@@ -282,19 +258,24 @@ function memoRefusedUpload(string $name = 'scan.pdf', string $mime = 'applicatio
     return new \Illuminate\Http\UploadedFile($path, $name, $mime, UPLOAD_ERR_INI_SIZE, true);
 }
 
-/** A valid written-draft payload for the memo form, with one signatory (the first in the list, or a new one). */
-function memoPayload(array $overrides = []): array
+/** A small PDF to attach to a memo. The memo is titled with its name. */
+function memoUpload(string $name = 'Memorandum Circular 58.pdf', int $kb = 100): \Illuminate\Http\UploadedFile
 {
-    $signatory = \App\Models\Signatory::first() ?? makeSignatory();
+    return \Illuminate\Http\UploadedFile::fake()->create($name, $kb, 'application/pdf');
+}
 
-    return array_merge([
-        'type' => 'Memorandum',
-        'subject' => 'Submission of IPCR for the first semester',
-        'addressed_to' => 'All DA RFO 5 Employees',
-        'memo_date' => '2026-11-21',
-        'memo_time' => '14:30',
-        'mode' => 'written',
-        'body' => "Please submit your IPCR on or before November 30.\n\nThank you.",
-        'signatories' => [['signatory_id' => $signatory->id, 'label' => 'Approved by']],
-    ], $overrides);
+/** A saved draft that has its file, saved the way the form saves it. */
+function uploadedDraft(?\App\Models\User $by = null, string $name = 'Memorandum Circular 58.pdf'): \App\Models\Memo
+{
+    return app(\App\Services\MemoService::class)->saveDraft(memoUpload($name), $by ?? memoAdmin());
+}
+
+/** Store a file for a memo on the private disk, the way the service stores it, and point the memo at it. */
+function attachMemoFile(\App\Models\Memo $memo, string $extension = 'pdf', ?string $content = null, string $name = 'Memo.pdf'): \App\Models\Memo
+{
+    $path = "memos/{$memo->id}/file/stored.{$extension}";
+    \App\Support\MemoFiles::disk()->put($path, $content ?? "bytes-of-memo-{$memo->id}");
+    $memo->update(['file_path' => $path, 'file_name' => $name]);
+
+    return $memo->fresh();
 }

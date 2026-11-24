@@ -21,7 +21,7 @@ import { useEffect } from 'react';
 type Announcement = {
     id: number;
     title: string;
-    body: string;
+    body: string | null;
     date: string;
     tag: string;
     tagColor: string;
@@ -165,7 +165,7 @@ export function AppSidebarHeader({
         echo
             .channel('announcements')
             .listen('.AnnouncementPosted', function(data: { announcement: {
-                id: number; title: string; body: string; date: string; tag: string; tagColor: string;
+                id: number; title: string; body: string | null; date: string; tag: string; tagColor: string;
             }}) {
                 // Update dashboard announcement lists
                 window.dispatchEvent(new CustomEvent('announcement:new', { detail: data.announcement }));

@@ -17,7 +17,7 @@ class UpdateMemoRequest extends FormRequest
 
     public function rules(): array
     {
-        return $this->memoRules($this->route('memo'));
+        return $this->memoRules();
     }
 
     public function messages(): array

@@ -229,7 +229,7 @@ function AnnouncementNotifRow({ notif, onClick, onClose  }: {
                     {d.title}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${d.tagColor}`}>{d.tag}</span>
+                    {d.tag !== 'General' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${d.tagColor}`}>{d.tag}</span>}
                     <span className="text-[10px] text-gray-400">{relativeTime(notif.created_at)}</span>
                 </div>
             </div>
@@ -299,7 +299,7 @@ export function NotificationDrawer({ open, onClose, onUnreadChange }: Props) {
 
         function onNewAnnouncement(e: Event) {
             const data = (e as CustomEvent<{
-                id: number; title: string; body: string; date: string; tag: string; tagColor: string;
+                id: number; title: string; body: string | null; date: string; tag: string; tagColor: string;
             }>).detail;
 
             const announcementData: AnnouncementNotifData = {

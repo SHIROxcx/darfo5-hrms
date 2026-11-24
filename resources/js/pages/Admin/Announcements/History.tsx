@@ -11,7 +11,8 @@ interface RemovedAnnouncement {
     title: string;
     tag: string;
     date: string;
-    body: string;
+    /** Text of an announcement written before announcements became files; null for a file-only one. */
+    body: string | null;
     created_by_name: string | null;
     deleted_at: string | null;
     reason: 'deleted' | 'expired';
@@ -48,7 +49,7 @@ export default function AnnouncementHistory({ announcements }: Props) {
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">Announcement History</h1>
                     <p className="mt-1 text-sm text-gray-500">
-                        Announcements that were removed or reached their auto-delete date. The text and files are kept here, and employees no longer see them.
+                        Announcements that were removed or reached their auto-delete date. The record is kept here, and employees no longer see them.
                     </p>
                 </div>
 
@@ -62,7 +63,7 @@ export default function AnnouncementHistory({ announcements }: Props) {
                                     <th className="px-4 py-5 text-left">Posted by</th>
                                     <th className="px-4 py-5 text-left">Removed on</th>
                                     <th className="px-4 py-5 text-left">Removed by</th>
-                                    <th className="px-4 py-5 text-center">Text</th>
+                                    <th className="px-4 py-5 text-center">Details</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -125,7 +126,11 @@ function FragmentRow({ row, open, onToggle }: { row: RemovedAnnouncement; open: 
             {open && (
                 <tr className="bg-gray-50/60">
                     <td colSpan={6} className="px-4 py-4">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{row.body}</p>
+                        {row.body ? (
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{row.body}</p>
+                        ) : (
+                            <p className="text-sm italic text-gray-400">This announcement was only a file.</p>
+                        )}
                         <p className="mt-2 text-xs text-gray-400">Announcement date: {formatDate(row.date)}</p>
                     </td>
                 </tr>

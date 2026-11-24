@@ -11,21 +11,30 @@ use App\Models\User;
 use App\Notifications\AnnouncementEmailNotification;
 use App\Notifications\AnnouncementNotification;
 use App\Support\AnnouncementFiles;
+use App\Support\FileTitle;
+use App\Support\UploadMessages;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Announcements: HR uploads a file and employees see it on their dashboard. The file is the whole announcement: its title is
+ * the file's name, and the date and category are filled in by the system. HR can still choose a date to have it removed.
+ */
 class AnnouncementController extends Controller
 {
+    private const FILE_TYPES = 'pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip';
+
+    private const MAX_FILE_KB = 10240;
+
     // Helpers
 
     private static function formatPayload(Announcement $a): array
     {
         $dateFormatted = Carbon::parse($a->date)->format('M d, Y');
 
-        // Build public URLs for attachments
+        // Build public URLs for the file(s). Announcements written before this change can hold several.
         $attachments = collect($a->attachments ?? [])->map(fn ($path) => [
             'path' => $path,
             'url' => Storage::url($path),
@@ -50,22 +59,30 @@ class AnnouncementController extends Controller
         return Announcement::tagColor($tag);
     }
 
-    /**
-     * What the admin reads when an attachment is refused. The form shows these as they are, so they have to make sense on
-     * their own: Laravel's default ("The attachments.0 field must not be greater than 10240 kilobytes.") does not.
-     */
-    private static function attachmentMessages(): array
+    /** The rules shared by posting and editing. Only the file differs: it is required to post and optional to edit. */
+    private static function rules(bool $fileRequired): array
     {
-        // PHP refuses a file before Laravel ever sees it when it is over upload_max_filesize (2 MB on a fresh WAMP install),
-        // even though the rule below allows 10 MB. Say the size the server really accepts, so the admin knows what to do.
-        $serverMb = max(1, (int) floor(UploadedFile::getMaxFilesize() / 1048576));
-        $acceptedMb = min(10, $serverMb);
-
         return [
-            'attachments.*.uploaded' => "A file could not be uploaded. This server accepts files up to {$acceptedMb} MB each. Attach a smaller file.",
-            'attachments.*.max' => 'A file is too large (maximum 10 MB each).',
-            'attachments.*.mimes' => 'That file type is not allowed. Attach a PDF, Word, Excel, PowerPoint, image or ZIP file.',
-            'attachments.*.file' => 'An attachment is not a valid file.',
+            'file' => ['bail', $fileRequired ? 'required' : 'nullable', 'file', 'mimes:'.self::FILE_TYPES, 'max:'.self::MAX_FILE_KB],
+            'auto_delete' => ['nullable', 'boolean'],
+            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after:today'],
+        ];
+    }
+
+    /**
+     * What the admin reads when the file is refused. The form shows these as they are, so they have to make sense on their
+     * own: Laravel's default ("The file field must not be greater than 10240 kilobytes.") does not.
+     */
+    private static function messages(): array
+    {
+        return [
+            'file.required' => 'Attach the announcement file.',
+            'file.file' => 'The announcement file must be a valid file.',
+            'file.uploaded' => UploadMessages::failed(intdiv(self::MAX_FILE_KB, 1024)),
+            'file.max' => 'The file is too large (maximum '.intdiv(self::MAX_FILE_KB, 1024).' MB).',
+            'file.mimes' => 'That file type is not allowed. Attach a PDF, Word, Excel, PowerPoint, image or ZIP file.',
+            'delete_after.required_if' => 'Please specify the delete-after date.',
+            'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
         ];
     }
 
@@ -73,40 +90,22 @@ class AnnouncementController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:5000'],
-            'date' => ['required', 'date'],
-            'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
-            'auto_delete' => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date', 'after:today'],
-            'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
-        ], [
-            'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
-            'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
-            ...self::attachmentMessages(),
-        ]);
-
         $user = $request->user();
         if (! $user->hasAnyRole(['admin', 'superadmin'])) {
             abort(403);
         }
 
-        // Handle file uploads
-        $paths = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $paths[] = $file->store('announcements/attachments', 'public');
-            }
-        }
+        $validated = $request->validate(self::rules(fileRequired: true), self::messages());
+        $file = $request->file('file');
 
         $announcement = Announcement::create([
-            'title' => $validated['title'],
-            'body' => $validated['body'],
-            'date' => $validated['date'],
-            'tag' => $validated['tag'],
+            'title' => FileTitle::from($file, 'Announcement'),
+            'body' => null,
+            // Today's date in the office's time zone (the app itself runs in UTC, which is a day behind in the early morning).
+            'date' => now(config('memos.timezone'))->toDateString(),
+            'tag' => 'General',
             'created_by' => $user->id,
-            'attachments' => $paths ?: null,
+            'attachments' => [AnnouncementFiles::store($file)],
             'auto_delete' => $validated['auto_delete'] ?? false,
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
         ]);
@@ -130,7 +129,6 @@ class AnnouncementController extends Controller
             title: $announcement->title,
             body: $announcement->body,
             date: $payload['date'],
-            tag: $announcement->tag,
         );
 
         User::where('is_approved', true)
@@ -153,46 +151,27 @@ class AnnouncementController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:5000'],
-            'date' => ['required', 'date'],
-            'tag' => ['required', 'string', 'in:Reminder,Policy,Health,Holiday,General'],
-            'auto_delete' => ['nullable', 'boolean'],
-            'delete_after' => ['nullable', 'date', 'required_if:auto_delete,true', 'after_or_equal:date', 'after:today'],
-            'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'],
-            'removed_attachments' => ['nullable', 'string'], // JSON array of paths to remove
-        ], [
-            'delete_after.after_or_equal' => 'The auto-delete date must be on or after the announcement date.',
-            'delete_after.after' => 'The auto-delete date must be a future date — today or a past date is not allowed.',
-            ...self::attachmentMessages(),
-        ]);
+        $validated = $request->validate(self::rules(fileRequired: false), self::messages());
 
-        // Handle removed attachments
-        $existingPaths = $announcement->attachments ?? [];
-        if (! empty($validated['removed_attachments'])) {
-            $toRemove = json_decode($validated['removed_attachments'], true) ?? [];
-            foreach ($toRemove as $path) {
-                Storage::disk('public')->delete($path);
-            }
-            $existingPaths = array_values(array_diff($existingPaths, $toRemove));
-        }
-
-        // Handle new file uploads
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $existingPaths[] = $file->store('announcements/attachments', 'public');
-            }
-        }
-        $announcement->update([
-            'title' => $validated['title'],
-            'body' => $validated['body'],
-            'date' => $validated['date'],
-            'tag' => $validated['tag'],
-            'attachments' => $existingPaths ?: null,
+        $changes = [
             'auto_delete' => $validated['auto_delete'] ?? false,
             'delete_after' => ($validated['auto_delete'] ?? false) ? $validated['delete_after'] : null,
-        ]);
+        ];
+
+        // A new file replaces the old one (or ones, for an announcement written before this change), and the title follows it.
+        $replaced = [];
+        if ($file = $request->file('file')) {
+            $replaced = $announcement->attachments ?? [];
+            $changes['attachments'] = [AnnouncementFiles::store($file)];
+            $changes['title'] = FileTitle::from($file, 'Announcement');
+        }
+
+        $announcement->update($changes);
+
+        // The old files go only once the new one is saved.
+        foreach ($replaced as $path) {
+            Storage::disk('public')->delete($path);
+        }
 
         // What this edit changed, for the history (updated_at always moves, so it does not count).
         $changed = array_keys(Arr::except($announcement->getChanges(), ['updated_at']));

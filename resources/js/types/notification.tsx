@@ -9,7 +9,7 @@ export interface AnnouncementNotifData {
     type:            'announcement';
     announcement_id: number;
     title:           string;
-    body:            string;
+    body:            string | null;
     date:            string;
     tag:             string;
     tagColor:        string;

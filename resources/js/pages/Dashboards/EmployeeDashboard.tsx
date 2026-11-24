@@ -14,7 +14,8 @@ interface AttachmentFile { path: string; url: string; name: string; }
 interface Announcement {
     id: number;
     title: string;
-    body: string;
+    /** Text of an announcement written before announcements became files; null for a file-only one. */
+    body: string | null;
     date: string;
     tag: string;
     tagColor: string;
@@ -143,7 +144,7 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
                         <div>
                             <h3 className="font-semibold text-green-800 text-base leading-snug">{announcement.title}</h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${announcement.tagColor}`}>{announcement.tag}</span>
+                                {announcement.tag !== 'General' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${announcement.tagColor}`}>{announcement.tag}</span>}
                                 <span className="text-xs text-gray-400">Posted: {announcement.date}</span>
                             </div>
                         </div>
@@ -153,14 +154,16 @@ function AnnouncementViewModal({ announcement, onClose }: { announcement: Announ
                     </button>
                 </div>
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-                    <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
-                    </div>
+                    {announcement.body && (
+                        <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
+                        </div>
+                    )}
                     {announcement.attachments.length > 0 && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
-                                <Paperclip className="h-3 w-3" /> Attachments
+                                <Paperclip className="h-3 w-3" /> {announcement.attachments.length === 1 ? 'File' : 'Files'}
                             </p>
                             <div className="space-y-1.5">
                                 {announcement.attachments.map((f, i) => (
@@ -197,7 +200,7 @@ function AnnouncementItem({ title, date, tag, tagColor, attachments, onClick }: 
                 <div className="flex flex-col min-w-0">
                     <p className="font-semibold text-green-700 leading-tight mb-1 text-sm">{title}</p>
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
+                        {tag !== 'General' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>}
                         <p className="text-xs text-gray-400">Posted: {date}</p>
                         {attachments.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] text-gray-400">

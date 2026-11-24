@@ -16,12 +16,10 @@ use Illuminate\Support\Facades\Notification;
 function publishedMemoFor(array $attributes = []): Memo
 {
     return Memo::factory()->published()->create(array_merge([
-        'type' => 'Memorandum Circular',
-        'series_year' => 2026,
-        'number' => 58,
         'subject' => 'Declaration of Laguna as Avian Influenza Free Province',
         'memo_date' => '2026-11-09',
-        'body' => 'This body must never be broadcast.',
+        'file_path' => 'memos/58/file/stored.pdf',
+        'file_name' => 'Circular 58.pdf',
     ], $attributes));
 }
 
@@ -110,18 +108,22 @@ test('the email names the subject and links to /memos/{id}', function () {
         ->and($mail->actionText)->toBe('View Memo')
         ->and($mail->actionUrl)->toBe(url("/memos/{$memo->id}"))
         ->and($mail->salutation)->toBe('DA RFO 5 - HRIS')
-        ->and(implode(' ', $mail->introLines))->toContain('Memorandum Circular')->toContain('No. 58')->toContain('November 9, 2026');
+        ->and($mail->introLines)->toBe([
+            'A new memo, dated November 9, 2026, was published.',
+            '**Declaration of Laguna as Avian Influenza Free Province**',
+        ]);
 });
 
-test('the email does not carry the memo body', function () {
+test('the email and the bell say nothing about the stored file', function () {
     $memo = publishedMemoFor();
 
     $mail = (new MemoEmailNotification($memo))->toMail(User::factory()->create(['first_name' => 'Maria']));
+    $bell = (new MemoPublishedNotification($memo))->toDatabase(memoAdmin('employee'));
 
-    expect(implode(' ', $mail->introLines))->not->toContain('This body must never be broadcast.');
+    expect(implode(' ', $mail->introLines).' '.json_encode($bell))->not->toContain('stored.pdf')->not->toContain('Circular 58.pdf');
 });
 
-test('the broadcast payload holds no body text', function () {
+test('the broadcast payload is only the message and the link', function () {
     $memo = publishedMemoFor();
 
     $event = new MemoPublished($memo);
@@ -130,7 +132,7 @@ test('the broadcast payload holds no body text', function () {
         'message' => 'New memo: Declaration of Laguna as Avian Influenza Free Province',
         'url' => "/memos/{$memo->id}",
     ])
-        ->and(json_encode($event->broadcastWith()))->not->toContain('This body must never be broadcast.')
+        ->and(json_encode($event->broadcastWith()))->not->toContain('stored.pdf')->not->toContain('Circular 58.pdf')
         ->and($event->broadcastAs())->toBe('memo-published')
         ->and($event->broadcastOn()[0]->name)->toBe('private-memos');
 });

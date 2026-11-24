@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\ReferenceData\SectionController;
 use App\Http\Controllers\Admin\ServiceRecordBulkPdfController;
 use App\Http\Controllers\Admin\ServiceRecordController;
 use App\Http\Controllers\Admin\ServiceRecordImportController;
-use App\Http\Controllers\Admin\SignatoryController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtaIdController;
 use App\Http\Controllers\DashboardController;
@@ -167,34 +166,26 @@ Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
     });
 
 // Announcement history and memos — HR admin and superadmin.
-// Fixed paths such as /admin/memos/signatories must stay above any /admin/memos/{memo} route added to this group.
+// Fixed paths such as /admin/memos/create must stay above any /admin/memos/{memo} route added to this group.
 Route::middleware(['auth', 'verified', 'role:admin|superadmin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/announcements/history', [AnnouncementHistoryController::class, 'index'])->name('announcements.history');
 
-        // Saved signatories. Fixed paths like these stay above any /memos/{memo} route.
-        Route::get('/memos/signatories', [SignatoryController::class, 'index'])->name('signatories.index');
-        Route::post('/memos/signatories', [SignatoryController::class, 'store'])->name('signatories.store');
-        Route::put('/memos/signatories/{signatory}', [SignatoryController::class, 'update'])->name('signatories.update');
-        Route::delete('/memos/signatories/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
-        Route::get('/memos/signatories/{signatory}/signature', [SignatoryController::class, 'signature'])->name('signatories.signature');
-
-        // Memos. Fixed paths (signatories above, create here) stay above any /memos/{memo} route.
+        // Memos. Fixed paths (create here) stay above any /memos/{memo} route.
         Route::get('/memos', [AdminMemoController::class, 'index'])->name('memos.index');
         Route::get('/memos/create', [AdminMemoController::class, 'create'])->name('memos.create');
         Route::post('/memos', [AdminMemoController::class, 'store'])->name('memos.store');
         Route::get('/memos/{memo}/edit', [AdminMemoController::class, 'edit'])->name('memos.edit');
-        Route::get('/memos/{memo}/preview', [AdminMemoController::class, 'preview'])->name('memos.preview');
         Route::put('/memos/{memo}', [AdminMemoController::class, 'update'])->name('memos.update');
         Route::delete('/memos/{memo}', [AdminMemoController::class, 'destroy'])->name('memos.destroy');
         Route::post('/memos/{memo}/publish', [AdminMemoController::class, 'publish'])->name('memos.publish');
         Route::post('/memos/{memo}/withdraw', [AdminMemoController::class, 'withdraw'])->name('memos.withdraw');
         Route::post('/memos/{memo}/restore', [AdminMemoController::class, 'restore'])->name('memos.restore');
-        // HR can open the file of any memo (a draft's uploaded file, a withdrawn memo's PDF); the same controller serves employees.
+        // HR can open the file of any memo (a draft's, a withdrawn memo's); the same controller serves employees.
         Route::get('/memos/{memo}/file', [MemoFileController::class, 'show'])->name('memos.file');
-        // The memo's own page. After every fixed path above (create, signatories), which would otherwise be read as a memo id.
+        // The memo's own page. After every fixed path above (create), which would otherwise be read as a memo id.
         Route::get('/memos/{memo}', [AdminMemoController::class, 'show'])->name('memos.show');
     });
 

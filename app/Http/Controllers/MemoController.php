@@ -34,12 +34,8 @@ class MemoController extends Controller
             ->withQueryString()
             ->through(fn (Memo $memo) => [
                 'id' => $memo->id,
-                'type' => $memo->type,
-                'number_label' => $memo->numberLabel(),
                 'subject' => $memo->subject,
                 'memo_date' => $memo->memo_date->toDateString(),
-                'memo_time' => $this->time($memo),
-                'addressed_to' => $memo->addressed_to,
             ]);
 
         return Inertia::render('Memos/Index', [
@@ -59,22 +55,11 @@ class MemoController extends Controller
         return Inertia::render('Memos/Show', [
             'memo' => [
                 'id' => $memo->id,
-                'type' => $memo->type,
-                'number_label' => $memo->numberLabel(),
                 'subject' => $memo->subject,
-                'addressed_to' => $memo->addressed_to,
                 'memo_date' => $memo->memo_date->toDateString(),
-                'memo_time' => $this->time($memo),
-                'mode' => $memo->mode,
-                'body' => $memo->mode === Memo::MODE_WRITTEN ? $memo->body : null,
-                'file_name' => $memo->mode === Memo::MODE_UPLOADED ? $memo->file_name : null,
+                'file_name' => $memo->file_name,
                 'has_file' => $hasFile,
             ],
-            'signatories' => $memo->signatories->map(fn ($row) => [
-                'label' => $row->label,
-                'name' => $row->name,
-                'position' => $row->position,
-            ])->all(),
             'file_url' => $hasFile ? route('memos.file', $memo, false) : null,
         ]);
     }
@@ -84,10 +69,5 @@ class MemoController extends Controller
         $value = $this->queryText($request, 'year');
 
         return preg_match('/^\d{4}$/', $value) ? (int) $value : null;
-    }
-
-    private function time(Memo $memo): ?string
-    {
-        return $memo->memo_time !== null ? substr($memo->memo_time, 0, 5) : null;
     }
 }

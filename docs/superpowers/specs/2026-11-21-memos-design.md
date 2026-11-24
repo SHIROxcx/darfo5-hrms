@@ -1,6 +1,6 @@
 # Memos module (official memos with signatories and history) — design
 
-Status: **waiting for approval**. Nothing is built. Date: 2026-11-21.
+Status: built 2026-11-21, then **changed to upload-only on 2026-11-23** (section 13 says what changed; sections 1 to 12 describe the first version and are kept as the record of it).
 
 ## 1. Intent and why
 HR (admin and superadmin) needs to issue **official memos** to employees from inside the HRMS, like the DA Memorandum Circular the requester had open (letterhead, number and series, subject, body, signatory). Today the only way to tell employees something is an *announcement*, which is a short notice, has no signatories, and is **deleted for good** when removed or expired, so there is no record of what was announced. Both memos and announcements should leave a **record with a history**, and every memo should carry its **signatories**.
@@ -132,3 +132,23 @@ The exact printed layout and page breaks for long bodies; component and file nam
 - Not verified end to end: the live push through a real Reverb server (it would have reached the user's open dev tabs). It is covered by tests, and the browser was confirmed to be authorised onto the private `memos` channel.
 
 **Still open (section 11):** numbering scheme, letterhead address lines, regular signatories, the "FROM" line.
+
+## 13. Changed to upload-only (2026-11-23)
+
+The requester asked: "make the memo to be something like upload only as well as the announcement remove the writing as well as the signatories".
+
+**Memos.**
+- A memo is now **only an uploaded file** (pdf, doc, docx, jpg, png, up to 10 MB) and nothing else is asked for (the requester, again, on 2026-11-23: when creating a memo or an announcement, "only upload the file"). The **subject is the file's name** (underscores become spaces, cut to 255), the **date is the day it is published** (it is set to today when the draft is saved, and again when it is published, in the office time zone), and the type, the "addressed to" line, the time and the typed reference are gone. Nothing is written in the system, and nothing is printed or numbered by it. A draft can only have its file replaced, which also renames it.
+- Removed: the written mode and its body, the signatories (the saved list, the picker and the per-memo rows), the PDF (`MemoPdfService`, the Blade view, the draft preview and the final PDF) and the series-year/number numbering with its unique index.
+- Kept: the draft, published and withdrawn states and the history; the rule that a published memo is frozen; the private disk and `MemoFileController`; the bell notice, the queued email and the private push channel; employee visibility rules. Publishing now needs only the file (`Upload the memo file before publishing.`); the email names the type and the reference instead of a number.
+- Database: one forward-only migration (`2026_11_23_090000_make_memos_upload_only`) drops `memo_signatories` and `signatories` and the columns `type`, `reference`, `addressed_to`, `memo_time`, `mode`, `body`, `series_year`, `number` and `final_pdf_path` (and the numbering unique index). It **refuses to run** if any memo was written in the system, so no text is lost without notice; the dropped detail columns of uploaded memos are not kept. `down()` restores the structure, not the data.
+- Limits left in `config/memos.php`: the withdraw reason (255) and the file (types and 10 MB). The memo types, the other text limits, and the signatory, signature, letterhead and body settings are gone, and `MEMO_LETTERHEAD_*` in `.env` is no longer used. The email says "A new memo, dated ..., was published." and names the subject.
+
+**Announcements.**
+- An announcement is now **only a file** (the types it accepted before, up to 10 MB, **one** file). HR picks the file; the **title is the file's name** (underscores become spaces, cut to 255), the **date is today** in the office time zone and the category is `General`. HR can still switch on auto-delete with a future date.
+- Editing: a new file replaces the old one and the title follows it; the auto-delete choice can change. There is no text to edit.
+- The stored file keeps a readable name in its own folder (`announcements/attachments/{uuid}/Name.pdf`), keeps only plain characters, and takes its extension from what the file really is, never from its name, so a PDF called `page.html` is not stored or served as a web page.
+- Announcements written earlier are not changed: they keep their text, their category and all their files, and show them. Migration `2026_11_23_090100_make_announcement_body_optional` makes `announcements.body` nullable.
+- The category chip is shown only on older announcements that had one chosen (anything but `General`).
+
+**Calls made without asking.** The title comes from the file name rather than being typed; the date is automatic (a memo is dated the day it is published); one file per announcement; older announcements are kept as they are; the migration refuses to drop written memos.

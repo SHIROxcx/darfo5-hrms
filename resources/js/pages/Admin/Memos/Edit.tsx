@@ -2,16 +2,14 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { edit, index } from '@/routes/admin/memos';
 import type { BreadcrumbItem } from '@/types';
-import type { MemoFormData, PickableSignatory } from '@/types/memo';
+import type { MemoFormData } from '@/types/memo';
 import MemoForm from './MemoForm';
 
 interface Props {
     memo: MemoFormData;
-    types: string[];
-    signatories: PickableSignatory[];
 }
 
-export default function EditMemo({ memo, types, signatories }: Props) {
+export default function EditMemo({ memo }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Memos', href: index().url },
         { title: 'Edit Draft', href: edit(memo.id).url },
@@ -27,7 +25,7 @@ export default function EditMemo({ memo, types, signatories }: Props) {
                     <p className="mt-1 truncate text-sm text-gray-500">{memo.subject}</p>
                 </div>
 
-                <MemoForm memo={memo} types={types} signatories={signatories} />
+                <MemoForm memo={memo} />
             </div>
         </AppLayout>
     );

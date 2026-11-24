@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * An official memo. A draft can be edited and deleted; a published memo is frozen; a withdrawn memo is hidden from
- * employees but kept. See docs/superpowers/specs/2026-11-21-memos-design.md.
+ * An official memo: an uploaded file (a PDF, Word document or picture) and nothing else. Its subject is the file's name and
+ * its date is the day it was saved, or published. A draft can be replaced and deleted; a published memo is frozen; a withdrawn
+ * memo is hidden from employees but kept. See docs/superpowers/specs/2026-11-21-memos-design.md.
  */
 class Memo extends Model
 {
@@ -24,14 +24,9 @@ class Memo extends Model
 
     public const STATUS_WITHDRAWN = 'withdrawn';
 
-    public const MODE_WRITTEN = 'written';
-
-    public const MODE_UPLOADED = 'uploaded';
-
     protected $fillable = [
-        'type', 'series_year', 'number', 'reference', 'subject', 'addressed_to', 'memo_date', 'memo_time', 'mode', 'body',
-        'file_path', 'file_name', 'final_pdf_path', 'status', 'published_at', 'published_by', 'withdrawn_reason',
-        'created_by', 'updated_by',
+        'subject', 'memo_date', 'file_path', 'file_name',
+        'status', 'published_at', 'published_by', 'withdrawn_reason', 'created_by', 'updated_by',
     ];
 
     protected function casts(): array
@@ -39,14 +34,7 @@ class Memo extends Model
         return [
             'memo_date' => 'date:Y-m-d',
             'published_at' => 'datetime',
-            'series_year' => 'integer',
-            'number' => 'integer',
         ];
-    }
-
-    public function signatories(): HasMany
-    {
-        return $this->hasMany(MemoSignatory::class)->orderBy('sort_order');
     }
 
     public function creator(): BelongsTo
@@ -97,11 +85,5 @@ class Memo extends Model
     public function isWithdrawn(): bool
     {
         return $this->status === self::STATUS_WITHDRAWN;
-    }
-
-    /** "No. 12, Series of 2026", or null until the memo is numbered at publish. */
-    public function numberLabel(): ?string
-    {
-        return $this->number !== null ? "No. {$this->number}, Series of {$this->series_year}" : null;
     }
 }

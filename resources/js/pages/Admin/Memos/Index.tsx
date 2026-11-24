@@ -6,7 +6,6 @@ import AppLayout from '@/layouts/app-layout';
 import { formatMemoDate } from '@/lib/memo-format';
 import { history as announcementHistory } from '@/routes/admin/announcements';
 import { create, edit, index, show } from '@/routes/admin/memos';
-import { index as signatoriesIndex } from '@/routes/admin/signatories';
 import type { BreadcrumbItem } from '@/types';
 import type { MemoCounts, MemoFilters, MemoRow, MemoStatus, PageLink } from '@/types/memo';
 import StatusBadge from './StatusBadge';
@@ -15,7 +14,6 @@ interface Props {
     memos: { data: MemoRow[]; links: PageLink[]; total: number };
     filters: MemoFilters;
     counts: MemoCounts;
-    types: string[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Memos', href: index().url }];
@@ -27,7 +25,7 @@ const TABS: { key: MemoStatus | null; label: string }[] = [
     { key: 'withdrawn', label: 'Withdrawn' },
 ];
 
-export default function MemosIndex({ memos, filters, counts, types }: Props) {
+export default function MemosIndex({ memos, filters, counts }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
     // Search as you type, a moment after you stop. Nothing is sent when the box already matches the list on screen: that covers
@@ -56,12 +54,9 @@ export default function MemosIndex({ memos, filters, counts, types }: Props) {
                 <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Memos</h1>
-                        <p className="mt-1 text-sm text-gray-500">Write or upload official memos for employees, and keep their history.</p>
+                        <p className="mt-1 text-sm text-gray-500">Upload official memos for employees, and keep their history.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Link href={signatoriesIndex().url} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
-                            Signatories
-                        </Link>
                         <Link href={announcementHistory().url} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
                             Announcement history
                         </Link>
@@ -92,16 +87,6 @@ export default function MemosIndex({ memos, filters, counts, types }: Props) {
                         })}
                     </div>
 
-                    <select
-                        aria-label="Filter by type"
-                        value={filters.type ?? ''}
-                        onChange={e => go({ type: e.target.value || null })}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                        <option value="">All types</option>
-                        {types.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-
                     <div className="relative w-full max-w-xs">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
@@ -120,9 +105,7 @@ export default function MemosIndex({ memos, filters, counts, types }: Props) {
                         <table className="w-full text-sm">
                             <thead className="sticky top-0 z-10 border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
                                 <tr>
-                                    <th className="px-4 py-5 text-left">Number</th>
                                     <th className="px-4 py-5 text-left">Subject</th>
-                                    <th className="px-4 py-5 text-left">Type</th>
                                     <th className="px-4 py-5 text-left">Date</th>
                                     <th className="px-4 py-5 text-left">Status</th>
                                     <th className="px-4 py-5 text-left">Made by</th>
@@ -132,17 +115,14 @@ export default function MemosIndex({ memos, filters, counts, types }: Props) {
                             <tbody className="divide-y divide-gray-100">
                                 {memos.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="py-12 text-center italic text-gray-400">No memos found.</td>
+                                        <td colSpan={5} className="py-12 text-center italic text-gray-400">No memos found.</td>
                                     </tr>
                                 ) : (
                                     memos.data.map(memo => (
                                         <tr key={memo.id} className="transition hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">{memo.number_label ?? <span className="italic text-gray-300">—</span>}</td>
                                             <td className="px-4 py-3 font-medium text-gray-800">
                                                 <Link href={show(memo.id).url} className="hover:text-green-700 hover:underline">{memo.subject}</Link>
-                                                {memo.mode === 'uploaded' && <span className="ml-2 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">File</span>}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-700">{memo.type}</td>
                                             <td className="whitespace-nowrap px-4 py-3 text-gray-700">{formatMemoDate(memo.memo_date)}</td>
                                             <td className="px-4 py-3"><StatusBadge status={memo.status} /></td>
                                             <td className="px-4 py-3 text-gray-700">{memo.created_by_name ?? <span className="italic text-gray-300">—</span>}</td>

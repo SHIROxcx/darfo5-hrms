@@ -2,30 +2,14 @@
 
 use App\Models\Memo;
 use App\Models\User;
-use App\Support\MemoFiles;
 use Inertia\Testing\AssertableInertia as Assert;
 
 // What employees can see of memos: the list, one memo, and its file. Drafts and withdrawn memos stay hidden from them.
 
-/** A published written memo whose final PDF is stored. */
-function memoWithPdf(array $attributes = []): Memo
+/** A published memo whose file is stored. */
+function publishedWithFile(array $attributes = [], string $extension = 'pdf', ?string $content = null, string $name = 'Memo.pdf'): Memo
 {
-    $memo = Memo::factory()->published()->create($attributes);
-    MemoFiles::disk()->put("memos/{$memo->id}/final.pdf", "%PDF-final-{$memo->id}");
-    $memo->update(['final_pdf_path' => "memos/{$memo->id}/final.pdf"]);
-
-    return $memo->fresh();
-}
-
-/** A published memo that is a ready-made file, with its file stored. */
-function memoWithUpload(string $extension, string $content, string $name, array $state = []): Memo
-{
-    $memo = Memo::factory()->published()->uploaded()->create($state);
-    $path = "memos/{$memo->id}/file/stored.{$extension}";
-    MemoFiles::disk()->put($path, $content);
-    $memo->update(['file_path' => $path, 'file_name' => $name]);
-
-    return $memo->fresh();
+    return attachMemoFile(Memo::factory()->published()->create($attributes), $extension, $content, $name);
 }
 
 /** An account that is signed up and verified but not approved by HR. */
@@ -78,54 +62,34 @@ test('a search with percent or underscore signs and a nonsense year are handled 
 test('the list is paginated by 15 and sends only what the list shows', function () {
     $employee = memoAdmin('employee');
     Memo::factory()->published()->count(17)->create();
-    Memo::factory()->published()->create(['memo_time' => '14:30:00', 'addressed_to' => 'All DA RFO 5 Employees', 'body' => 'Never in the list.']);
+    Memo::factory()->published()->create(['file_path' => 'memos/1/file/a.pdf']);
 
     $this->actingAs($employee)->get('/memos')->assertInertia(fn (Assert $page) => $page
         ->has('memos.data', 15)
         ->where('memos.total', 18)
         ->has('memos.data.0', fn (Assert $row) => $row
-            ->hasAll(['id', 'type', 'number_label', 'subject', 'memo_date', 'memo_time', 'addressed_to'])));
+            ->hasAll(['id', 'subject', 'memo_date'])));
 });
 
-test('the show page sends the memo and its signatories in order, and the file address', function () {
+test('the show page sends the memo and the file address', function () {
     $employee = memoAdmin('employee');
-    $memo = memoWithPdf(['type' => 'Memorandum Circular', 'series_year' => 2026, 'number' => 7, 'subject' => 'Declaration of Laguna',
-        'memo_time' => '14:30:00', 'body' => "First line\nSecond line\n\nNew paragraph"]);
-    foreach ([['Regional Executive Director', 'Maria Santos', 'Approved by'], ['Chief, Administrative Division', 'Juan Dela Cruz', null]] as $order => [$position, $name, $label]) {
-        $memo->signatories()->create(['signatory_id' => makeSignatory()->id, 'sort_order' => $order, 'label' => $label, 'name' => $name, 'position' => $position]);
-    }
+    $memo = publishedWithFile(['subject' => 'Declaration of Laguna'], name: 'Circular 7.pdf');
 
     $this->actingAs($employee)->get("/memos/{$memo->id}")->assertOk()->assertInertia(fn (Assert $page) => $page
         ->component('Memos/Show')
-        ->where('memo.id', $memo->id)
-        ->where('memo.type', 'Memorandum Circular')
-        ->where('memo.number_label', 'No. 7, Series of 2026')
-        ->where('memo.subject', 'Declaration of Laguna')
-        ->where('memo.memo_time', '14:30')
-        ->where('memo.mode', 'written')
-        ->where('memo.body', "First line\nSecond line\n\nNew paragraph")
-        ->where('memo.has_file', true)
-        ->where('signatories', [
-            ['label' => 'Approved by', 'name' => 'Maria Santos', 'position' => 'Regional Executive Director'],
-            ['label' => null, 'name' => 'Juan Dela Cruz', 'position' => 'Chief, Administrative Division'],
+        ->where('memo', [
+            'id' => $memo->id,
+            'subject' => 'Declaration of Laguna',
+            'memo_date' => $memo->memo_date->toDateString(),
+            'file_name' => 'Circular 7.pdf',
+            'has_file' => true,
         ])
-        ->where('file_url', "/memos/{$memo->id}/file"));
-});
-
-test('an uploaded memo shows its file name and no body', function () {
-    $employee = memoAdmin('employee');
-    $memo = memoWithUpload('pdf', '%PDF-up', 'Quarterly Schedule.pdf');
-
-    $this->actingAs($employee)->get("/memos/{$memo->id}")->assertInertia(fn (Assert $page) => $page
-        ->where('memo.mode', 'uploaded')
-        ->where('memo.body', null)
-        ->where('memo.file_name', 'Quarterly Schedule.pdf')
-        ->where('memo.has_file', true)
-        ->where('file_url', "/memos/{$memo->id}/file"));
+        ->where('file_url', "/memos/{$memo->id}/file")
+        ->missing('signatories'));
 });
 
 test('a published memo without a stored file has no file address', function () {
-    $memo = Memo::factory()->published()->create(['final_pdf_path' => null]);
+    $memo = Memo::factory()->published()->create();
 
     $this->actingAs(memoAdmin('employee'))->get("/memos/{$memo->id}")->assertInertia(fn (Assert $page) => $page
         ->where('memo.has_file', false)
@@ -134,11 +98,9 @@ test('a published memo without a stored file has no file address', function () {
 
 test('an employee gets 404 for a draft or a withdrawn memo, on the page and on the file route', function () {
     $employee = memoAdmin('employee');
-    $draft = Memo::factory()->uploaded()->create();
-    MemoFiles::disk()->put($draft->file_path, '%PDF-draft');
-    $withdrawn = memoWithPdf();
-    $withdrawn->update(['status' => Memo::STATUS_WITHDRAWN, 'withdrawn_reason' => 'Mistake.']);
-    $deleted = memoWithPdf();
+    $draft = attachMemoFile(Memo::factory()->create());
+    $withdrawn = attachMemoFile(Memo::factory()->withdrawn()->create());
+    $deleted = publishedWithFile();
     $deleted->delete();
 
     foreach ([$draft, $withdrawn, $deleted] as $memo) {
@@ -162,7 +124,7 @@ test('the employee pages show published memos to admins too, and nothing else', 
 });
 
 test('an unapproved account gets 403 on the list, the page and the file', function () {
-    $memo = memoWithPdf();
+    $memo = publishedWithFile();
     $unapproved = unapprovedEmployee();
 
     foreach (['/memos', "/memos/{$memo->id}", "/memos/{$memo->id}/file"] as $url) {
@@ -171,7 +133,7 @@ test('an unapproved account gets 403 on the list, the page and the file', functi
 });
 
 test('a guest is sent to login on every memo route', function () {
-    $memo = memoWithPdf();
+    $memo = publishedWithFile();
 
     foreach (['/memos', "/memos/{$memo->id}", "/memos/{$memo->id}/file", "/admin/memos/{$memo->id}/file"] as $url) {
         $this->get($url)->assertRedirect('/login');
@@ -179,40 +141,28 @@ test('a guest is sent to login on every memo route', function () {
 });
 
 test('admins and superadmins see every memo on the admin file route', function () {
-    $draftUpload = memoWithUpload('pdf', '%PDF-draft-upload', 'Draft.pdf', ['status' => Memo::STATUS_DRAFT, 'published_at' => null]);
-    $published = memoWithPdf();
-    $withdrawn = memoWithPdf();
-    $withdrawn->update(['status' => Memo::STATUS_WITHDRAWN, 'withdrawn_reason' => 'Mistake.']);
+    $draft = attachMemoFile(Memo::factory()->create());
+    $published = publishedWithFile();
+    $withdrawn = attachMemoFile(Memo::factory()->withdrawn()->create());
 
     foreach (['admin', 'superadmin'] as $role) {
         $user = memoAdmin($role);
-        foreach ([$draftUpload, $published, $withdrawn] as $memo) {
+        foreach ([$draft, $published, $withdrawn] as $memo) {
             $this->actingAs($user)->get("/admin/memos/{$memo->id}/file")->assertOk();
         }
     }
 });
 
-test('the admin file route refuses employees, a draft that was written (use the preview), and a deleted memo', function () {
+test('the admin file route refuses employees, a memo with no file, and a deleted memo', function () {
     $admin = memoAdmin();
-    $published = memoWithPdf();
-    $writtenDraft = Memo::factory()->create();
-    $deleted = memoWithPdf();
+    $published = publishedWithFile();
+    $noFile = Memo::factory()->create();
+    $deleted = publishedWithFile();
     $deleted->delete();
 
     $this->actingAs(memoAdmin('employee'))->get("/admin/memos/{$published->id}/file")->assertForbidden();
-    $this->actingAs($admin)->get("/admin/memos/{$writtenDraft->id}/file")->assertNotFound();
+    $this->actingAs($admin)->get("/admin/memos/{$noFile->id}/file")->assertNotFound();
     $this->actingAs($admin)->get("/admin/memos/{$deleted->id}/file")->assertNotFound();
-});
-
-test('the file route serves the stored final PDF inline, with its type and nosniff', function () {
-    $memo = memoWithPdf(['type' => 'Memorandum Circular', 'series_year' => 2026, 'number' => 58]);
-
-    $response = $this->actingAs(memoAdmin('employee'))->get("/memos/{$memo->id}/file")->assertOk();
-
-    expect($response->headers->get('Content-Type'))->toStartWith('application/pdf')
-        ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff')
-        ->and($response->headers->get('Content-Disposition'))->toStartWith('inline')->toContain('Memorandum-Circular-No-58-S2026.pdf')
-        ->and($response->streamedContent())->toBe("%PDF-final-{$memo->id}");
 });
 
 test('the file route serves an uploaded file with the right type and disposition for each kind', function () {
@@ -226,7 +176,7 @@ test('the file route serves an uploaded file with the right type and disposition
     ];
 
     foreach ($cases as [$extension, $type, $disposition, $name]) {
-        $memo = memoWithUpload($extension, "bytes-of-{$extension}", $name);
+        $memo = publishedWithFile([], $extension, "bytes-of-{$extension}", $name);
 
         $response = $this->actingAs($employee)->get("/memos/{$memo->id}/file")->assertOk();
 
@@ -238,7 +188,7 @@ test('the file route serves an uploaded file with the right type and disposition
 });
 
 test('a stored file of an unknown kind is only ever offered as a download', function () {
-    $memo = memoWithUpload('html', '<script>alert(1)</script>', 'trick.html');
+    $memo = publishedWithFile([], 'html', '<script>alert(1)</script>', 'trick.html');
 
     $response = $this->actingAs(memoAdmin('employee'))->get("/memos/{$memo->id}/file")->assertOk();
 
@@ -248,45 +198,30 @@ test('a stored file of an unknown kind is only ever offered as a download', func
 
 test('the file route ignores any path in the query and serves only what the memo row says', function () {
     $employee = memoAdmin('employee');
-    $memo = memoWithPdf();
-    $other = memoWithPdf();
-    MemoFiles::disk()->put('memos/secret/other.pdf', 'someone else');
+    $memo = publishedWithFile();
+    $other = publishedWithFile();
+    Illuminate\Support\Facades\Storage::disk('local')->put('memos/secret/other.pdf', 'someone else');
 
-    foreach (['memos/secret/other.pdf', "memos/{$other->id}/final.pdf", '../../.env', 'path=/etc/passwd'] as $path) {
+    foreach (['memos/secret/other.pdf', "memos/{$other->id}/file/stored.pdf", '../../.env', 'path=/etc/passwd'] as $path) {
         $response = $this->actingAs($employee)->get("/memos/{$memo->id}/file?path=".urlencode($path).'&file='.urlencode($path))->assertOk();
 
-        expect($response->streamedContent())->toBe("%PDF-final-{$memo->id}");
+        expect($response->streamedContent())->toBe("bytes-of-memo-{$memo->id}");
     }
 });
 
-test('no route serves a signature picture to an employee', function () {
+test('a memo row that points outside its own folder is never served', function () {
     $employee = memoAdmin('employee');
-    $signatory = makeSignatory();
-    $memo = memoWithPdf();
-    MemoFiles::disk()->put("memos/{$memo->id}/signatures/0.png", 'frozen picture');
-    MemoFiles::disk()->put(MemoFiles::signatoryDir($signatory->id).'/pic.png', 'saved picture');
-    $signatory->update(['signature_path' => MemoFiles::signatoryDir($signatory->id).'/pic.png']);
-
-    // The saved picture's route belongs to HR only.
-    $this->actingAs($employee)->get("/admin/memos/signatories/{$signatory->id}/signature")->assertForbidden();
-    // There is no route to a memo's frozen copy, and asking for one by path still returns the memo's own PDF.
-    $this->actingAs($employee)->get("/memos/{$memo->id}/signatures/0.png")->assertNotFound();
-    $response = $this->actingAs($employee)->get("/memos/{$memo->id}/file?path=".urlencode("memos/{$memo->id}/signatures/0.png"))->assertOk();
-    expect($response->streamedContent())->toBe("%PDF-final-{$memo->id}");
-});
-
-test('a memo row that points at a signature picture or outside its own folder is never served', function () {
-    $employee = memoAdmin('employee');
-    $memo = Memo::factory()->published()->uploaded()->create();
-    MemoFiles::disk()->put("memos/{$memo->id}/signatures/0.png", 'frozen picture');
-    MemoFiles::disk()->put('memos/signatories/3/pic.png', 'saved picture');
+    $other = publishedWithFile();
+    $memo = Memo::factory()->published()->create();
+    Illuminate\Support\Facades\Storage::disk('local')->put('memos/secret/other.pdf', 'someone else');
 
     foreach ([
+        $other->file_path,
+        'memos/secret/other.pdf',
         "memos/{$memo->id}/signatures/0.png",
-        'memos/signatories/3/pic.png',
-        "memos/{$memo->id}/file/../signatures/0.png",
+        "memos/{$memo->id}/file/../../secret/other.pdf",
     ] as $path) {
-        $memo->update(['file_path' => $path, 'file_name' => 'x.png']);
+        $memo->update(['file_path' => $path, 'file_name' => 'x.pdf']);
 
         $this->actingAs($employee)->get("/memos/{$memo->id}/file")->assertNotFound();
         $this->actingAs(memoAdmin())->get("/admin/memos/{$memo->id}/file")->assertNotFound();
@@ -294,10 +229,7 @@ test('a memo row that points at a signature picture or outside its own folder is
 });
 
 test('a missing stored file is a plain 404', function () {
-    $memo = Memo::factory()->published()->create(['final_pdf_path' => 'memos/55/final.pdf']);
-    $upload = Memo::factory()->published()->uploaded()->create(['file_path' => 'memos/56/file/gone.pdf']);
+    $memo = Memo::factory()->published()->create(['file_path' => 'memos/56/file/gone.pdf', 'file_name' => 'gone.pdf']);
 
-    foreach ([$memo, $upload] as $row) {
-        $this->actingAs(memoAdmin('employee'))->get("/memos/{$row->id}/file")->assertNotFound();
-    }
+    $this->actingAs(memoAdmin('employee'))->get("/memos/{$memo->id}/file")->assertNotFound();
 });

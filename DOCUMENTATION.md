@@ -611,10 +611,10 @@ The DB columns for `abbreviation` are NOT NULL, but the controllers validate the
 | Column | Type | Notes |
 |---|---|---|
 | title | string | |
-| body | string(200) | |
-| date | date | |
-| tag | string, default `General` | Validated to `Reminder, Policy, Health, Holiday, General`. |
-| attachments | json, nullable | Array of public-disk paths under `announcements/attachments`. |
+| body | text, nullable | Only announcements written before they became upload-only have text; new ones leave it null. |
+| date | date | Today in the office time zone when posted. |
+| tag | string, default `General` | Always `General` for new announcements; older ones keep the category chosen then. |
+| attachments | json, nullable | Array of public-disk paths under `announcements/attachments/{uuid}/`. A new announcement holds exactly one. |
 | auto_delete | boolean, default false | |
 | delete_after | date, nullable | |
 | created_by | FK → users, cascade | |
@@ -891,8 +891,8 @@ All three share one route: `GET /dashboard` (`dashboard`), [DashboardController@
     - `age_18_30`, `age_31_60`
   - `announcements`: latest 30
 - **Actions:**
-  - "Post new announcement" modal with title, body (≤200 chars), date, tag, attachments, and an auto-delete toggle plus date → `POST /announcements` (multipart)
-  - edit → `POST /announcements/{id}` with `_method=PUT`
+  - "Post new announcement" modal: one file (PDF, Word, Excel, PowerPoint, image or ZIP, up to 10 MB) and an auto-delete toggle plus date → `POST /announcements` (multipart). The title is the file's name; the date and category are automatic
+  - edit → `POST /announcements/{id}` with `_method=PUT` (a new file replaces the old one; the auto-delete choice can change)
   - delete with SweetAlert confirmation → `DELETE /announcements/{id}`
   - live updates via the `announcements` channel
   - the `#announcements-panel` anchor scrolls to the list
@@ -1323,8 +1323,8 @@ Conventions used in this section:
 #### [AnnouncementController](app/Http/Controllers/AnnouncementController.php)
 | Method | Params | Returns | Side effects |
 |---|---|---|---|
-| `store` | title, body, date, tag, auto_delete, delete_after, `attachments[]` | Redirect back | 403 unless admin/superadmin, checked **after** validation. Stores files under `announcements/attachments` (public disk). Creates the row. Broadcasts `AnnouncementPosted` (best-effort). Sends `AnnouncementNotification` to every approved, verified user except the author, in chunks of 100. |
-| `update` | same + `removed_attachments` (JSON string) | Redirect back | Deletes removed files, adds new ones, updates the row, broadcasts `AnnouncementUpdated`. |
+| `store` | `file` (required, one), auto_delete, delete_after | Redirect back | 403 unless admin/superadmin, checked **before** validation. Stores the file under `announcements/attachments/{uuid}/` (public disk; readable name, extension taken from the file's real type). The title is the file's name, the date is today (Asia/Manila), the category is `General`, there is no text. Creates the row. Broadcasts `AnnouncementPosted` (best-effort). Sends `AnnouncementNotification` and the queued email to every approved, verified user except the author, in chunks of 100. |
+| `update` | `file` (optional), auto_delete, delete_after | Redirect back | A new file replaces the old file(s) and the title follows it; the old files are deleted once the new one is saved. Writes an `updated` history line naming what changed. Broadcasts `AnnouncementUpdated`. |
 | `destroy` | `Announcement` | Redirect back | Deletes files and notifications whose `data->announcement_id` matches, deletes the row, broadcasts `AnnouncementDeleted`. |
 | `latest` (static) | `int $limit = 20` | array of formatted payloads | Used by the dashboards (with 30). |
 | `formatPayload`, `tagColor`, `broadcastSafely` (private static) | — | — | `broadcastSafely` logs a warning instead of throwing when Reverb is down. |

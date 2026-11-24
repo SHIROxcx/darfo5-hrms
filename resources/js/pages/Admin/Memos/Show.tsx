@@ -3,16 +3,15 @@ import { ArrowLeft, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import AppLayout from '@/layouts/app-layout';
-import { formatMemoDate, formatMemoDateTime, formatMemoTime } from '@/lib/memo-format';
+import { formatMemoDate, formatMemoDateTime } from '@/lib/memo-format';
 import { MEMO_MAX } from '@/lib/memo-limits';
-import { destroy, edit, file, index, preview, publish, restore, show, withdraw } from '@/routes/admin/memos';
+import { destroy, edit, file, index, publish, restore, show, withdraw } from '@/routes/admin/memos';
 import type { BreadcrumbItem } from '@/types';
-import type { MemoCan, MemoDetail, MemoEvent, MemoSignatoryDetail } from '@/types/memo';
+import type { MemoCan, MemoDetail, MemoEvent } from '@/types/memo';
 import StatusBadge from './StatusBadge';
 
 interface Props {
     memo: MemoDetail;
-    signatories: MemoSignatoryDetail[];
     events: MemoEvent[];
     can: MemoCan;
 }
@@ -24,7 +23,7 @@ function toast(text: string) {
 const secondaryBtn = 'inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60';
 const primaryBtn = 'inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60';
 
-export default function MemosShow({ memo, signatories, events, can }: Props) {
+export default function MemosShow({ memo, events, can }: Props) {
     const [busy, setBusy] = useState(false);
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Memos', href: index().url },
@@ -92,7 +91,7 @@ export default function MemosShow({ memo, signatories, events, can }: Props) {
         const result = await Swal.fire({
             icon: 'warning',
             title: 'Delete this draft?',
-            text: 'Its files are removed. The history keeps a line saying it was deleted.',
+            text: 'Its file is removed. The history keeps a line saying it was deleted.',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
             cancelButtonColor: '#6b7280',
@@ -120,10 +119,6 @@ export default function MemosShow({ memo, signatories, events, can }: Props) {
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={memo.status} />
-                            <span className="text-xs font-semibold uppercase tracking-wider text-green-700">
-                                {memo.type}
-                                {memo.number_label && <span className="text-gray-500"> · {memo.number_label}</span>}
-                            </span>
                         </div>
                         <h1 className="mt-2 break-words text-2xl font-bold text-gray-900">{memo.subject}</h1>
                     </div>
@@ -133,11 +128,6 @@ export default function MemosShow({ memo, signatories, events, can }: Props) {
                             <Link href={edit(memo.id).url} className={secondaryBtn}>
                                 <Pencil className="h-4 w-4" /> Edit
                             </Link>
-                        )}
-                        {memo.status === 'draft' && memo.mode === 'written' && (
-                            <a href={preview(memo.id).url} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
-                                <ExternalLink className="h-4 w-4" /> Preview PDF
-                            </a>
                         )}
                         {memo.has_file && (
                             <a href={file(memo.id).url} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
@@ -180,19 +170,8 @@ export default function MemosShow({ memo, signatories, events, can }: Props) {
                     <div className="space-y-6">
                         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" aria-label="Memo">
                             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                                <dt className="font-semibold text-gray-600">To:</dt>
-                                <dd className="break-words text-gray-800">{memo.addressed_to}</dd>
                                 <dt className="font-semibold text-gray-600">Date:</dt>
-                                <dd className="text-gray-800">
-                                    {formatMemoDate(memo.memo_date)}
-                                    {memo.memo_time && <>, {formatMemoTime(memo.memo_time)}</>}
-                                </dd>
-                                {memo.reference && (
-                                    <>
-                                        <dt className="font-semibold text-gray-600">Reference:</dt>
-                                        <dd className="break-words text-gray-800">{memo.reference}</dd>
-                                    </>
-                                )}
+                                <dd className="text-gray-800">{formatMemoDate(memo.memo_date)}</dd>
                                 {memo.published_at && (
                                     <>
                                         <dt className="font-semibold text-gray-600">Published:</dt>
@@ -202,38 +181,12 @@ export default function MemosShow({ memo, signatories, events, can }: Props) {
                                         </dd>
                                     </>
                                 )}
-                                {memo.mode === 'uploaded' && (
-                                    <>
-                                        <dt className="font-semibold text-gray-600">File:</dt>
-                                        <dd className="break-all text-gray-800">{memo.file_name ?? <span className="italic text-gray-400">None yet</span>}</dd>
-                                    </>
-                                )}
+                                <dt className="font-semibold text-gray-600">File:</dt>
+                                <dd className="break-all text-gray-800">{memo.file_name ?? <span className="italic text-gray-400">None yet</span>}</dd>
                             </dl>
 
-                            {memo.body && (
-                                <div className="mt-5 whitespace-pre-line break-words border-t border-gray-100 pt-5 text-sm leading-relaxed text-gray-800">
-                                    {memo.body}
-                                </div>
-                            )}
                         </section>
 
-                        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" aria-label="Signatories">
-                            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-600">Signatories</h2>
-                            {signatories.length === 0 ? (
-                                <p className="text-sm italic text-gray-400">No signatories added.</p>
-                            ) : (
-                                <ul className="grid gap-5 sm:grid-cols-2">
-                                    {signatories.map((signatory, i) => (
-                                        <li key={i} className="text-sm">
-                                            {signatory.label && <p className="text-xs italic text-gray-500">{signatory.label}</p>}
-                                            <p className="font-semibold text-gray-900">{signatory.name}</p>
-                                            <p className="text-gray-600">{signatory.position}</p>
-                                            <p className="mt-0.5 text-xs text-gray-400">{signatory.has_signature ? 'Signature picture on the memo' : 'No signature picture'}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </section>
                     </div>
 
                     <section className="h-fit rounded-xl border border-gray-200 bg-white p-6 shadow-sm" aria-label="History">

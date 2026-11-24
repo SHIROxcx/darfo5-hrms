@@ -2,7 +2,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import {
     Users, ShieldCheck, Briefcase, SquareUserRound,
     Megaphone, Plus, X, History as HistoryIcon,
-    Paperclip, Trash2, ExternalLink, FileText, Image, File,
+    Paperclip, Trash2, ExternalLink, FileText, Image, File, Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
@@ -16,7 +16,8 @@ interface AttachmentFile { path: string; url: string; name: string; }
 interface Announcement {
     id: number;
     title: string;
-    body: string;
+    /** Text of an announcement written before announcements became files; null for a file-only one. */
+    body: string | null;
     date: string;
     tag: string;
     tagColor: string;
@@ -53,18 +54,9 @@ function getGreeting(): { text: string; emoji: string } {
     return { text: pool[now.getTime() % pool.length], emoji };
 }
 
-const TAGS     = ['Reminder', 'Policy', 'Health', 'Holiday', 'General'];
-const MAX_BODY = 5000;
-const MAX_FILE_MB = 10; // per attachment, the same as the server rule
+const MAX_FILE_MB = 10; // the same as the server rule
+const FILE_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'zip'];
 const PREVIEW  = 3;
-
-const TAG_COLOR_MAP: Record<string, string> = {
-    Reminder: 'bg-yellow-50 text-yellow-600',
-    Policy:   'bg-blue-50 text-blue-600',
-    Health:   'bg-green-50 text-green-600',
-    Holiday:  'bg-red-50 text-red-600',
-    General:  'bg-gray-50 text-gray-600',
-};
 
 // Helpers
 
@@ -272,7 +264,7 @@ function AnnouncementItem({
                 <div className="flex flex-col min-w-0 pr-12">
                     <p className="font-semibold text-green-700 leading-tight mb-1 text-sm">{title}</p>
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
+                        {tag !== 'General' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>}
                         <p className="text-xs text-gray-400">Posted: {date}</p>
                         {attachments.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] text-gray-400">
@@ -312,7 +304,7 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
                         <div>
                             <h3 className="font-semibold text-green-800 text-base leading-snug">{announcement.title}</h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${announcement.tagColor}`}>{announcement.tag}</span>
+                                {announcement.tag !== 'General' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${announcement.tagColor}`}>{announcement.tag}</span>}
                                 <span className="text-xs text-gray-400">Posted: {announcement.date}</span>
                             </div>
                             {announcement.auto_delete && announcement.delete_after && (
@@ -326,15 +318,17 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
                 </div>
 
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-                    <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
-                    </div>
+                    {announcement.body && (
+                        <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
+                        </div>
+                    )}
 
                     {announcement.attachments.length > 0 && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
-                                <Paperclip className="h-3 w-3" /> Attachments
+                                <Paperclip className="h-3 w-3" /> {announcement.attachments.length === 1 ? 'File' : 'Files'}
                             </p>
                             <div className="space-y-1.5">
                                 {announcement.attachments.map((f, i) => (
@@ -369,15 +363,15 @@ function AnnouncementViewModal({ announcement, onClose, isAdmin, onEdit, onDelet
 
 // ─── Post / Edit Modal ─────────────────────────────────────────────────────
 
-// The server names its fields differently from this form (delete_after, attachments.0), and a message nobody has a spot for
-// still has to be seen: without this, a refused post looked like nothing had happened.
+// An announcement is only a file. The server names the file box `file` and the removal date `delete_after`, and a message
+// nobody has a spot for still has to be seen: without this, a refused post looked like nothing had happened.
 function readServerErrors(errs: Record<string, string>): Record<string, string> {
-    const spots: Record<string, string> = { title: 'title', body: 'body', date: 'date', delete_after: 'deleteAfter' };
+    const spots: Record<string, string> = { file: 'file', delete_after: 'deleteAfter' };
     const out: Record<string, string> = {};
     for (const [key, message] of Object.entries(errs)) {
-        const spot = spots[key] ?? (key.startsWith('attachments') ? 'attachments' : 'form');
+        const spot = spots[key] ?? 'form';
         if (!out[spot]) out[spot] = message;
-        else if (!out[spot].includes(message)) out[spot] += ` ${message}`; // several files can fail with the same message
+        else if (!out[spot].includes(message)) out[spot] += ` ${message}`;
     }
     return out;
 }
@@ -385,27 +379,13 @@ function readServerErrors(errs: Record<string, string>): Record<string, string> 
 interface ModalProps {
     editing?: Announcement;
     onClose: () => void;
-    onSaved: (a: Announcement) => void;
 }
 
-function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
+function AnnouncementModal({ editing, onClose }: ModalProps) {
     const isEdit = editing !== undefined;
 
-    const [title,        setTitle]        = useState(editing?.title  ?? '');
-    const [body,         setBody]         = useState(editing?.body   ?? '');
-    const [date, setDate] = useState(
-        editing?.date
-            ? (() => {
-                const d = new Date(editing.date);
-                const offset = d.getTimezoneOffset() * 60000;
-                return new Date(d.getTime() - offset).toISOString().slice(0, 10);
-            })()
-            : ''
-    );
-    const [tag,          setTag]          = useState(editing?.tag ?? 'General');
-    const [files,        setFiles]        = useState<File[]>([]);
-    const [removedPaths, setRemovedPaths] = useState<string[]>([]);
-    const [autoDelete,   setAutoDelete]   = useState(editing?.auto_delete ?? false);
+    const [file,        setFile]        = useState<File | null>(null);
+    const [autoDelete,  setAutoDelete]  = useState(editing?.auto_delete ?? false);
     const [deleteAfter, setDeleteAfter] = useState(
         editing?.delete_after
             ? (() => {
@@ -415,35 +395,37 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
             })()
             : ''
     );
-    const [saving,  setSaving]  = useState(false);
-    const [errors,  setErrors]  = useState<Record<string, string>>({});
-    const [fileError, setFileError] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const bodyLeft            = MAX_BODY - body.length;
-    const inputCls            = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600';
-    const existingAttachments = (editing?.attachments ?? []).filter(a => !removedPaths.includes(a.path));
+    const inputCls     = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600';
+    const savedFiles   = editing?.attachments ?? [];
+    const hasFile      = file !== null || savedFiles.length > 0;
+
+    function pickFile(chosen: File) {
+        const extension = chosen.name.split('.').pop()?.toLowerCase() ?? '';
+        if (!FILE_EXTENSIONS.includes(extension)) {
+            setErrors(p => ({ ...p, file: 'That file type is not allowed. Attach a PDF, Word, Excel, PowerPoint, image or ZIP file.' }));
+            return;
+        }
+        if (chosen.size > MAX_FILE_MB * 1024 * 1024) {
+            setErrors(p => ({ ...p, file: `The file is too large (maximum ${MAX_FILE_MB} MB).` }));
+            return;
+        }
+        setErrors(p => ({ ...p, file: '' }));
+        setFile(chosen);
+    }
 
     function validate() {
         const e: Record<string, string> = {};
-        if (!title.trim())              e.title       = 'Title is required.';
-        if (!body.trim())               e.body        = 'Description is required.';
-        if (body.length > MAX_BODY)     e.body        = `Max ${MAX_BODY} characters.`;
-        if (!date)                      e.date        = 'Date is required.';
+        if (!hasFile) e.file = 'Attach the announcement file.';
         if (autoDelete && !deleteAfter) {
             e.deleteAfter = 'Please specify the delete-after date.';
-        } else if (autoDelete && deleteAfter) {
-            if (deleteAfter <= localDateStr()) e.deleteAfter = 'The auto-delete date must be a future date — today or a past date is not allowed.';
-            else if (date && deleteAfter < date) e.deleteAfter = 'The auto-delete date must be on or after the announcement date.';
+        } else if (autoDelete && deleteAfter <= localDateStr()) {
+            e.deleteAfter = 'The auto-delete date must be a future date — today or a past date is not allowed.';
         }
         return e;
-    }
-
-    function removeExistingAttachment(path: string) { setRemovedPaths(prev => [...prev, path]); }
-    function removeNewFile(i: number) {
-        setFiles(prev => prev.filter((_, idx) => idx !== i));
-        setFileError('');
-        setErrors(p => ({ ...p, attachments: '' }));
     }
 
     function handleSubmit() {
@@ -453,14 +435,9 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
         setSaving(true);
 
         const formData = new FormData();
-        formData.append('title', title);
-        formData.append('body',  body);
-        formData.append('date',  date);
-        formData.append('tag',   tag);
+        if (file) formData.append('file', file);
         formData.append('auto_delete', autoDelete ? '1' : '0');
         if (autoDelete && deleteAfter) formData.append('delete_after', deleteAfter);
-        files.forEach(f => formData.append('attachments[]', f));
-        if (isEdit && removedPaths.length) formData.append('removed_attachments', JSON.stringify(removedPaths));
         if (isEdit) formData.append('_method', 'PUT');
 
         const url = isEdit ? `/announcements/${editing!.id}` : '/announcements';
@@ -487,97 +464,60 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
 
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 shrink-0">
                     <h3 className="font-semibold text-green-800 text-sm">{isEdit ? 'Edit Announcement' : 'Post Announcement'}</h3>
-                    <button onClick={onClose} className="cursor-pointer text-gray-400 hover:text-gray-600 transition"><X className="h-5 w-5" /></button>
+                    <button onClick={onClose} aria-label="Close" className="cursor-pointer text-gray-400 hover:text-gray-600 transition"><X className="h-5 w-5" /></button>
                 </div>
 
                 <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
 
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Title</label>
-                        <input value={title} onChange={e => { setTitle(e.target.value); setErrors(p => ({ ...p, title: '' })); }}
-                            className={inputCls} placeholder="e.g. Submission of IPCR for Q1 2026" />
-                        {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
-                    </div>
+                        <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                            <Paperclip className="h-3.5 w-3.5" /> Announcement file <span className="text-red-500">*</span>
+                        </span>
 
-                    <div>
-                        <label className="mb-1 flex items-center justify-between text-xs font-medium text-gray-500">
-                            <span>Description</span>
-                            <span className={bodyLeft < 500 ? 'text-red-500 font-semibold' : bodyLeft < 1000 ? 'text-yellow-500' : 'text-gray-400'}>{bodyLeft} / {MAX_BODY}</span>
-                        </label>
-                        <textarea value={body} onChange={e => { setBody(e.target.value.slice(0, MAX_BODY)); setErrors(p => ({ ...p, body: '' })); }}
-                            rows={6} className={`${inputCls} resize-none`} placeholder="Write the memo for employees" />
-                        {errors.body && <p className="mt-1 text-xs text-red-500">{errors.body}</p>}
-                    </div>
+                        <div className={`rounded-xl border-2 border-dashed p-4 ${errors.file ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}>
+                            {file ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-xs text-gray-700">
+                                    <span className="text-green-600">{fileIcon(file.name)}</span>
+                                    <span className="truncate flex-1">{file.name}</span>
+                                    <button type="button" onClick={() => setFile(null)} aria-label="Remove the chosen file"
+                                        className="cursor-pointer text-red-400 hover:text-red-600 transition shrink-0"><X className="h-3.5 w-3.5" /></button>
+                                </div>
+                            ) : savedFiles.length > 0 ? (
+                                <div className="space-y-1">
+                                    {savedFiles.map(f => (
+                                        <div key={f.path} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-700">
+                                            <span className="text-green-600">{fileIcon(f.name)}</span>
+                                            <span className="truncate flex-1">{f.name}</span>
+                                        </div>
+                                    ))}
+                                    {savedFiles.length > 1 && (
+                                        <p className="text-[10px] text-gray-400">Choosing a new file replaces all of these.</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-400">No file chosen yet.</p>
+                            )}
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-500">Announcement Date</label>
-                            <input type="date" value={date} onChange={e => { setDate(e.target.value); setErrors(p => ({ ...p, date: '' })); }} className={inputCls} />
-                            {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+                            <button type="button" onClick={() => fileInputRef.current?.click()}
+                                className="mt-3 flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-50">
+                                <Upload className="h-3.5 w-3.5" /> {hasFile ? 'Choose a different file' : 'Choose file'}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                accept={FILE_EXTENSIONS.map(ext => `.${ext}`).join(',')}
+                                onChange={e => {
+                                    const chosen = e.target.files?.[0];
+                                    e.target.value = '';
+                                    if (chosen) pickFile(chosen);
+                                }}
+                            />
                         </div>
-                        <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-500">Category</label>
-                            <select value={tag} onChange={e => setTag(e.target.value)} className={inputCls}>
-                                {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                            <Paperclip className="h-3.5 w-3.5" /> Attachments
-                            <span className="text-gray-400 font-normal">(PDF, images, docs — max 10MB each)</span>
-                        </label>
-
-                        {existingAttachments.length > 0 && (
-                            <div className="mb-2 space-y-1">
-                                {existingAttachments.map((f, i) => (
-                                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-700">
-                                        <span className="text-green-600">{fileIcon(f.name)}</span>
-                                        <span className="truncate flex-1">{f.name}</span>
-                                        <button onClick={() => removeExistingAttachment(f.path)}
-                                            className="text-red-400 hover:text-red-600 transition shrink-0"><X className="h-3.5 w-3.5" /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {files.length > 0 && (
-                            <div className="mb-2 space-y-1">
-                                {files.map((f, i) => (
-                                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-xs text-gray-700">
-                                        <span className="text-green-600">{fileIcon(f.name)}</span>
-                                        <span className="truncate flex-1">{f.name}</span>
-                                        <button onClick={() => removeNewFile(i)}
-                                            className="text-red-400 hover:text-red-600 transition shrink-0"><X className="h-3.5 w-3.5" /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <button type="button" onClick={() => fileInputRef.current?.click()}
-                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-xs text-gray-500 hover:border-green-400 hover:text-green-600 transition w-full justify-center">
-                            <Plus className="h-3.5 w-3.5" /> Add file
-                        </button>
-                        {fileError && <p role="alert" className="mt-1 text-xs text-red-500">{fileError}</p>}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            multiple
-                            className="hidden"
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip"
-                            onChange={e => {
-                                const picked = e.target.files ? Array.from(e.target.files) : [];
-                                e.target.value = '';
-                                const tooBig = picked.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
-                                const fine   = picked.filter(f => f.size <= MAX_FILE_MB * 1024 * 1024);
-                                setFileError(tooBig.length
-                                    ? `${tooBig.map(f => f.name).join(', ')} ${tooBig.length > 1 ? 'are' : 'is'} larger than ${MAX_FILE_MB} MB and was not added.`
-                                    : '');
-                                setErrors(p => ({ ...p, attachments: '' }));
-                                if (fine.length) setFiles(prev => [...prev, ...fine]);
-                            }}
-                        />
+                        <p className="mt-1 text-[10px] text-gray-400">
+                            PDF, Word, Excel, PowerPoint, image or ZIP, up to {MAX_FILE_MB} MB. The announcement is titled with the file's name, so name the file the way you want it to read.
+                        </p>
+                        {errors.file && <p role="alert" className="mt-1 text-xs text-red-500">{errors.file}</p>}
                     </div>
 
                     <div className="rounded-lg border border-gray-200 px-4 py-3 space-y-2">
@@ -589,7 +529,7 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                         </label>
                         {autoDelete && (
                             <div>
-                                <input type="date" value={deleteAfter} min={date && date > localDateStr(1) ? date : localDateStr(1)}
+                                <input type="date" value={deleteAfter} min={localDateStr(1)} aria-label="Auto-delete date"
                                     onChange={e => { setDeleteAfter(e.target.value); setErrors(p => ({ ...p, deleteAfter: '' })); }}
                                     className={inputCls} />
                                 {errors.deleteAfter && <p className="mt-1 text-xs text-red-500">{errors.deleteAfter}</p>}
@@ -601,8 +541,8 @@ function AnnouncementModal({ editing, onClose, onSaved }: ModalProps) {
                 </div>
 
                 <div className="flex justify-end gap-2 border-t px-6 py-4 shrink-0">
-                    {(errors.attachments || errors.form) && (
-                        <p role="alert" className="mr-auto min-w-0 self-center text-xs text-red-500">{errors.attachments || errors.form}</p>
+                    {errors.form && (
+                        <p role="alert" className="mr-auto min-w-0 self-center text-xs text-red-500">{errors.form}</p>
                     )}
                     <button onClick={onClose}
                         className="shrink-0 cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
@@ -649,13 +589,6 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
     function handleEdit(id: number) {
         const found = announcements.find(a => a.id === id);
         if (found) { setViewing(undefined); setEditing(found); setShowModal(true); }
-    }
-
-    function handleSaved(updated: Announcement) {
-        setAnnouncements(prev => {
-            const exists = prev.some(a => a.id === updated.id);
-            return exists ? prev.map(a => a.id === updated.id ? updated : a) : [updated, ...prev];
-        });
     }
 
     function handleDelete(id: number, title: string) {
@@ -726,7 +659,6 @@ export default function AdminDashboard({ user, stats, announcements: initialAnno
                 <AnnouncementModal
                     editing={editing}
                     onClose={() => { setShowModal(false); setEditing(undefined); }}
-                    onSaved={handleSaved}
                 />
             )}
 
