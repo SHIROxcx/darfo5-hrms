@@ -9,9 +9,43 @@
 
 @theme {
     --font-sans:
-        'Poppins', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Atkinson Hyperlegible', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    /*
+     * Design option A, "refined green" (chosen 2026-11-24, ui-ux-pro-max "Accessible & Ethical").
+     *
+     * The greens and grays below REPLACE Tailwind's own values, so every existing class such as bg-green-600 or text-gray-400
+     * picks up the accessible colours without editing each screen. To undo the whole redesign, delete this block and restore
+     * the :root values below from git.
+     *
+     * green: 600 is the brand (buttons and links, 5.0:1 on white), 700 the hover, 800 the header and headings, 500 for rings
+     * and decoration. gray: tinted to match; 400 and up all pass 4.5:1 as text on white, 800 and 900 are the dark green.
+     */
+    --color-green-50: #f0fdf4;
+    --color-green-100: #dcfce7;
+    --color-green-200: #bbf7d0;
+    --color-green-300: #86efac;
+    --color-green-400: #4ade80;
+    --color-green-500: #16a34a;
+    --color-green-600: #15803d;
+    --color-green-700: #166534;
+    --color-green-800: #14532d;
+    --color-green-900: #052e16;
+    --color-green-950: #052e16;
+
+    --color-gray-50: #f0fdf4;
+    --color-gray-100: #dcfce7;
+    --color-gray-200: #bbf7d0;
+    --color-gray-300: #86efac;
+    --color-gray-400: #64748b;
+    --color-gray-500: #475569;
+    --color-gray-600: #334155;
+    --color-gray-700: #1e293b;
+    --color-gray-800: #14532d;
+    --color-gray-900: #14532d;
+    --color-gray-950: #052e16;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -62,39 +96,39 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: #f0fdf4;
+    --foreground: #14532d;
+    --card: #ffffff;
+    --card-foreground: #14532d;
+    --popover: #ffffff;
+    --popover-foreground: #14532d;
+    --primary: #15803d;
+    --primary-foreground: #ffffff;
+    --secondary: #f0fdf4;
+    --secondary-foreground: #14532d;
+    --muted: #dcfce7;
+    --muted-foreground: #475569;
+    --accent: #dcfce7;
+    --accent-foreground: #14532d;
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --border: #bbf7d0;
+    --input: #86efac;
+    --ring: #a16207;
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: #ffffff;
+    --sidebar-foreground: #14532d;
+    --sidebar-primary: #15803d;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #dcfce7;
+    --sidebar-accent-foreground: #14532d;
+    --sidebar-border: #bbf7d0;
+    --sidebar-ring: #a16207;
 
     color-scheme: light only;
 }
@@ -141,5 +175,11 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    /* Keyboard focus: a clear 3px amber outline. Components that set their own focus ring keep it. */
+    :focus-visible {
+        outline: 3px solid var(--ring);
+        outline-offset: 2px;
     }
 }
